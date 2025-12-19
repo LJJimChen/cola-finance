@@ -19,10 +19,12 @@
 
 ### 1.2 技术栈
 - **Frontend**: `Next.js 14+`, `Recharts` (走势图), `Zustand`.
+- **Admin**: `Vite`, `React`, `Refine`, `Chakra UI` (独立 SPA).
 - **PWA**: `next-pwa` (Plugin), `manifest.json` (Web App Manifest).
 - **Backend**: `NestJS`, `Prisma ORM`.
 - **Monorepo**:
-  - `apps/web`: 前端应用
+  - `apps/web`: C端前台应用
+  - `apps/admin`: [NEW] 管理后台应用
   - `apps/api`: 后端 API 服务
   - `packages/platform-adapters`: 平台数据适配器模块
   - `packages/db`: 数据库 Schema 与 Client
@@ -31,15 +33,18 @@
 
 ```mermaid
 flowchart TB
-  subgraph Client [Next.js Frontend]
-    Dashboard
-    FamilyGroup[Family Group View]
-    TrendCharts[Asset/Profit/Rate Trends]
-    MessageCenter[Notification Center]
+  subgraph Client [C-End User]
+    Web[apps/web (Next.js)]
+  end
+
+  subgraph Admin [Admin User]
+    Console[apps/admin (Vite + Refine)]
   end
 
   subgraph Server [NestJS Backend]
-    API[API Gateway / Auth Guard]
+    API[API Gateway]
+    AuthGuard[User Guard]
+    AdminGuard[Admin Guard]
     
     subgraph CoreServices [Core Domain]
       AuthSvc[AuthService]
@@ -62,8 +67,13 @@ flowchart TB
     DB[(PostgreSQL)]
   end
 
-  Client <-->|REST/JSON| API
-  API --> CoreServices
+  Web <-->|/api/*| API
+  Console <-->|/admin/*| API
+  
+  API --> AuthGuard & AdminGuard
+  AuthGuard --> CoreServices
+  AdminGuard --> CoreServices
+
   CoreServices --> InfraServices
   InfraServices --> AdapterLib
   AdapterLib -->|API/Mock/Http| External[External Platforms]
