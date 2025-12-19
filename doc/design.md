@@ -2,22 +2,30 @@
 
 | 文档版本 | 修改日期 | 修改人 | 备注 |
 | :--- | :--- | :--- | :--- |
+| v2.5 | 2025-12-19 | AI Assistant | 新增 PWA 技术选型与 manifest 配置 |
+| v2.4 | 2025-12-19 | AI Assistant | 新增家庭组 (Family Group)、消息通知与注册流程设计 |
+| v2.3 | 2025-12-19 | AI Assistant | 重构爬虫模块为适配器模式 (Platform Adapters)，增加 Mock 平台设计 |
+| v2.2 | 2025-12-06 | AI Assistant | 新增多用户支持、独立爬虫包、每日快照覆盖策略 |
 | v2.1 | 2025-12-06 | AI Assistant | 基于 PRD v2.0 细化数据模型、接口定义与核心算法 |
 
 ## 1. 架构总览 (Architecture Overview)
 
 ### 1.1 设计原则
-- **Local-First & Privacy**: 数据完全私有化，数据库 (SQLite/PostgreSQL) 部署在本地，凭证 (Token/Cookies) 本地加密存储。
-- **Adapter-Based**: 核心业务逻辑与数据来源解耦，通过适配器模式接入不同券商/平台。
-- **Snapshot Consistency**: 采用“快照 (Snapshot)”机制管理数据版本，确保前端看到的总是同一时刻的完整资产视图。
-- **Unified Data Model**: 无论来源是 A 股、美股还是基金，最终都清洗为统一的 `AssetHolding` 模型。
+- **Local-First & Privacy**: 数据完全私有化，数据库 (SQLite/PostgreSQL) 部署在本地。
+- **Multi-User Isolation**: 支持家庭多用户，数据逻辑隔离 (Row-Level Security 思想)。
+- **Adapter-Based**: 数据获取逻辑封装为独立适配器包，与核心业务解耦，支持 API/Mock/Crawler 多种模式。
+- **Snapshot Consistency**: 每日保留一份最新快照，支持历史走势回溯。
+- **Collaborative**: 支持家庭组 (Family Group) 数据聚合与共享。
 
 ### 1.2 技术栈
-- **Frontend**: `Next.js 14+` (App Router), `React`, `Tailwind CSS`, `Recharts/ECharts` (图表), `Zustand` (状态管理).
-- **Backend**: `NestJS`, `Prisma ORM`, `RxJS`.
-- **Database**: `PostgreSQL` (推荐) 或 `SQLite` (轻量级文件存储).
-- **Crawler**: `Playwright` (Headless Browser for complex auth/scraping), `Axios` (Official API).
-- **Job Queue**: `BullMQ` (Redis) 或 `NestJS Schedule` (简单场景).
+- **Frontend**: `Next.js 14+`, `Recharts` (走势图), `Zustand`.
+- **PWA**: `next-pwa` (Plugin), `manifest.json` (Web App Manifest).
+- **Backend**: `NestJS`, `Prisma ORM`.
+- **Monorepo**:
+  - `apps/web`: 前端应用
+  - `apps/api`: 后端 API 服务
+  - `packages/platform-adapters`: 平台数据适配器模块
+  - `packages/db`: 数据库 Schema 与 Client
 
 ### 1.3 系统拓扑
 
@@ -25,45 +33,40 @@
 flowchart TB
   subgraph Client [Next.js Frontend]
     Dashboard
-    AssetList
-    RebalanceView
-    Settings
+    FamilyGroup[Family Group View]
+    TrendCharts[Asset/Profit/Rate Trends]
+    MessageCenter[Notification Center]
   end
 
   subgraph Server [NestJS Backend]
-    API[API Gateway / Controllers]
+    API[API Gateway / Auth Guard]
     
     subgraph CoreServices [Core Domain]
+      AuthSvc[AuthService]
       AssetSvc[AssetService]
-      RebalanceSvc[RebalanceService]
-      DimensionSvc[DimensionService]
       SnapshotSvc[SnapshotService]
+      GroupSvc[FamilyGroupService]
     end
 
     subgraph InfraServices [Infrastructure]
+      NotifySvc[NotificationService]
       JobSvc[JobService]
-      FXSvc[FXService]
-      CryptoSvc[CryptoService]
     end
+  end
 
-    subgraph Adapters [Platform Adapters]
-      EastMoney[EastMoney Adapter]
-      TTF[Tiantian Fund Adapter]
-      IBKR[IBKR Adapter]
-      Xueqiu[Xueqiu Adapter]
-    end
+  subgraph Libs [Packages]
+    AdapterLib[packages/platform-adapters]
   end
 
   subgraph Data [Storage]
-    DB[(PostgreSQL/SQLite)]
-    Redis[(Redis Cache)]
+    DB[(PostgreSQL)]
   end
 
-  Client <-->|REST/JSON + ETag| API
+  Client <-->|REST/JSON| API
   API --> CoreServices
   CoreServices --> InfraServices
-  InfraServices --> Adapters
-  Adapters -->|Http/Playwright| External[External Platforms]
+  InfraServices --> AdapterLib
+  AdapterLib -->|API/Mock/Http| External[External Platforms]
   CoreServices --> DB
 ```
 
@@ -71,122 +74,144 @@ flowchart TB
 
 ## 2. 详细数据模型 (Data Model)
 
-基于 Prisma Schema 描述。
-
-### 2.1 核心资产模型
+### 2.1 用户与账户
 
 ```prisma
-// 平台枚举
-enum PlatformType {
-  EAST_MONEY  // 东方财富
-  TIANTIAN    // 天天基金
-  XUEQIU      // 雪球
-  IBKR        // 盈透证券
-  MANUAL      // 手动录入
+// 用户
+model User {
+  id          String    @id @default(uuid())
+  username    String    @unique
+  password    String    // bcrypt hash
+  email       String?   // optional for notification
+  timezone    String    @default("Asia/Shanghai")
+  createdAt   DateTime  @default(now())
+
+  accounts    Account[]
+  snapshots   Snapshot[]
+  memberships GroupMember[]
+  notifications Notification[]
 }
 
-// 基础货币
-enum Currency {
-  CNY
-  USD
-  HKD
-  // ... others
-}
-
-// 账户 (Account)
+// 账户 (Account) - 存储各平台凭证
 model Account {
   id          String   @id @default(uuid())
+  userId      String   // 关联用户
   platform    PlatformType
-  name        String   // 账户名称，如 "美股账户-IBKR"
-  credentials String?  // 加密后的凭证 (JSON string)
-  status      String   // ACTIVE, ERROR, EXPIRED
-  lastSyncAt  DateTime?
-  
+  name        String
+  credentials String?  // 加密存储的 API Key / Token
+  status      String
+
+  user        User     @relation(fields: [userId], references: [id])
   assets      AssetHolding[]
-  snapshots   Snapshot[]
 }
 
-// 持仓快照 (AssetHolding) - 核心表
-// 每次同步生成新的 Snapshot，包含当次所有 Account 的 Holdings
+enum PlatformType {
+  EASTMONEY // 东方财富
+  TIANTIAN  // 天天基金
+  XUEQIU    // 雪球
+  IBKR      // 盈透证券
+  SCHWAB    // 嘉信理财 [NEW]
+  MOCK      // 模拟
+  OTHER
+}
+```
+
+### 2.2 家庭组与协作 (Family Group)
+
+```prisma
+// 家庭组/投资组
+model FamilyGroup {
+  id          String    @id @default(uuid())
+  name        String
+  creatorId   String
+  createdAt   DateTime  @default(now())
+
+  members     GroupMember[]
+}
+
+// 组成员关联
+model GroupMember {
+  id          String    @id @default(uuid())
+  groupId     String
+  userId      String
+  role        GroupRole @default(MEMBER) // OWNER, MEMBER
+  joinedAt    DateTime  @default(now())
+
+  group       FamilyGroup @relation(fields: [groupId], references: [id])
+  user        User        @relation(fields: [userId], references: [id])
+
+  @@unique([groupId, userId])
+}
+
+enum GroupRole {
+  OWNER
+  MEMBER
+}
+```
+
+### 2.3 消息通知 (Notification)
+
+```prisma
+model Notification {
+  id          String    @id @default(uuid())
+  userId      String    // 接收人
+  type        NotifyType
+  title       String
+  content     String
+  payload     Json?     // 携带额外数据 (如 groupId, inviterId)
+  isRead      Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  user        User      @relation(fields: [userId], references: [id])
+}
+
+enum NotifyType {
+  INVITATION  // 邀请加入
+  SYSTEM      // 系统通知
+  ALERT       // 资产预警
+}
+```
+
+### 2.4 每日快照 (Daily Snapshot)
+
+```prisma
+// 全局快照 (Snapshot)
+model Snapshot {
+  id          String   @id @default(uuid())
+  userId      String
+  
+  // 业务日期: YYYY-MM-DD
+  date        String   
+  timestamp   DateTime @default(now())
+
+  totalValue  Decimal  
+  dayProfit   Decimal  
+  totalProfit Decimal  
+  
+  status      String   
+  
+  holdings    AssetHolding[]
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, date])
+  @@index([date])
+}
+
+// 持仓快照
 model AssetHolding {
   id            String   @id @default(uuid())
   snapshotId    String
   accountId     String
   
-  // 原始资产信息
-  symbol        String   // 代码: "sh600519", "AAPL"
-  name          String   // 名称: "贵州茅台", "Apple Inc."
-  assetType     String   // 原始类型: "Stock", "Fund", "Bond"
+  symbol        String
+  quantity      Decimal
+  price         Decimal
+  costPrice     Decimal
+  marketValue   Decimal
+  dayProfit     Decimal
   
-  // 核心数值 (Decimal ensure precision)
-  quantity      Decimal  // 持仓数量/份额
-  price         Decimal  // 最新单价/净值
-  costPrice     Decimal  // 成本价 (平台获取或手动覆盖)
-  currency      Currency // 原始币种
-  
-  // 计算数值 (存库以固化快照)
-  marketValue   Decimal  // quantity * price
-  dayProfit     Decimal  // 当日盈亏
-  totalProfit   Decimal  // 持仓盈亏: (price - costPrice) * quantity
-  
-  // 关联
-  snapshot      Snapshot @relation(fields: [snapshotId], references: [id])
+  snapshot      Snapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
   account       Account  @relation(fields: [accountId], references: [id])
-
-  @@index([snapshotId])
-  @@index([symbol])
-}
-
-// 全局快照 (Snapshot)
-model Snapshot {
-  id          String   @id @default(uuid())
-  createdAt   DateTime @default(now())
-  hash        String   // 内容哈希，用于 ETag
-  totalValue  Decimal  // 总资产折合 (Base Currency)
-  status      String   // COMPLETED, PARTIAL (部分失败)
-  
-  holdings    AssetHolding[]
-}
-```
-
-### 2.2 维度与配置
-
-```prisma
-// 维度 (Dimension) - 如 "资产属性", "市场地域"
-model Dimension {
-  id          String   @id @default(uuid())
-  name        String   // "Asset Class", "Region"
-  isSystem    Boolean  @default(false) // 是否系统预设
-  
-  classifications Classification[]
-}
-
-// 分类 (Classification) - 如 "权益类", "美股"
-model Classification {
-  id          String   @id @default(uuid())
-  dimensionId String
-  name        String   // "Equity", "US Market"
-  
-  // 再平衡配置
-  targetWeight Decimal // 目标占比 (0.0 - 1.0)
-  tolerance    Decimal // 容忍度 Band (e.g. 0.05 for 5%)
-  
-  dimension   Dimension @relation(fields: [dimensionId], references: [id])
-  rules       ClassificationRule[]
-}
-
-// 自动分类规则 (ClassificationRule)
-model ClassificationRule {
-  id               String @id @default(uuid())
-  classificationId String
-  priority         Int    @default(0)
-  
-  // 匹配条件
-  matchSymbol      String? // 正则或精确匹配
-  matchName        String?
-  matchType        String?
-  
-  classification   Classification @relation(fields: [classificationId], references: [id])
 }
 ```
 
@@ -194,185 +219,170 @@ model ClassificationRule {
 
 ## 3. 核心模块与算法 (Core Logic)
 
-### 3.1 统一口径与计算 (AssetService)
+### 3.1 平台适配器封装 (`packages/platform-adapters`)
 
-所有从 Adapter 进来的数据必须经过 `Pipeline` 清洗：
+为了支持未来方便地扩展更多交易平台（如嘉信理财、富途牛牛等），系统采用**适配器模式 (Adapter Pattern)**。
 
-1.  **Normalize**: 映射字段到 `AssetHolding` 标准字段。
-2.  **Fill Gaps**:
-    *   若 `dayProfit` 缺失 -> 计算 `(currentPrice - prevClose) * quantity`。
-    *   若 `costPrice` 缺失 -> 标记为 `0` 或尝试读取用户手动补录配置。
-3.  **FX Conversion**:
-    *   调用 `FXService` 获取 `AssetCurrency -> SystemCurrency` 汇率。
-    *   计算 `displayValue` (展示市值)。
-4.  **Snapshot**:
-    *   生成 `Snapshot` 记录，计算该次快照的 Hash (e.g., `sha256(JSON.stringify(sortedHoldings))`)。
+#### 3.1.1 统一接口定义
+所有适配器必须实现 `IPlatformAdapter` 接口，确保上层业务对具体平台无感知。
 
-### 3.2 再平衡算法 (RebalanceService)
-
-**输入**:
-- Snapshot (包含当前所有持仓)
-- Dimension (选定的维度，如"资产属性")
-- TotalAssetValue (当前总资产折算值)
-
-**逻辑**:
 ```typescript
-function generateAdvice(snapshot, dimension) {
-  const advices = [];
-  const totalValue = snapshot.totalValue; // e.g. 1,000,000 CNY
+export interface FetchedAsset {
+  symbol: string;      // 资产代码 (e.g., "AAPL", "000001")
+  name: string;        // 资产名称
+  quantity: number;    // 持有数量
+  price: number;       // 当前单价
+  costPrice: number;   // 成本单价
+  currency: string;    // 原始币种 (USD, CNY, HKD)
+  marketValue: number; // 市值
+}
+
+export interface IPlatformAdapter {
+  platform: PlatformType; // 平台标识
+  name: string;           // 平台显示名称
+
+  // 核心方法：获取最新持仓
+  fetchAssets(credentials: Record<string, any>): Promise<FetchedAsset[]>;
   
-  // 1. 聚合当前持仓到分类
-  const currentAllocations = groupByClassification(snapshot.holdings, dimension);
-  
-  for (const cls of dimension.classifications) {
-    const currentVal = currentAllocations[cls.id] || 0;
-    const currentWt = currentVal / totalValue;
-    const targetWt = cls.targetWeight;
-    const band = cls.tolerance; // e.g. 0.05
-    
-    // 2. Band Check logic
-    const deviation = currentWt - targetWt;
-    
-    if (Math.abs(deviation) <= band) {
-      continue; // 在容忍范围内，不做操作
-    }
-    
-    // 3. 计算建议金额
-    // 策略：回归到目标占比 (Revert to Target)
-    const targetVal = totalValue * targetWt;
-    const diffVal = targetVal - currentVal;
-    
-    advices.push({
-      classification: cls.name,
-      action: diffVal > 0 ? 'BUY' : 'SELL',
-      amount: Math.abs(diffVal),
-      reason: `Deviation ${(deviation * 100).toFixed(2)}% exceeds band ${(band * 100).toFixed(2)}%`
-    });
+  // 可选方法：校验凭证有效性
+  validateCredentials?(credentials: Record<string, any>): Promise<boolean>;
+}
+```
+
+#### 3.1.2 适配器注册与工厂
+使用工厂模式管理适配器，新增平台只需注册一个新的 Class，无需修改核心调用逻辑。
+
+```typescript
+export class AdapterFactory {
+  private static adapters = new Map<PlatformType, IPlatformAdapter>();
+
+  static register(adapter: IPlatformAdapter) {
+    this.adapters.set(adapter.platform, adapter);
   }
-  
-  return advices;
+
+  static getAdapter(type: PlatformType): IPlatformAdapter {
+    const adapter = this.adapters.get(type);
+    if (!adapter) throw new Error(`Adapter for ${type} not found`);
+    return adapter;
+  }
 }
+
+// 注册示例 (在应用启动时执行)
+AdapterFactory.register(new EastMoneyAdapter());
+AdapterFactory.register(new IBKRAdapter());
+AdapterFactory.register(new SchwabAdapter()); // 新增平台只需在此添加
 ```
 
-### 3.3 适配器接口 (Adapter Interface)
+### 3.2 每日快照覆盖策略 (SnapshotService)
 
-所有平台插件需实现以下接口：
+系统强制执行“每日一快照”原则，确保历史趋势图的数据点均匀且唯一。
+
+#### 3.2.1 覆盖逻辑 (Upsert Logic)
+利用数据库的 Unique Constraint (`[userId, date]`) 和 Prisma 的事务机制。
 
 ```typescript
-interface IPlatformAdapter {
-  // 平台元数据
-  readonly id: PlatformType;
-  readonly name: string;
-  
-  // 核心抓取方法
-  fetchAssets(credentials: string): Promise<RawAsset[]>;
-  
-  // 验证凭证有效性
-  validateCredentials(credentials: string): Promise<boolean>;
+async function saveDailySnapshot(userId: string, data: FetchedAsset[]) {
+  const user = await db.user.findUnique({ where: { id: userId } });
+  // 根据用户时区确定“今天”的日期字符串 (e.g., "2025-12-20")
+  const today = format(new Date(), 'yyyy-MM-dd', { timeZone: user.timezone });
+
+  await db.$transaction(async (tx) => {
+    // 1. 查找今日是否已存在快照
+    const existing = await tx.snapshot.findUnique({
+      where: { userId_date: { userId, date: today } }
+    });
+
+    if (existing) {
+      // 2. 存在则清理旧持仓数据
+      await tx.assetHolding.deleteMany({ where: { snapshotId: existing.id } });
+      
+      // 3. 更新快照元数据
+      await tx.snapshot.update({
+        where: { id: existing.id },
+        data: {
+          timestamp: new Date(),
+          totalValue: sum(data.marketValue),
+          holdings: { create: data.map(toHoldingModel) }
+        }
+      });
+    } else {
+      // 4. 不存在则新建
+      await tx.snapshot.create({
+        data: {
+          userId,
+          date: today,
+          totalValue: sum(data.marketValue),
+          holdings: { create: data.map(toHoldingModel) }
+        }
+      });
+    }
+  });
 }
 ```
+
+### 3.3 家庭组数据聚合 (FamilyGroupService)
+
+**聚合逻辑**:
+当请求家庭组数据看板时，不实时拉取各成员的最新数据，而是**基于已生成的每日快照 (`Snapshot`) 进行聚合**。
+
+1.  **获取成员**: 查询 `GroupMember` 获取所有 `userId`。
+2.  **获取快照**: 查询所有成员在指定日期范围内的 `Snapshot`。
+3.  **计算聚合值**:
+    - `GroupTotalAsset(date) = Sum(Member_i.Snapshot(date).totalValue)`
+    - `GroupDayProfit(date) = Sum(Member_i.Snapshot(date).dayProfit)`
+    - `GroupTotalProfit(date) = Sum(Member_i.Snapshot(date).totalProfit)`
+4.  **聚合收益率**:
+    - 使用聚合后的每日总资产与收益流重新计算 TWR，确保数学意义正确。
 
 ---
 
 ## 4. 接口设计 (API Specification)
 
-### 4.1 资产概览 (Overview)
-- **Endpoint**: `GET /api/v1/assets/overview`
-- **Headers**: `If-None-Match: "sha256-hash..."`
-- **Response**:
-  - `200 OK`:
-    ```json
-    {
-      "data": {
-        "totalValue": 1250000.00,
-        "totalDayProfit": 5200.00,
-        "totalProfit": 150000.00,
-        "currency": "CNY",
-        "updatedAt": "2025-12-06T10:00:00Z",
-        "holdings": [ ...AssetHoldingList... ]
-      },
-      "meta": {
-        "snapshotId": "uuid...",
-        "warnings": ["IBKR data is 2 hours old"]
-      }
-    }
-    ```
-  - `304 Not Modified`: (当 ETag 匹配时)
+### 4.1 用户与授权 (Auth)
+- `POST /auth/register`: 注册 (username, password)
+- `POST /auth/login`: 登录 -> 返回 JWT
 
-### 4.2 再平衡建议 (Rebalance)
-- **Endpoint**: `POST /api/v1/rebalance/advise`
-- **Body**:
-  ```json
-  {
-    "dimensionId": "dim-asset-class-uuid",
-    "ignoreSmallDiff": true // 可选，忽略微小差异
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "totalAssets": 1000000,
-    "plan": [
-      {
-        "classification": "Stock",
-        "currentWeight": 0.65,
-        "targetWeight": 0.50,
-        "action": "SELL",
-        "amount": 150000,
-        "message": "Reduce exposure to Equity"
-      },
-      {
-        "classification": "Bond",
-        "currentWeight": 0.20,
-        "targetWeight": 0.40,
-        "action": "BUY",
-        "amount": 200000,
-        "message": "Increase Fixed Income"
-      }
-    ]
-  }
-  ```
+### 4.2 家庭组管理 (Group)
+- `POST /groups`: 创建组
+- `POST /groups/:id/invite`: 邀请用户 (param: username) -> 生成 `Notification`
+- `GET /groups/:id/members`: 成员列表
+- `GET /groups/:id/dashboard`: 聚合看板数据 (Assets, Profits, Trends)
+
+### 4.3 消息中心 (Notification)
+- `GET /notifications`: 列表
+- `POST /notifications/:id/read`: 标为已读
+- `POST /notifications/:id/accept`: 接受邀请 -> 插入 `GroupMember`
+
+### 4.4 历史走势 (Trend)
+- `GET /api/v1/history/trend?range=...`
+  - **Params**:
+    - `range`: `1M` | `3M` | `6M` | `1Y` | `2Y` | `3Y` | `5Y` | `10Y` | `ALL`
+- `GET /api/v1/groups/:id/trend?range=...`: (家庭组聚合，参数同上)
+- **Frontend Strategy**:
+  - 使用 `Zustand` + `persist middleware` 或 `localStorage` 存储用户选择的 `trendRange`，作为默认值。
 
 ---
 
-## 5. 工程结构 (Project Structure)
-
-采用 Monorepo 结构以便于前后端类型共享。
+## 5. 工程结构更新
 
 ```text
 cola-finance/
 ├── apps/
-│   ├── web/                 # Next.js Frontend
-│   │   ├── app/             # App Router Pages
-│   │   ├── components/      # UI Components
-│   │   └── lib/             # Frontend Utils
-│   │
-│   └── api/                 # NestJS Backend
+│   ├── web/
+│   │   ├── public/
+│   │   │   ├── manifest.json    # [NEW] PWA Manifest
+│   │   │   └── icons/           # [NEW] PWA Icons
+│   │   ├── next.config.js       # [UPD] next-pwa config
+│   │   └── ...
+│   └── api/
 │       ├── src/
-│       │   ├── modules/
-│       │   │   ├── asset/   # Asset Module
-│       │   │   ├── job/     # Job/Scheduler Module
-│       │   │   └── ...
-│       │   ├── adapters/    # Platform Adapters (EastMoney, IBKR...)
-│       │   └── common/      # Shared Utils
-│
+│       │   ├── auth/            # [NEW]
+│       │   ├── family-group/    # [NEW]
+│       │   ├── notification/    # [NEW]
+│       │   └── ...
 ├── packages/
-│   ├── shared/              # Shared Types/Interfaces (DTOs)
-│   └── db/                  # Prisma Schema & Client
-│
-├── docker-compose.yml       # DB & Redis setup
-└── README.md
+│   ├── platform-adapters/
+│   ├── db/
+│   └── shared/
+└── ...
 ```
-
-## 6. 安全与部署 (Security & Deployment)
-
-1.  **凭证存储**:
-    - 开发环境: `.env` 或本地 SQLite 加密字段。
-    - 生产环境: 使用 AES-256-GCM 加密存储在数据库中的 `credentials` 字段，密钥由用户在启动时输入或环境变量注入 (`APP_SECRET`)。
-2.  **网络隔离**:
-    - 后端服务仅监听 `localhost` (默认)，通过 Nginx 反代或 Next.js Rewrite 暴露。
-    - 数据库端口不直接对外暴露。
-
-## 7. 开发计划 (Roadmap)
-
-请参考 PRD 的 Milestones 章节。M1 阶段优先完成 `apps/api` 的 `AssetService` 与 `EastMoneyAdapter`，以及 `apps/web` 的基础看板。
