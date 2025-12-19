@@ -139,6 +139,21 @@ model FamilyGroup {
   members     GroupMember[]
 }
 
+// 组合分享配置 (Portfolio Share)
+model ShareConfig {
+  id          String    @id @default(uuid())
+  userId      String    @unique
+  isEnabled   Boolean   @default(false)
+  shareToken  String    @unique @default(uuid()) // 用于生成公开链接
+  
+  // 可选配置：是否展示具体持仓标的 (默认展示，若 false 则只展示大类分布)
+  showHoldings Boolean  @default(true)
+  
+  updatedAt   DateTime  @updatedAt
+  
+  user        User      @relation(fields: [userId], references: [id])
+}
+
 // 组成员关联
 model GroupMember {
   id          String    @id @default(uuid())
@@ -172,7 +187,7 @@ model Notification {
   isRead      Boolean   @default(false)
   createdAt   DateTime  @default(now())
 
-  user        User      @relation(fields: [userId], references: [id])
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum NotifyType {
@@ -370,6 +385,16 @@ async function saveDailySnapshot(userId: string, data: FetchedAsset[]) {
 - `GET /api/v1/groups/:id/trend?range=...`: (家庭组聚合，参数同上)
 - **Frontend Strategy**:
   - 使用 `Zustand` + `persist middleware` 或 `localStorage` 存储用户选择的 `trendRange`，作为默认值。
+
+### 4.5 组合分享 (Portfolio Share) [NEW]
+- `GET /api/v1/share/config`: 获取当前分享配置
+- `POST /api/v1/share/config`: 更新配置 (开启/关闭, 刷新 Token)
+- `GET /api/v1/share/:token`: 公开访问接口
+  - **Auth**: 无需登录
+  - **Response**: 
+    - 用户昵称
+    - 资产分布 (Pie Chart Data: { category, percentage })
+    - 持仓列表 (仅 Symbol, Name, Percentage; **隐去 Quantity, Price, MarketValue**)
 
 ---
 
