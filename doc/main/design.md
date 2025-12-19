@@ -2,6 +2,8 @@
 
 | 文档版本 | 修改日期 | 修改人 | 备注 |
 | :--- | :--- | :--- | :--- |
+| v2.7 | 2025-12-20 | AI Assistant | 补全数据模型（分类/汇率/再平衡）与相关接口 |
+| v2.6 | 2025-12-20 | AI Assistant | 新增前端架构与交互实现章节，完善 API 设计 |
 | v2.5 | 2025-12-19 | AI Assistant | 新增 PWA 技术选型与 manifest 配置 |
 | v2.4 | 2025-12-19 | AI Assistant | 新增家庭组 (Family Group)、消息通知与注册流程设计 |
 | v2.3 | 2025-12-19 | AI Assistant | 重构爬虫模块为适配器模式 (Platform Adapters)，增加 Mock 平台设计 |
@@ -238,6 +240,39 @@ model AssetHolding {
   snapshot      Snapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
   account       Account  @relation(fields: [accountId], references: [id])
 }
+
+// 汇率缓存 (Exchange Rate)
+model ExchangeRate {
+  id          String   @id @default(uuid())
+  from        String   // e.g. "USD"
+  to          String   // e.g. "CNY"
+  rate        Decimal
+  updatedAt   DateTime @updatedAt
+
+  @@unique([from, to])
+}
+
+// 资产自定义分类 (User Asset Classification)
+model AssetClass {
+  id          String   @id @default(uuid())
+  userId      String
+  symbol      String   // 资产代码
+  category    String   // 用户手动指定的分类，如 "Equity", "Bond"
+  
+  user        User     @relation(fields: [userId], references: [id])
+  @@unique([userId, symbol])
+}
+
+// 再平衡配置 (Rebalance Config)
+model AllocationTarget {
+  id          String   @id @default(uuid())
+  userId      String
+  category    String   // 资产大类，如 "Equity-US", "Bond-CN"
+  percentage  Decimal  // 目标占比 (0-100)
+  
+  user        User     @relation(fields: [userId], references: [id])
+  @@unique([userId, category])
+}
 ```
 
 ---
@@ -396,9 +431,84 @@ async function saveDailySnapshot(userId: string, data: FetchedAsset[]) {
     - 资产分布 (Pie Chart Data: { category, percentage })
     - 持仓列表 (仅 Symbol, Name, Percentage; **隐去 Quantity, Price, MarketValue**)
 
+### 4.6 核心看板接口 (Dashboard & Portfolio) [UPD]
+- `GET /api/v1/dashboard/summary`
+  - **Response**: 总资产, 当日收益, 累计收益, 最新快照时间
+- `GET /api/v1/assets`
+  - **Params**: `groupBy` (platform/account/category), `filter`
+  - **Response**: 扁平化的 AssetHolding 列表，建议前端进行分组处理以提升交互响应速度。
+- `POST /api/v1/assets/:symbol/classify`
+  - **Body**: `{ category: string }`
+  - **Desc**: 手动修正资产分类 (Upsert AssetClass)。
+
+### 4.7 分析与再平衡接口 (Analysis & Rebalance) [NEW]
+- `GET /api/v1/analysis/rebalance`
+  - **Response**: 
+    - `totalAssets`: Decimal
+    - `targets`: { category, targetPercent, currentPercent, deltaValue }[]
+    - `actions`: { action: "BUY"|"SELL", category, amount }[]
+- `POST /api/v1/analysis/targets`
+  - **Body**: `{ targets: { category: string, percentage: number }[] }`
+  - **Desc**: 批量更新用户的目标配置。
+
 ---
 
-## 5. 工程结构更新
+## 5. 前端架构与交互实现 (Frontend Architecture)
+
+### 5.1 路由与页面结构 (App Router)
+基于 Next.js 14 App Router 构建，严格映射 PRD 的导航结构。
+
+```text
+apps/web/src/app/
+├── (main)/                 # 主应用布局 (Sidebar/TabBar)
+│   ├── dashboard/          # [Page] 首页
+│   ├── portfolio/          # [Page] 持仓明细
+│   ├── analysis/           # [Page] 历史与再平衡
+│   ├── family/             # [Page] 家庭组
+│   └── settings/           # [Page] 设置
+├── (auth)/                 # 认证布局 (无导航栏)
+│   ├── login/              # [Page] 登录
+│   └── register/           # [Page] 注册
+├── api/                    # Next.js Route Handlers (BFF层)
+└── layout.tsx              # Root Layout (Providers)
+```
+
+### 5.2 状态管理 (State Management)
+使用 `Zustand` 进行轻量级状态管理，配合 `persist` 中间件实现本地偏好记忆。
+
+- **`useUserStore`**: 存储 UserInfo, Token, FamilyGroupInfo。
+- **`useAssetStore`**: 存储最新的 AssetHoldings, Snapshots (用于缓存，避免频繁请求)。
+- **`useSettingsStore`**: 
+  - `currency`: 基准货币 (CNY/USD)。
+  - `privacyMode`: 是否隐藏金额 (Boolean)。
+  - `theme`: 主题偏好 (System/Light/Dark)。
+  - `trendRange`: 走势图默认时间范围。
+
+### 5.3 UI/UX 技术落地
+遵循 PRD "简洁、清晰" 的设计原则。
+
+- **组件库 (UI Library)**: 
+  - 采用 **Shadcn/UI** (基于 Radix UI + Tailwind CSS)。
+  - **优势**: 源码级拷贝，方便深度定制样式，去除冗余设计，符合“简洁”要求。
+- **样式系统**: `Tailwind CSS`。
+- **图表库**: `Recharts` (高度可定制，适合 React)。
+- **交互反馈**:
+  - **Skeleton**: 封装 `<Skeleton />` 组件，在数据加载 (`React Query` 的 `isLoading`) 时替代 Loading Spinner。
+  - **Toast**: 使用 `Sonner` 提供优雅的成功/错误提示。
+- **响应式布局策略**:
+  - **Layout**: 使用 `md:flex-row` (PC侧边栏) vs `flex-col-reverse` (Mobile底部栏) 实现布局切换。
+  - **View**: Portfolio 页面根据 `useMediaQuery` 决定渲染 `<DataTable />` (PC) 还是 `<AssetCardList />` (Mobile)。
+
+### 5.4 PWA 配置细节
+- **Manifest**: 
+  - `display: "standalone"`
+  - `background_color`: 跟随亮/暗色主题。
+  - `shortcuts`: 提供 "Add Asset", "Check Trend" 等快捷入口。
+- **Service Worker**: 使用 `next-pwa` 默认配置，缓存静态资源 (JS/CSS/Icons)，API 请求暂不缓存以保证数据实时性。
+
+---
+
+## 6. 工程结构更新
 
 ```text
 cola-finance/
