@@ -30,4 +30,5 @@ export interface IPlatformAdapter {
   name: string;
   fetchAssets(credentials: Record<string, unknown>): Promise<FetchAssetsResult>;
   validateCredentials?(credentials: Record<string, unknown>): Promise<boolean>;
+  submitChallenge?(sessionId: string, challengeResponse: string): Promise<FetchAssetsResult>;
 }

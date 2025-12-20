@@ -178,10 +178,10 @@
 
 ### 4.2 网页爬取与多步登录 (Crawler + 2FA)
 
-- [ ] 爬虫会话与挑战状态设计
+- [x] 爬虫会话与挑战状态设计
   - 在适配器内部维护会话状态与 Cookie/Token
   - 约定会话失效与挑战（密码、2FA、验证码）时的错误返回结构
-- [ ] Crawler 认证与 2FA 接口 (apps/api)
+- [x] Crawler 认证与 2FA 接口 (apps/api)
   - 实现 `POST /api/v1/accounts/:id/crawler/login` 触发爬虫登录
   - 实现 `POST /api/v1/accounts/:id/crawler/2fa` 提交二次验证码
   - 实现 `GET /api/v1/accounts/:id/status` 查询连接与验证状态

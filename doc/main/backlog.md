@@ -32,3 +32,6 @@
 
 - [ ] **完善 DailySnapshot 收益字段计算**
   - `SnapshotService` 当前将 `dayProfit/totalProfit` 固定写入 0，可按快照序列计算并存储，供趋势与看板复用。
+
+- [ ] **会话状态持久化 (Redis)**
+  - 目前 Crawler/2FA 会话状态仅在内存中维护（若实现），生产环境需迁移至 Redis 以支持多实例部署与持久化。
