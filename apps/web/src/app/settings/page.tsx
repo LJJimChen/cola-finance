@@ -174,62 +174,71 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-900">{t.settings.title}</h1>
-          <p className="mt-2 text-sm text-zinc-600">
+          <div className="text-sm font-semibold text-[var(--card-foreground)]">{t.settings.title}</div>
+          <p className="mt-1 text-sm text-[var(--muted-foreground)]">
             {t.settings.system} & {t.settings.accounts}
           </p>
         </div>
         <button
-          className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs text-zinc-700 disabled:opacity-60"
+          className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--muted)] px-3 py-2 text-sm text-[var(--muted-foreground)] hover:bg-[var(--card)] disabled:opacity-60"
           disabled={isBusy}
           onClick={() => void accountsQuery.refetch()}
+          type="button"
         >
           {isBusy ? t.common.refreshing : t.common.refresh}
         </button>
       </div>
 
-      <section className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {/* System Settings */}
-        <div className="rounded-2xl bg-white p-4 shadow-sm md:col-span-2 lg:col-span-3">
-          <h2 className="text-sm font-semibold text-zinc-900">{t.settings.system}</h2>
+      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm md:col-span-2 lg:col-span-3">
+          <h2 className="text-sm font-semibold text-[var(--card-foreground)]">{t.settings.system}</h2>
           <div className="mt-4 flex flex-wrap gap-6">
             <div className="grid gap-1">
-              <label className="text-xs text-zinc-600">{t.settings.language}</label>
+              <label className="text-xs text-[var(--muted-foreground)]">{t.settings.language}</label>
               <div className="flex gap-2">
                 <button
                   onClick={() => switchLocale("en")}
                   className={clsx(
-                    "rounded-lg px-3 py-1 text-sm border",
-                    language === "en" ? "bg-zinc-900 text-white border-zinc-900" : "bg-white text-zinc-600 border-zinc-200"
+                    "rounded-xl px-3 py-2 text-sm border border-[var(--border)]",
+                    language === "en"
+                      ? "bg-zinc-900 text-white"
+                      : "bg-[var(--muted)] text-[var(--muted-foreground)] hover:bg-[var(--card)]"
                   )}
+                  type="button"
                 >
                   English
                 </button>
                 <button
                   onClick={() => switchLocale("zh")}
                   className={clsx(
-                    "rounded-lg px-3 py-1 text-sm border",
-                    language === "zh" ? "bg-zinc-900 text-white border-zinc-900" : "bg-white text-zinc-600 border-zinc-200"
+                    "rounded-xl px-3 py-2 text-sm border border-[var(--border)]",
+                    language === "zh"
+                      ? "bg-zinc-900 text-white"
+                      : "bg-[var(--muted)] text-[var(--muted-foreground)] hover:bg-[var(--card)]"
                   )}
+                  type="button"
                 >
                   简体中文
                 </button>
               </div>
             </div>
             <div className="grid gap-1">
-              <label className="text-xs text-zinc-600">{t.settings.currency}</label>
+              <label className="text-xs text-[var(--muted-foreground)]">{t.settings.currency}</label>
               <div className="flex gap-2">
                 {(["CNY", "USD"] as const).map((c) => (
                   <button
                     key={c}
                     onClick={() => setCurrency(c)}
                     className={clsx(
-                      "rounded-lg px-3 py-1 text-sm border",
-                      currency === c ? "bg-zinc-900 text-white border-zinc-900" : "bg-white text-zinc-600 border-zinc-200"
+                      "rounded-xl px-3 py-2 text-sm border border-[var(--border)]",
+                      currency === c
+                        ? "bg-zinc-900 text-white"
+                        : "bg-[var(--muted)] text-[var(--muted-foreground)] hover:bg-[var(--card)]"
                     )}
+                    type="button"
                   >
                     {c}
                   </button>
@@ -237,23 +246,29 @@ export default function SettingsPage() {
               </div>
             </div>
             <div className="grid gap-1">
-              <label className="text-xs text-zinc-600">{t.settings.theme}</label>
+              <label className="text-xs text-[var(--muted-foreground)]">{t.settings.theme}</label>
               <div className="flex gap-2">
                 <button
                   onClick={() => setTheme("light")}
                   className={clsx(
-                    "rounded-lg px-3 py-1 text-sm border",
-                    theme === "light" ? "bg-zinc-900 text-white border-zinc-900" : "bg-white text-zinc-600 border-zinc-200"
+                    "rounded-xl px-3 py-2 text-sm border border-[var(--border)]",
+                    theme === "light"
+                      ? "bg-zinc-900 text-white"
+                      : "bg-[var(--muted)] text-[var(--muted-foreground)] hover:bg-[var(--card)]"
                   )}
+                  type="button"
                 >
                   {t.common.theme_light}
                 </button>
                 <button
                   onClick={() => setTheme("dark")}
                   className={clsx(
-                    "rounded-lg px-3 py-1 text-sm border",
-                    theme === "dark" ? "bg-zinc-900 text-white border-zinc-900" : "bg-white text-zinc-600 border-zinc-200"
+                    "rounded-xl px-3 py-2 text-sm border border-[var(--border)]",
+                    theme === "dark"
+                      ? "bg-zinc-900 text-white"
+                      : "bg-[var(--muted)] text-[var(--muted-foreground)] hover:bg-[var(--card)]"
                   )}
+                  type="button"
                 >
                   {t.common.theme_dark}
                 </button>
@@ -262,17 +277,17 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl bg-white p-4 shadow-sm">
-          <h2 className="text-sm font-semibold text-zinc-900">{t.settings.add_account}</h2>
-          <p className="mt-1 text-xs text-zinc-500">
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
+          <h2 className="text-sm font-semibold text-[var(--card-foreground)]">{t.settings.add_account}</h2>
+          <p className="mt-1 text-xs text-[var(--muted-foreground)]">
             {t.settings.mock_platform}
           </p>
 
           <div className="mt-4 grid gap-3">
             <div className="grid gap-1">
-              <label className="text-xs text-zinc-600">{t.settings.platform}</label>
+              <label className="text-xs text-[var(--muted-foreground)]">{t.settings.platform}</label>
               <select
-                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-[var(--card-foreground)] outline-none focus:border-blue-500"
                 value={platform}
                 onChange={(e) => setPlatform(e.target.value)}
               >
@@ -280,18 +295,18 @@ export default function SettingsPage() {
               </select>
             </div>
             <div className="grid gap-1">
-              <label className="text-xs text-zinc-600">{t.settings.name}</label>
+              <label className="text-xs text-[var(--muted-foreground)]">{t.settings.name}</label>
               <input
-                className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-[var(--card-foreground)] outline-none focus:border-blue-500"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="My Mock Account"
               />
             </div>
             <div className="grid gap-1">
-              <label className="text-xs text-zinc-600">{t.settings.credentials}</label>
+              <label className="text-xs text-[var(--muted-foreground)]">{t.settings.credentials}</label>
               <input
-                className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-[var(--card-foreground)] outline-none focus:border-blue-500"
                 value={credentials}
                 onChange={(e) => setCredentials(e.target.value)}
                 placeholder="For login simulation"
@@ -301,15 +316,16 @@ export default function SettingsPage() {
               className="inline-flex items-center justify-center rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
               disabled={isBusy || !name.trim()}
               onClick={() => createAccountMutation.mutate()}
+              type="button"
             >
               {t.common.create}
             </button>
           </div>
         </div>
 
-        <div className="rounded-2xl bg-white p-4 shadow-sm md:col-span-1 lg:col-span-2">
-          <h2 className="text-sm font-semibold text-zinc-900">{t.settings.accounts}</h2>
-          <p className="mt-1 text-xs text-zinc-500">
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm md:col-span-1 lg:col-span-2">
+          <h2 className="text-sm font-semibold text-[var(--card-foreground)]">{t.settings.accounts}</h2>
+          <p className="mt-1 text-xs text-[var(--muted-foreground)]">
             {t.settings.connected_accounts}
           </p>
 
@@ -321,40 +337,42 @@ export default function SettingsPage() {
 
           <div className="mt-4 grid gap-2">
             {accounts.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-zinc-200 px-3 py-6 text-center text-xs text-zinc-500">
+              <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--muted)] px-3 py-6 text-center text-xs text-[var(--muted-foreground)]">
                 {accountsQuery.isFetching ? t.common.loading : t.settings.no_accounts}
               </div>
             ) : (
               accounts.map((a) => (
                 <div
                   key={a.id}
-                  className="flex items-center justify-between rounded-xl border border-zinc-100 bg-zinc-50 px-3 py-3"
+                  className="flex items-center justify-between rounded-2xl border border-[var(--border)] bg-[var(--muted)] px-4 py-3"
                 >
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-zinc-900">
+                      <span className="text-sm font-medium text-[var(--card-foreground)]">
                         {a.name}
                       </span>
-                      <span className="rounded-full bg-white px-2 py-0.5 text-[10px] text-zinc-600">
+                      <span className="rounded-full border border-[var(--border)] bg-[var(--card)] px-2 py-0.5 text-[10px] text-[var(--muted-foreground)]">
                         {a.platform}
                       </span>
                     </div>
-                    <div className="mt-1 text-xs text-zinc-500">
+                    <div className="mt-1 text-xs text-[var(--muted-foreground)]">
                       {t.settings.status}: {a.status}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
-                      className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs text-zinc-700 disabled:opacity-60"
+                      className="rounded-full border border-[var(--border)] bg-[var(--card)] px-3 py-1 text-xs text-[var(--muted-foreground)] hover:bg-[var(--card)] disabled:opacity-60"
                       disabled={isBusy}
                       onClick={() => openEdit(a)}
+                      type="button"
                     >
                       {t.common.edit}
                     </button>
                     <button
-                      className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs text-red-600 disabled:opacity-60"
+                      className="rounded-full border border-[var(--border)] bg-[var(--card)] px-3 py-1 text-xs text-red-600 hover:bg-[var(--muted)] disabled:opacity-60"
                       disabled={isBusy}
                       onClick={() => deleteAccountMutation.mutate(a.id)}
+                      type="button"
                     >
                       {t.common.delete}
                     </button>
@@ -368,37 +386,38 @@ export default function SettingsPage() {
 
       {editingAccount && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-4 shadow-lg">
+          <div className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-lg">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-zinc-900">{t.common.edit}</h3>
+              <h3 className="text-sm font-semibold text-[var(--card-foreground)]">{t.common.edit}</h3>
               <button
-                className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs text-zinc-700"
+                className="rounded-full border border-[var(--border)] bg-[var(--card)] px-3 py-1 text-xs text-[var(--muted-foreground)] hover:bg-[var(--muted)]"
                 onClick={() => setEditingId(null)}
+                type="button"
               >
                 {t.common.cancel}
               </button>
             </div>
             <div className="mt-4 grid gap-3">
               <div className="grid gap-1">
-                <label className="text-xs text-zinc-600">{t.settings.name}</label>
+                <label className="text-xs text-[var(--muted-foreground)]">{t.settings.name}</label>
                 <input
-                  className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-[var(--card-foreground)] outline-none focus:border-blue-500"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                 />
               </div>
               <div className="grid gap-1">
-                <label className="text-xs text-zinc-600">{t.settings.credentials}</label>
+                <label className="text-xs text-[var(--muted-foreground)]">{t.settings.credentials}</label>
                 <input
-                  className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-[var(--card-foreground)] outline-none focus:border-blue-500"
                   value={editCredentials}
                   onChange={(e) => setEditCredentials(e.target.value)}
                 />
               </div>
               <div className="grid gap-1">
-                <label className="text-xs text-zinc-600">{t.settings.status}</label>
+                <label className="text-xs text-[var(--muted-foreground)]">{t.settings.status}</label>
                 <select
-                  className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500"
+                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-[var(--card-foreground)] outline-none focus:border-blue-500"
                   value={editStatus}
                   onChange={(e) => setEditStatus(e.target.value)}
                 >
@@ -409,9 +428,10 @@ export default function SettingsPage() {
               </div>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <button
-                  className="inline-flex items-center justify-center rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 disabled:opacity-60"
+                  className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)] px-4 py-2 text-sm font-medium text-[var(--muted-foreground)] hover:bg-[var(--muted)] disabled:opacity-60"
                   disabled={isBusy}
                   onClick={() => setEditingId(null)}
+                  type="button"
                 >
                   {t.common.cancel}
                 </button>
@@ -419,6 +439,7 @@ export default function SettingsPage() {
                   className="inline-flex items-center justify-center rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
                   disabled={isBusy || !editName.trim()}
                   onClick={() => updateAccountMutation.mutate()}
+                  type="button"
                 >
                   {t.common.save}
                 </button>

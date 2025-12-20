@@ -170,7 +170,7 @@ export default function FamilyPage() {
   const isOwner = selectedGroup?.role === "OWNER";
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8">
+    <div className="flex flex-col gap-6">
       {/* Header & Group Selector */}
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -184,7 +184,7 @@ export default function FamilyPage() {
         <div className="flex items-center gap-2">
           {groups.length > 0 && (
             <select
-              className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500"
+              className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-[var(--card-foreground)] outline-none focus:border-blue-500"
               value={selectedGroupId || ""}
               onChange={(e) => setSelectedGroupId(e.target.value)}
             >
@@ -198,9 +198,10 @@ export default function FamilyPage() {
           
           <button
             onClick={() => setIsCreating(!isCreating)}
-            className="flex items-center gap-1 rounded-lg bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-800"
+            className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-2 text-sm font-medium text-[var(--muted-foreground)] hover:bg-[var(--muted)]"
+            type="button"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-4 w-4 inline mr-2" />
             {t.family.create_group}
           </button>
         </div>
@@ -256,7 +257,7 @@ export default function FamilyPage() {
           {loading && <div className="text-sm text-zinc-500">{t.common.loading}</div>}
           {/* Dashboard Cards */}
           <section className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-2xl border border-zinc-100 bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm">
               <div className="flex items-center gap-2 text-zinc-500">
                 <Wallet className="h-4 w-4" />
                 <span className="text-xs font-medium">{t.dashboard.total_assets}</span>
@@ -267,7 +268,7 @@ export default function FamilyPage() {
               <p className="mt-1 text-xs text-zinc-400">{t.family.aggregated_from}</p>
             </div>
 
-            <div className="rounded-2xl border border-zinc-100 bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm">
               <div className="flex items-center gap-2 text-zinc-500">
                 <TrendingUp className="h-4 w-4" />
                 <span className="text-xs font-medium">{t.dashboard.day_profit}</span>
@@ -277,7 +278,7 @@ export default function FamilyPage() {
               </p>
             </div>
 
-            <div className="rounded-2xl border border-zinc-100 bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm">
               <div className="flex items-center gap-2 text-zinc-500">
                 <TrendingUp className="h-4 w-4" />
                 <span className="text-xs font-medium">{t.dashboard.total_profit}</span>
@@ -292,7 +293,7 @@ export default function FamilyPage() {
           {/* Content Grid: Members & Invite */}
           <div className="grid gap-6 md:grid-cols-3">
             {/* Members List */}
-            <section className="rounded-2xl border border-zinc-100 bg-white p-6 shadow-sm md:col-span-2">
+            <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm md:col-span-2">
               <h2 className="text-lg font-semibold text-zinc-900">{t.family.members}</h2>
               <div className="mt-4 space-y-4">
                 {members.map((member) => (
@@ -315,7 +316,7 @@ export default function FamilyPage() {
             </section>
 
             {/* Invite Section */}
-            <section className="rounded-2xl border border-zinc-100 bg-white p-6 shadow-sm">
+            <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm">
               <div className="flex items-center gap-2 text-zinc-900">
                 <UserPlus className="h-5 w-5" />
                 <h2 className="text-lg font-semibold">{t.family.invite}</h2>

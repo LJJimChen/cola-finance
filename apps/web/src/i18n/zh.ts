@@ -16,6 +16,8 @@ export const zh: typeof en = {
     create_failed: '创建失败',
     delete_failed: '删除失败',
     update_failed: '更新失败',
+    welcome_back: '欢迎回来',
+    search: '搜索',
     theme_light: '浅色',
     theme_dark: '深色',
   },

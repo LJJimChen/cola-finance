@@ -60,24 +60,29 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-sm">
-        <h1 className="text-lg font-semibold text-zinc-900">{t.auth.register_title}</h1>
-        <p className="mt-1 text-xs text-zinc-500">{t.auth.register_subtitle}</p>
+    <div className="flex min-h-screen items-center justify-center bg-[var(--background)] px-6">
+      <div className="w-full max-w-sm rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400" />
+          <div className="leading-tight">
+            <div className="text-sm font-semibold text-[var(--card-foreground)]">Cola Finance</div>
+            <div className="text-[11px] text-[var(--muted-foreground)]">{t.auth.register_title}</div>
+          </div>
+        </div>
         <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
           <div className="space-y-1">
-            <label className="text-xs text-zinc-600">{t.auth.username}</label>
+            <label className="text-xs text-[var(--muted-foreground)]">{t.auth.username}</label>
             <input
-              className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-500"
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-[var(--card-foreground)] outline-none focus:border-blue-500"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-zinc-600">{t.auth.password}</label>
+            <label className="text-xs text-[var(--muted-foreground)]">{t.auth.password}</label>
             <input
               type="password"
-              className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-500"
+              className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-[var(--card-foreground)] outline-none focus:border-blue-500"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />

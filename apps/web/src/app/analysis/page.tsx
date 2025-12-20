@@ -18,8 +18,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ArrowLeft, RefreshCw, Save } from "lucide-react";
-import Link from "next/link";
+import { RefreshCw, Save } from "lucide-react";
 import clsx from "clsx";
 
 type TrendPoint = {
@@ -54,7 +53,6 @@ export default function AnalysisPage() {
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
   const currencySymbol = currency === "CNY" ? "￥" : "$";
   const loginHref = href("/login");
-  const dashboardHref = href("/dashboard");
 
   const [activeTab, setActiveTab] = useState<"trend" | "rebalance">("trend");
   
@@ -168,47 +166,47 @@ export default function AnalysisPage() {
   // Real implementation might need a way to add new categories.
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 h-screen">
-      <header className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href={dashboardHref} className="p-2 hover:bg-zinc-100 rounded-full">
-            <ArrowLeft className="h-5 w-5 text-zinc-600" />
-          </Link>
-          <h1 className="text-xl font-semibold text-zinc-900">{t.analysis.title}</h1>
-        </div>
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
+        <div className="text-sm font-semibold text-[var(--card-foreground)]">{t.analysis.title}</div>
         <div className="flex items-center gap-2">
           <button
             onClick={refreshActiveTab}
             disabled={trendLoading || rebalanceLoading}
-            className="inline-flex items-center justify-center rounded-lg border border-zinc-200 bg-white p-2 text-zinc-600 hover:bg-zinc-50 disabled:opacity-60"
+            className="inline-flex items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--muted)] p-2 text-[var(--muted-foreground)] hover:bg-[var(--card)] disabled:opacity-60"
             aria-label={t.common.refresh}
+            type="button"
           >
             <RefreshCw className={clsx("h-4 w-4", (trendLoading || rebalanceLoading) && "animate-spin")} />
           </button>
-          <div className="flex rounded-lg bg-zinc-100 p-1">
+          <div className="flex rounded-xl border border-[var(--border)] bg-[var(--muted)] p-1">
             <button
               onClick={() => setActiveTab("trend")}
               className={clsx(
-                "px-4 py-1.5 text-sm font-medium rounded-md transition-all",
-                activeTab === "trend" ? "bg-white shadow-sm text-zinc-900" : "text-zinc-500 hover:text-zinc-700"
+                "px-4 py-1.5 text-sm font-medium rounded-lg transition-all",
+                activeTab === "trend"
+                  ? "bg-[var(--card)] text-[var(--card-foreground)] shadow-sm"
+                  : "text-[var(--muted-foreground)] hover:text-[var(--card-foreground)]"
               )}
+              type="button"
             >
               {t.analysis.trend}
             </button>
             <button
               onClick={() => setActiveTab("rebalance")}
               className={clsx(
-                "px-4 py-1.5 text-sm font-medium rounded-md transition-all",
+                "px-4 py-1.5 text-sm font-medium rounded-lg transition-all",
                 activeTab === "rebalance"
-                  ? "bg-white shadow-sm text-zinc-900"
-                  : "text-zinc-500 hover:text-zinc-700"
+                  ? "bg-[var(--card)] text-[var(--card-foreground)] shadow-sm"
+                  : "text-[var(--muted-foreground)] hover:text-[var(--card-foreground)]"
               )}
+              type="button"
             >
               {t.analysis.rebalance}
             </button>
           </div>
         </div>
-      </header>
+      </div>
 
       {activeTab === "trend" && (
         <div className="flex flex-col gap-4 flex-1 min-h-0">
@@ -219,17 +217,18 @@ export default function AnalysisPage() {
                 onClick={() => setRange(r)}
                 disabled={trendLoading}
                 className={clsx(
-                  "px-3 py-1 text-xs rounded-full border transition-colors disabled:opacity-60",
+                  "px-3 py-1 text-xs rounded-full border border-[var(--border)] transition-colors disabled:opacity-60",
                   range === r
-                    ? "bg-zinc-900 text-white border-zinc-900"
-                    : "bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-50"
+                    ? "bg-zinc-900 text-white"
+                    : "bg-[var(--card)] text-[var(--muted-foreground)] hover:bg-[var(--muted)]"
                 )}
+                type="button"
               >
                 {r}
               </button>
             ))}
           </div>
-          <div className="flex-1 min-h-[400px] w-full bg-white rounded-2xl p-4 shadow-sm">
+          <div className="flex-1 min-h-[400px] w-full rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
             {trendLoading ? (
               <div className="flex h-full items-center justify-center text-sm text-zinc-500">
                 {t.common.loading}
@@ -292,7 +291,7 @@ export default function AnalysisPage() {
           )}
           <div className="grid md:grid-cols-3 gap-6">
             {/* Current Allocation Chart */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm flex flex-col items-center">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm flex flex-col items-center">
               <h3 className="text-sm font-medium text-zinc-500 mb-4">{t.analysis.current_allocation}</h3>
               <div className="w-full h-[200px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -318,7 +317,7 @@ export default function AnalysisPage() {
             </div>
 
             {/* Target Allocation Chart */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm flex flex-col items-center">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm flex flex-col items-center">
               <h3 className="text-sm font-medium text-zinc-500 mb-4">{t.analysis.target_allocation}</h3>
               <div className="w-full h-[200px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -344,7 +343,7 @@ export default function AnalysisPage() {
             </div>
 
             {/* Summary / Action */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm flex flex-col justify-center gap-4">
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm flex flex-col justify-center gap-4">
                <div className="text-center">
                <p className="text-sm text-zinc-500">{t.analysis.total_value}</p>
                  <p className="text-2xl font-bold text-zinc-900 mt-1">
@@ -370,7 +369,7 @@ export default function AnalysisPage() {
           </div>
 
           {/* Allocation Table */}
-          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-sm overflow-hidden">
             <table className="w-full text-sm text-left">
               <thead className="bg-zinc-50 text-zinc-500 font-medium border-b border-zinc-100">
                 <tr>

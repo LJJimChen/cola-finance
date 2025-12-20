@@ -14,6 +14,8 @@ export const en = {
     create_failed: 'Create failed',
     delete_failed: 'Delete failed',
     update_failed: 'Update failed',
+    welcome_back: 'Welcome back',
+    search: 'Search',
     theme_light: 'Light',
     theme_dark: 'Dark',
   },
