@@ -99,7 +99,7 @@
   - `POST /groups`：创建家庭组（仅登录用户）
   - `GET /groups`：列出用户参与的家庭组
   - `GET /groups/:id/members`：成员列表
-- [ ] 家庭组聚合看板接口
+- [x] 家庭组聚合看板接口
   - `GET /groups/:id/dashboard`：基于成员每日快照聚合总资产、日收益、累计收益
   - `GET /groups/:id/trend?range=...`：基于 DailySnapshot 计算家庭组趋势与收益率
 
@@ -112,17 +112,17 @@
   - 接口：`POST /groups/:id/invite`，传入被邀请用户名
   - 创建邀请类型的 Notification，payload 携带 groupId、inviter 信息
   - 接口：`POST /notifications/:id/accept`，接受邀请后写入 GroupMember
-- [ ] 前端消息中心页面与交互 (apps/web)
+- [x] 前端消息中心页面与交互 (apps/web)
   - 在 Dashboard Header 上实现消息铃铛提示，显示未读角标
   - 构建消息中心列表，可以筛选邀请/系统通知
   - 在邀请消息上实现接受/拒绝操作，与后端接口打通
 
 ### 2.3 家庭组前端页面 (apps/web)
 
-- [ ] Family 看板页面
+- [x] Family 看板页面
   - 复用 Dashboard 布局，改为展示当前选中家庭组的聚合数据
   - 显示成员头像与基本信息
-- [ ] 成员管理与邀请 UI
+- [x] 成员管理与邀请 UI
   - 在 Family 页面提供成员列表与角色显示
   - 实现输入用户名的邀请卡片，与 `/groups/:id/invite` 接口打通
 
