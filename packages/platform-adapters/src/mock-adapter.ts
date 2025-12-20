@@ -9,7 +9,7 @@ export class MockAdapter implements IPlatformAdapter {
   platform: PlatformType = 'MOCK';
   name = 'Mock Broker';
 
-  async fetchAssets(): Promise<FetchAssetsResult> {
+  async fetchAssets(_: Record<string, unknown>): Promise<FetchAssetsResult> {
     const assets: FetchedAsset[] = [
       {
         symbol: 'AAPL',

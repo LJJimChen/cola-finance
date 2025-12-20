@@ -169,7 +169,7 @@
 
 ### 4.1 平台适配器框架完善 (packages/platform-adapters)
 
-- [ ] 抽象统一的 `IPlatformAdapter` 接口
+- [x] 抽象统一的 `IPlatformAdapter` 接口
   - 补充错误返回结构 `FetchAssetsResult`，支持 NEED_2FA/NEED_CAPTCHA/INVALID_CREDENTIALS 等状态
   - 在 `AdapterFactory` 中实现注册与获取逻辑
 - [ ] 实现 API 平台适配器（如 IBKR）
@@ -211,9 +211,8 @@
 
 ### 5.2 PWA 支持
 
-- [x] `manifest.json` 配置与图标资源
+- [x] Web App Manifest 配置
   - 配置名称、short_name、display=standalone、主题色、背景色
-  - 提供多尺寸图标与启动图
 - [x] 接入 Service Worker
   - 配置静态资源缓存策略
   - 实现基础离线 App Shell：无网络时仍能打开应用框架与最近一次快照数据

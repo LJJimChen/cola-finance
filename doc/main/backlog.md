@@ -21,7 +21,7 @@
 - [ ] **评估并接入 next-pwa**
   - 评估与 Next.js 16 / Turbopack 的兼容性，并替换当前自定义 Service Worker（如有必要）。
 
-- [ ] **Next.js Workspace Root Warning**
+- [x] **Next.js Workspace Root Warning**
   - 修复构建时关于 workspace root 的警告，确保依赖解析正确。
 
 - [ ] **多币种深度支持**

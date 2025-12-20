@@ -22,13 +22,12 @@ export type FetchAssetsResult =
   | {
       ok: false;
       reason: "NEED_2FA" | "NEED_CAPTCHA" | "INVALID_CREDENTIALS" | "PLATFORM_CHANGED";
-      metadata?: any;
+      metadata?: Record<string, unknown>;
     };
 
 export interface IPlatformAdapter {
   platform: PlatformType;
   name: string;
-  fetchAssets(credentials: Record<string, any>): Promise<FetchAssetsResult>;
-  validateCredentials?(credentials: Record<string, any>): Promise<boolean>;
+  fetchAssets(credentials: Record<string, unknown>): Promise<FetchAssetsResult>;
+  validateCredentials?(credentials: Record<string, unknown>): Promise<boolean>;
 }
-
