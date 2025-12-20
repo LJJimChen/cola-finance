@@ -79,7 +79,7 @@ export default function AnalysisPage() {
     }
     setTrendLoading(true);
     try {
-      const res = await fetch(`${apiBase}/api/v1/analysis/trend?range=${range}`, {
+      const res = await fetch(`${apiBase}/api/v1/history/trend?range=${range}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {

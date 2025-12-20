@@ -128,11 +128,11 @@
 
 ### 2.4 国际化与偏好记忆
 
-- [ ] 前端多语言方案实现
+- [x] 前端多语言方案实现
   - 在 `apps/web` 中选型并接入 i18n（如基于 JSON 词条的简单实现）
   - 支持 English / 简体中文 UI，默认加载英文
   - 关键页面（Dashboard/Portfolio/Analysis/Family/Settings/Auth）的文案双语化
-- [ ] 用户偏好存储与切换
+- [x] 用户偏好存储与切换
   - 在 `useSettingsStore` 中增加 `language` 字段
   - Settings 页面提供语言切换开关，与 `language` 状态联动
   - 使用 `persist` 中间件将语言偏好、本币、主题、趋势时间范围等本地持久化
@@ -265,3 +265,13 @@
 - [ ] 基础测试与验证
   - 为核心服务（AuthService/AssetService/SnapshotService/FamilyGroupService）编写单元测试
   - 为关键接口编写集成测试（注册登录、Mock 数据采集、快照生成、家庭组聚合等）
+
+---
+
+## 验收记录
+
+- 2025-12-20
+  - 前端国际化与偏好持久化：语言/本币/主题可切换且刷新后保持
+  - 历史趋势接口：`GET /api/v1/history/trend?range=...` 返回序列数据
+  - 家庭组趋势接口：`GET /groups/:id/trend?range=...` 返回聚合序列数据
+  - Analysis 页面趋势请求已对齐到 `/api/v1/history/trend`
