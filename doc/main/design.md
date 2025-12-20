@@ -21,7 +21,7 @@
 - **Collaborative**: 支持家庭组 (Family Group) 数据聚合与共享。
 
 ### 1.2 技术栈
-- **Frontend**: `Next.js 14+`, `Recharts` (走势图), `Zustand`.
+- **Frontend**: `Next.js 14+`, `Recharts` (走势图), `Zustand`, `shadcn/ui`, `react-query`.
 - **Admin**: `Vite`, `React`, `Refine`, `Chakra UI` (独立 SPA).
 - **PWA**: `next-pwa` (Plugin), `manifest.json` (Web App Manifest).
 - **Backend**: `NestJS`, `Prisma ORM`.
