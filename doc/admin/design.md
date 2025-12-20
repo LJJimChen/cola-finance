@@ -59,7 +59,7 @@ cola-finance/
 
 ## 3. 数据模型 (Data Model)
 
-为了安全和解耦，**管理员 (AdminUser)** 与 **C 端用户 (User)** 使用两套完全独立的账号体系。
+为了安全和解耦，**管理员 (AdminUser)** 与 **C 端用户 (AppUser)** 使用两套完全独立的账号体系。
 
 ```prisma
 // --- 管理后台专用模型 ---
@@ -110,7 +110,7 @@ model AuditLog {
 // --- 业务系统模型 (C端) ---
 
 // 扩展 User 模型 (仅增加管理状态字段)
-model User {
+model AppUser {
   // ... existing fields (id, email, password, etc.)
   
   // 移除所有管理员相关字段，仅保留被管理状态
@@ -144,7 +144,7 @@ model SystemConfig {
 | Resource | Method | Path | Description |
 | :--- | :--- | :--- | :--- |
 | **users** | GET | `/admin/users` | 分页查询 C 端用户列表 |
-| | POST | `/admin/users/:id/ban` | 封禁/解封用户 (更新 `User.isActive`) |
+| | POST | `/admin/users/:id/ban` | 封禁/解封用户 (更新 `AppUser.isActive`) |
 | **admin-users** | GET | `/admin/admin-users` | 管理员列表 (仅超级管理员可用) |
 | **audit-logs** | GET | `/admin/audit-logs` | 查看审计日志 |
 
@@ -153,7 +153,7 @@ model SystemConfig {
 ## 5. 安全策略
 
 1.  **物理隔离**:
-    *   `AdminUser` 表存储管理员账号，`User` 表存储 C 端用户。即使 C 端数据库泄露，管理员账号也不会直接暴露（虽然在同一个 DB，但逻辑上完全分开）。
+    *   `AdminUser` 表存储管理员账号，`AppUser` 表存储 C 端用户。即使 C 端数据库泄露，管理员账号也不会直接暴露（虽然在同一个 DB，但逻辑上完全分开）。
 2.  **鉴权机制**:
     *   **AdminGuard**: 验证 Header 中的 `Authorization: Bearer <AdminToken>`。
     *   **Token 区分**: Admin Token 签发时包含 `type: 'admin'` payload，防止 C 端 User Token 越权访问后台接口。

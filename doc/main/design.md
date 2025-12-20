@@ -91,7 +91,7 @@ flowchart TB
 
 ```prisma
 // 用户
-model User {
+model AppUser {
   id          String    @id @default(uuid())
   username    String    @unique
   password    String    // bcrypt hash
@@ -99,14 +99,14 @@ model User {
   timezone    String    @default("Asia/Shanghai")
   createdAt   DateTime  @default(now())
 
-  accounts    Account[]
-  snapshots   Snapshot[]
+  accounts    PlatformAccount[]
+  snapshots   DailySnapshot[]
   memberships GroupMember[]
-  notifications Notification[]
+  notifications UserNotification[]
 }
 
-// 账户 (Account) - 存储各平台凭证
-model Account {
+// 账户 (PlatformAccount) - 存储各平台凭证
+model PlatformAccount {
   id          String   @id @default(uuid())
   userId      String   // 关联用户
   platform    PlatformType
@@ -114,8 +114,8 @@ model Account {
   credentials String?  // 加密存储的 API Key / Token
   status      String
 
-  user        User     @relation(fields: [userId], references: [id])
-  assets      AssetHolding[]
+  user        AppUser     @relation(fields: [userId], references: [id])
+  assets      AssetPosition[]
 }
 
 enum PlatformType {
@@ -143,7 +143,7 @@ model FamilyGroup {
 }
 
 // 组合分享配置 (Portfolio Share)
-model ShareConfig {
+model PortfolioShareConfig {
   id          String    @id @default(uuid())
   userId      String    @unique
   isEnabled   Boolean   @default(false)
@@ -154,7 +154,7 @@ model ShareConfig {
   
   updatedAt   DateTime  @updatedAt
   
-  user        User      @relation(fields: [userId], references: [id])
+  user        AppUser      @relation(fields: [userId], references: [id])
 }
 
 // 组成员关联
@@ -166,7 +166,7 @@ model GroupMember {
   joinedAt    DateTime  @default(now())
 
   group       FamilyGroup @relation(fields: [groupId], references: [id])
-  user        User        @relation(fields: [userId], references: [id])
+  user        AppUser        @relation(fields: [userId], references: [id])
 
   @@unique([groupId, userId])
 }
@@ -180,7 +180,7 @@ enum GroupRole {
 ### 2.3 消息通知 (Notification)
 
 ```prisma
-model Notification {
+model UserNotification {
   id          String    @id @default(uuid())
   userId      String    // 接收人
   type        NotifyType
@@ -190,7 +190,7 @@ model Notification {
   isRead      Boolean   @default(false)
   createdAt   DateTime  @default(now())
 
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        AppUser      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum NotifyType {
@@ -203,8 +203,8 @@ enum NotifyType {
 ### 2.4 每日快照 (Daily Snapshot)
 
 ```prisma
-// 全局快照 (Snapshot)
-model Snapshot {
+// 全局快照 (DailySnapshot)
+model DailySnapshot {
   id          String   @id @default(uuid())
   userId      String
   
@@ -218,15 +218,15 @@ model Snapshot {
   
   status      String   
   
-  holdings    AssetHolding[]
-  user        User     @relation(fields: [userId], references: [id])
+  holdings    AssetPosition[]
+  user        AppUser     @relation(fields: [userId], references: [id])
 
   @@unique([userId, date])
   @@index([date])
 }
 
-// 持仓快照
-model AssetHolding {
+// 持仓快照 (AssetPosition)
+model AssetPosition {
   id            String   @id @default(uuid())
   snapshotId    String
   accountId     String
@@ -238,12 +238,12 @@ model AssetHolding {
   marketValue   Decimal
   dayProfit     Decimal
   
-  snapshot      Snapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
-  account       Account  @relation(fields: [accountId], references: [id])
+  snapshot      DailySnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  account       PlatformAccount  @relation(fields: [accountId], references: [id])
 }
 
 // 汇率缓存 (Exchange Rate)
-model ExchangeRate {
+model CurrencyRate {
   id          String   @id @default(uuid())
   from        String   // e.g. "USD"
   to          String   // e.g. "CNY"
@@ -253,25 +253,25 @@ model ExchangeRate {
   @@unique([from, to])
 }
 
-// 资产自定义分类 (User Asset Classification)
-model AssetClass {
+// 资产自定义分类 (AssetCategory)
+model AssetCategory {
   id          String   @id @default(uuid())
   userId      String
   symbol      String   // 资产代码
   category    String   // 用户手动指定的分类，如 "Equity", "Bond"
   
-  user        User     @relation(fields: [userId], references: [id])
+  user        AppUser     @relation(fields: [userId], references: [id])
   @@unique([userId, symbol])
 }
 
-// 再平衡配置 (Rebalance Config)
-model AllocationTarget {
+// 再平衡配置 (AllocationConfig)
+model AllocationConfig {
   id          String   @id @default(uuid())
   userId      String
   category    String   // 资产大类，如 "Equity-US", "Bond-CN"
   percentage  Decimal  // 目标占比 (0-100)
   
-  user        User     @relation(fields: [userId], references: [id])
+  user        AppUser     @relation(fields: [userId], references: [id])
   @@unique([userId, category])
 }
 ```
@@ -339,7 +339,7 @@ export interface IPlatformAdapter {
 
 当返回 `ok: false, reason: "NEED_2FA"` 时：
 
-- 后端不再继续尝试爬取，而是将对应 `Account` 的状态更新为“需要二次验证”，并通过业务服务返回给前端。
+- 后端不再继续尝试爬取，而是将对应 `PlatformAccount` 的状态更新为“需要二次验证”，并通过业务服务返回给前端。
 - 前端在设置页的账户卡片上展示“需要验证”的状态，提供“重新验证”入口，用户点击后进入专门的二次验证码输入流程。
 
 当返回 `ok: false, reason: "NEED_CAPTCHA"` 时：
@@ -385,37 +385,37 @@ AdapterFactory.register(new SchwabAdapter()); // 新增平台只需在此添加
 
 ```typescript
 async function saveDailySnapshot(userId: string, data: FetchedAsset[]) {
-  const user = await db.user.findUnique({ where: { id: userId } });
+  const user = await db.appUser.findUnique({ where: { id: userId } });
   // 根据用户时区确定“今天”的日期字符串 (e.g., "2025-12-20")
   const today = format(new Date(), 'yyyy-MM-dd', { timeZone: user.timezone });
 
   await db.$transaction(async (tx) => {
     // 1. 查找今日是否已存在快照
-    const existing = await tx.snapshot.findUnique({
+    const existing = await tx.dailySnapshot.findUnique({
       where: { userId_date: { userId, date: today } }
     });
 
     if (existing) {
       // 2. 存在则清理旧持仓数据
-      await tx.assetHolding.deleteMany({ where: { snapshotId: existing.id } });
+      await tx.assetPosition.deleteMany({ where: { snapshotId: existing.id } });
       
       // 3. 更新快照元数据
-      await tx.snapshot.update({
+      await tx.dailySnapshot.update({
         where: { id: existing.id },
         data: {
           timestamp: new Date(),
           totalValue: sum(data.marketValue),
-          holdings: { create: data.map(toHoldingModel) }
+          holdings: { create: data.map(toAssetPositionModel) }
         }
       });
     } else {
       // 4. 不存在则新建
-      await tx.snapshot.create({
+      await tx.dailySnapshot.create({
         data: {
           userId,
           date: today,
           totalValue: sum(data.marketValue),
-          holdings: { create: data.map(toHoldingModel) }
+          holdings: { create: data.map(toAssetPositionModel) }
         }
       });
     }
@@ -426,14 +426,14 @@ async function saveDailySnapshot(userId: string, data: FetchedAsset[]) {
 ### 3.3 家庭组数据聚合 (FamilyGroupService)
 
 **聚合逻辑**:
-当请求家庭组数据看板时，不实时拉取各成员的最新数据，而是**基于已生成的每日快照 (`Snapshot`) 进行聚合**。
+当请求家庭组数据看板时，不实时拉取各成员的最新数据，而是**基于已生成的每日快照 (`DailySnapshot`) 进行聚合**。
 
 1.  **获取成员**: 查询 `GroupMember` 获取所有 `userId`。
-2.  **获取快照**: 查询所有成员在指定日期范围内的 `Snapshot`。
+2.  **获取快照**: 查询所有成员在指定日期范围内的 `DailySnapshot`。
 3.  **计算聚合值**:
-    - `GroupTotalAsset(date) = Sum(Member_i.Snapshot(date).totalValue)`
-    - `GroupDayProfit(date) = Sum(Member_i.Snapshot(date).dayProfit)`
-    - `GroupTotalProfit(date) = Sum(Member_i.Snapshot(date).totalProfit)`
+    - `GroupTotalAsset(date) = Sum(Member_i.DailySnapshot(date).totalValue)`
+    - `GroupDayProfit(date) = Sum(Member_i.DailySnapshot(date).dayProfit)`
+    - `GroupTotalProfit(date) = Sum(Member_i.DailySnapshot(date).totalProfit)`
 4.  **聚合收益率**:
     - 使用聚合后的每日总资产与收益流重新计算 TWR，确保数学意义正确。
 
@@ -479,10 +479,10 @@ async function saveDailySnapshot(userId: string, data: FetchedAsset[]) {
   - **Response**: 总资产, 当日收益, 累计收益, 最新快照时间
 - `GET /api/v1/assets`
   - **Params**: `groupBy` (platform/account/category), `filter`
-  - **Response**: 扁平化的 AssetHolding 列表，建议前端进行分组处理以提升交互响应速度。
+  - **Response**: 扁平化的 AssetPosition 列表，建议前端进行分组处理以提升交互响应速度。
 - `POST /api/v1/assets/:symbol/classify`
   - **Body**: `{ category: string }`
-  - **Desc**: 手动修正资产分类 (Upsert AssetClass)。
+  - **Desc**: 手动修正资产分类 (Upsert AssetCategory)。
 
 ### 4.8 爬虫认证与二次验证接口 (Crawler Auth & 2FA) [NEW]
 
@@ -536,7 +536,7 @@ apps/web/src/app/
 使用 `Zustand` 进行轻量级状态管理，配合 `persist` 中间件实现本地偏好记忆。
 
 - **`useUserStore`**: 存储 UserInfo, Token, FamilyGroupInfo。
-- **`useAssetStore`**: 存储最新的 AssetHoldings, Snapshots (用于缓存，避免频繁请求)。
+- **`useAssetStore`**: 存储最新的 AssetPositions, DailySnapshots (用于缓存，避免频繁请求)。
 - **`useSettingsStore`**: 
   - `currency`: 基准货币 (CNY/USD)。
   - `privacyMode`: 是否隐藏金额 (Boolean)。
