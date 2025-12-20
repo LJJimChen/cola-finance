@@ -9,7 +9,16 @@ export class MockAdapter implements IPlatformAdapter {
   platform: PlatformType = 'MOCK';
   name = 'Mock Broker';
 
-  async fetchAssets(_: Record<string, unknown>): Promise<FetchAssetsResult> {
+  async fetchAssets(credentials: Record<string, unknown>): Promise<FetchAssetsResult> {
+    // Simulate 2FA requirement if username is "2fa_user"
+    if (credentials?.username === '2fa_user' && !credentials?._2fa_verified) {
+      return {
+        ok: false,
+        reason: 'NEED_2FA',
+        metadata: { sessionId: 'mock-session-id' },
+      };
+    }
+
     const assets: FetchedAsset[] = [
       {
         symbol: 'AAPL',
@@ -40,5 +49,15 @@ export class MockAdapter implements IPlatformAdapter {
       },
     ];
     return { ok: true, assets };
+  }
+
+  async submitChallenge(sessionId: string, challengeResponse: string): Promise<FetchAssetsResult> {
+    if (sessionId === 'mock-session-id' && challengeResponse === '123456') {
+      return this.fetchAssets({ username: '2fa_user', _2fa_verified: true });
+    }
+    return {
+      ok: false,
+      reason: 'INVALID_CREDENTIALS',
+    };
   }
 }

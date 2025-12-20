@@ -31,6 +31,8 @@ model PlatformAccount {
   name        String
   credentials String?
   status      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   user    AppUser       @relation(fields: [userId], references: [id])
   assets  AssetPosition[]
