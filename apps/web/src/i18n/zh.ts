@@ -46,6 +46,7 @@ export const zh: typeof en = {
     total_profit: '累计收益',
     nav_family: '家庭组',
     nav_analysis: '分析',
+    distribution: '资产分布',
   },
   family: {
     title: '家庭组',
@@ -118,6 +119,17 @@ export const zh: typeof en = {
   portfolio: {
     title: '持仓',
     description: '持仓列表将在这里展示，后续接入表格视图与卡片视图。',
+    holdings: '持仓明细',
+    market_value: '市值',
+    no_holdings: '暂无持仓',
+    unclassified: '未分类',
+    filter_all: '全部平台',
+    view_list: '列表视图',
+    view_cards: '卡片视图',
+    group_platform: '按平台',
+    group_category: '按类别',
+    edit_category: '编辑分类',
+    category: '分类',
   },
   landing: {
     hero_title: '一个屏幕看全你的资产',

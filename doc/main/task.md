@@ -196,13 +196,13 @@
 
 ### 5.1 交互与视觉实现 (apps/web)
 
-- [ ] 完成导航结构与布局
+- [x] 完成导航结构与布局
   - PC 端：侧边栏导航，菜单项 `Dashboard/Portfolio/Analysis/Family/Settings`
   - 移动端：底部 TabBar，适配单手操作
-- [ ] Dashboard 视觉细节
+- [x] Dashboard 视觉细节
   - 实现问候语、刷新按钮（含 Loading 动画）、消息铃铛角标
   - 实现迷你 Sparkline 与资产分布饼图
-- [ ] Portfolio 多视图与表格交互
+- [x] Portfolio 多视图与表格交互
   - 实现列表/卡片视图切换
   - 实现“平台 > 账户”与“资产类别 > 标的”两级折叠分组
   - 实现搜索与按币种/市场筛选
@@ -211,10 +211,10 @@
 
 ### 5.2 PWA 支持
 
-- [ ] `manifest.json` 配置与图标资源
+- [x] `manifest.json` 配置与图标资源
   - 配置名称、short_name、display=standalone、主题色、背景色
   - 提供多尺寸图标与启动图
-- [ ] 接入 `next-pwa` 与 Service Worker
+- [x] 接入 Service Worker
   - 配置静态资源缓存策略
   - 实现基础离线 App Shell：无网络时仍能打开应用框架与最近一次快照数据
 

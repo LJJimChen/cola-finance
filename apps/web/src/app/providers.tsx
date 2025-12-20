@@ -59,6 +59,18 @@ export function Providers({
     document.documentElement.lang = routeLanguage ?? language;
   }, [language, routeLanguage]);
 
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) {
+      return;
+    }
+    const isLocalhost =
+      window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    if (!window.isSecureContext && !isLocalhost) {
+      return;
+    }
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  }, []);
+
   function AppShell({ children: shellChildren }: { children: ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
@@ -67,6 +79,8 @@ export function Providers({
     const clearSession = useUserStore((s) => s.clear);
     const setLanguage = useSettingsStore((s) => s.setLanguage);
     const { t, href } = useTranslation();
+    const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
+    const [unreadCount, setUnreadCount] = useState(0);
 
     const segments = pathname.split("/").filter(Boolean);
     const maybeLocale = segments[0];
@@ -82,6 +96,34 @@ export function Providers({
       routeKey === "settings";
 
     const showShell = Boolean(token) && !isAuthRoute && isAppRoute;
+
+    useEffect(() => {
+      if (!token) {
+        setUnreadCount(0);
+        return;
+      }
+      let cancelled = false;
+      fetch(`${apiBase}/notifications`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => res.json())
+        .then((data: unknown) => {
+          if (cancelled || !Array.isArray(data)) {
+            return;
+          }
+          const count = data.filter((n) => typeof n === "object" && n !== null && "isRead" in n && !(n as { isRead?: boolean }).isRead)
+            .length;
+          setUnreadCount(count);
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setUnreadCount(0);
+          }
+        });
+      return () => {
+        cancelled = true;
+      };
+    }, [apiBase, pathname, token]);
 
     const title =
       routeKey === "dashboard"
@@ -200,10 +242,15 @@ export function Providers({
               </div>
               <Link
                 href={href("/notifications")}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--muted)]"
+                className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--muted)]"
                 aria-label={t.notifications.title}
               >
                 <Bell className="h-4 w-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] leading-none text-white">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
               </Link>
             </div>
           </header>

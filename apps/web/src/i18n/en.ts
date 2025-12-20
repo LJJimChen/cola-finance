@@ -44,6 +44,7 @@ export const en = {
     total_profit: 'Total Profit',
     nav_family: 'Family',
     nav_analysis: 'Analysis',
+    distribution: 'Distribution',
   },
   family: {
     title: 'Family',
@@ -116,6 +117,17 @@ export const en = {
   portfolio: {
     title: 'Portfolio',
     description: 'Portfolio list will be displayed here, with table view and card view coming soon.',
+    holdings: 'Holdings',
+    market_value: 'Market Value',
+    no_holdings: 'No holdings',
+    unclassified: 'Unclassified',
+    filter_all: 'All Platforms',
+    view_list: 'List view',
+    view_cards: 'Card view',
+    group_platform: 'Platform',
+    group_category: 'Category',
+    edit_category: 'Edit Category',
+    category: 'Category',
   },
   landing: {
     hero_title: 'One screen for all your assets',

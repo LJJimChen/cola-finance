@@ -2,7 +2,7 @@
 
 ## 待办事项 (To Do)
 
-- [ ] **资产分类管理 UI**
+- [x] **资产分类管理 UI**
   - 目前 `AssetCategory` 只能通过数据库操作，需要在前端 Settings 或 Portfolio 页面提供管理界面，允许用户手动修正资产分类（如将 AAPL 归类为 "Technology" 或 "Equity"）。
 
 - [ ] **批量再平衡 (Batch Rebalance)**
@@ -14,6 +14,12 @@
 - [ ] **数据导出/导入 (Data Export/Import)**
   - 支持将 DailySnapshot 和 Transaction 导出为 CSV/Excel。
   - 支持从外部文件导入历史数据。
+
+- [ ] **PWA 图标与启动图资源**
+  - 补齐 PNG 多尺寸图标（如 192/512）与 iOS 启动图，完善安装体验。
+
+- [ ] **评估并接入 next-pwa**
+  - 评估与 Next.js 16 / Turbopack 的兼容性，并替换当前自定义 Service Worker（如有必要）。
 
 - [ ] **Next.js Workspace Root Warning**
   - 修复构建时关于 workspace root 的警告，确保依赖解析正确。
