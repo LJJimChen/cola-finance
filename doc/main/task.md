@@ -46,11 +46,11 @@
 
 ### 1.2 用户体系与认证授权 (apps/api + apps/web)
 
-- [ ] 实现 C 端用户注册/登录接口
+- [x] 实现 C 端用户注册/登录接口
   - 接口：`POST /auth/register`，`POST /auth/login`
   - 支持用户名/密码注册，密码使用 bcrypt 存储
   - 登录成功签发 JWT（区分用户类型字段）
-- [ ] 接入用户鉴权守卫
+- [x] 接入用户鉴权守卫
   - 在 NestJS 中实现 `AuthGuard`，校验 Authorization Header 中的 Bearer Token
   - 配置路由保护：资产、快照、家庭组等接口仅允许已登录用户访问
 - [ ] 前端登录/注册页面与会话管理 (apps/web)
@@ -60,7 +60,7 @@
 
 ### 1.3 平台账户与 Mock 平台
 
-- [ ] 平台账户数据模型与接口 (apps/api)
+- [x] 平台账户数据模型与接口 (apps/api)
   - 完成 `PlatformAccount` 的 CRUD 基础接口：创建、更新、删除、查询
   - 接口示例：`POST /accounts`，`GET /accounts`，`DELETE /accounts/:id`
   - 字段包含：平台类型、名称、凭证（加密保存）、状态（Connected/Error/NeedVerify 等）
@@ -74,14 +74,14 @@
 
 ### 1.4 每日快照与基础看板
 
-- [ ] 实现每日快照生成逻辑 (SnapshotService)
+- [x] 实现每日快照生成逻辑 (SnapshotService)
   - 根据用户时区计算业务日期 (Business Date)
   - 调用适配器生成 FetchedAsset 数组，计算总资产、日收益、累计收益
   - 按 `[userId, date]` 唯一键进行 Upsert，覆盖当日旧快照与旧持仓
-- [ ] 实现 Dashboard 汇总接口
+- [x] 实现 Dashboard 汇总接口
   - `GET /api/v1/dashboard/summary`：返回总资产、当日收益、累计收益、最近快照时间
   - `GET /api/v1/assets`：返回当前持仓列表，支持按平台/账户/分类分组的参数
-- [ ] 前端 Dashboard 页面骨架
+- [x] 前端 Dashboard 页面骨架
   - 使用 `shadcn/ui` + `Recharts` 实现基础的 Dashboard 布局
   - 显示关键指标卡（总资产、当日收益、累计收益）
   - 接口联通后能展示真实 Mock 数据
