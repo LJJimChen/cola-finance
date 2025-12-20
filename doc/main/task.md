@@ -126,6 +126,17 @@
   - 在 Family 页面提供成员列表与角色显示
   - 实现输入用户名的邀请卡片，与 `/groups/:id/invite` 接口打通
 
+### 2.4 国际化与偏好记忆
+
+- [ ] 前端多语言方案实现
+  - 在 `apps/web` 中选型并接入 i18n（如基于 JSON 词条的简单实现）
+  - 支持 English / 简体中文 UI，默认加载英文
+  - 关键页面（Dashboard/Portfolio/Analysis/Family/Settings/Auth）的文案双语化
+- [ ] 用户偏好存储与切换
+  - 在 `useSettingsStore` 中增加 `language` 字段
+  - Settings 页面提供语言切换开关，与 `language` 状态联动
+  - 使用 `persist` 中间件将语言偏好、本币、主题、趋势时间范围等本地持久化
+
 ---
 
 ## M3: 历史走势、分析与再平衡
@@ -181,7 +192,7 @@
 
 ---
 
-## M5: UI/UX、PWA 与国际化
+## M5: UI/UX、PWA 
 
 ### 5.1 交互与视觉实现 (apps/web)
 
@@ -206,17 +217,6 @@
 - [ ] 接入 `next-pwa` 与 Service Worker
   - 配置静态资源缓存策略
   - 实现基础离线 App Shell：无网络时仍能打开应用框架与最近一次快照数据
-
-### 5.3 国际化与偏好记忆
-
-- [ ] 前端多语言方案实现
-  - 在 `apps/web` 中选型并接入 i18n（如基于 JSON 词条的简单实现）
-  - 支持 English / 简体中文 UI，默认加载英文
-  - 关键页面（Dashboard/Portfolio/Analysis/Family/Settings/Auth）的文案双语化
-- [ ] 用户偏好存储与切换
-  - 在 `useSettingsStore` 中增加 `language` 字段
-  - Settings 页面提供语言切换开关，与 `language` 状态联动
-  - 使用 `persist` 中间件将语言偏好、本币、主题、趋势时间范围等本地持久化
 
 ---
 
