@@ -73,7 +73,14 @@ export default function DashboardPage() {
     })
       .then((res) => res.json())
       .then((data) => {
-        if (!cancelled) setSummary(data);
+        if (!cancelled) {
+          setSummary({
+            ...data,
+            totalValue: Number(data.totalValue),
+            dayProfit: Number(data.dayProfit),
+            totalProfit: Number(data.totalProfit),
+          });
+        }
       })
       .catch(console.error);
 
@@ -81,9 +88,16 @@ export default function DashboardPage() {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
-      .then((data: TrendPoint[]) => {
+      .then((data: any[]) => {
         if (!cancelled && Array.isArray(data)) {
-          setTrendData(data);
+          setTrendData(
+            data.map((d) => ({
+              ...d,
+              totalValue: Number(d.totalValue),
+              dayProfit: Number(d.dayProfit),
+              totalProfit: Number(d.totalProfit),
+            }))
+          );
         }
       })
       .catch(console.error);

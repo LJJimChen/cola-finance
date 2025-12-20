@@ -83,8 +83,15 @@ export default function AnalysisPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
-        const data = (await res.json()) as TrendPoint[];
-        setTrendData(data);
+        const data = (await res.json()) as any[];
+        setTrendData(
+          data.map((d) => ({
+            ...d,
+            totalValue: Number(d.totalValue),
+            dayProfit: Number(d.dayProfit),
+            totalProfit: Number(d.totalProfit),
+          }))
+        );
       }
     } catch (error) {
       console.error(error);
@@ -103,7 +110,18 @@ export default function AnalysisPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
-        const data = (await res.json()) as RebalanceData;
+        const rawData = await res.json();
+        const data: RebalanceData = {
+          totalValue: Number(rawData.totalValue),
+          categories: rawData.categories.map((c: any) => ({
+            ...c,
+            currentAmount: Number(c.currentAmount),
+            currentPercent: Number(c.currentPercent),
+            targetPercent: Number(c.targetPercent),
+            targetAmount: Number(c.targetAmount),
+            diffAmount: Number(c.diffAmount),
+          })),
+        };
         setRebalanceData(data);
         setEditTargets(
           data.categories.map((c: RebalanceItem) => ({
