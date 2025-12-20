@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "../../../store/useUserStore";
+import { useTranslation } from "../../../hooks/useTranslation";
 
 type AuthResponse = {
   token: string;
@@ -16,6 +17,7 @@ export default function LoginPage() {
   const router = useRouter();
   const token = useUserStore((s) => s.token);
   const setSession = useUserStore((s) => s.setSession);
+  const { t } = useTranslation();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +49,7 @@ export default function LoginPage() {
       router.push("/dashboard");
     },
     onError: () => {
-      setError("登录失败");
+      setError(t.auth.login_failed);
     },
   });
 
@@ -60,11 +62,11 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-sm">
-        <h1 className="text-lg font-semibold text-zinc-900">登录 Cola Finance</h1>
-        <p className="mt-1 text-xs text-zinc-500">使用用户名和密码登录</p>
+        <h1 className="text-lg font-semibold text-zinc-900">{t.auth.login_title}</h1>
+        <p className="mt-1 text-xs text-zinc-500">{t.auth.login_subtitle}</p>
         <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
           <div className="space-y-1">
-            <label className="text-xs text-zinc-600">用户名</label>
+            <label className="text-xs text-zinc-600">{t.auth.username}</label>
             <input
               className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-500"
               value={username}
@@ -72,7 +74,7 @@ export default function LoginPage() {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-zinc-600">密码</label>
+            <label className="text-xs text-zinc-600">{t.auth.password}</label>
             <input
               type="password"
               className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-500"
@@ -90,7 +92,7 @@ export default function LoginPage() {
             disabled={loginMutation.isPending}
             className="mt-2 inline-flex w-full items-center justify-center rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
           >
-            {loginMutation.isPending ? "登录中..." : "登录"}
+            {loginMutation.isPending ? t.auth.logging_in : t.auth.login_button}
           </button>
         </form>
       </div>

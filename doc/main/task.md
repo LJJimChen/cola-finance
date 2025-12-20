@@ -143,22 +143,22 @@
 
 ### 3.1 历史走势与收益率
 
-- [ ] 历史趋势接口实现 (apps/api)
+- [x] 历史趋势接口实现 (apps/api)
   - `GET /api/v1/history/trend?range=...`：根据 range 查询用户 DailySnapshot 序列
   - 计算每日资产值、当日收益、累计收益率（TWR/复利累加）
   - 支持家庭组版本：`GET /api/v1/groups/:id/trend?range=...`
-- [ ] 再平衡数据模型与接口
+- [x] 再平衡数据模型与接口
   - 在数据库中实现 AllocationConfig，用于存储用户目标占比
   - `GET /api/v1/analysis/rebalance`：计算当前配置 vs 目标配置，输出调仓建议
   - `POST /api/v1/analysis/targets`：更新用户目标配置
 
 ### 3.2 前端 Analysis 与 Rebalance 页面 (apps/web)
 
-- [ ] Analysis 历史走势页
+- [x] Analysis 历史走势页
   - 使用 `Recharts` 实现资产曲线与累计收益率曲线切换
   - 实现时间范围筛选：1M / 3M / 6M / 1Y / YTD / All
   - 添加 Tooltip、十字光标、区间缩放等交互
-- [ ] Rebalance 页面
+- [x] Rebalance 页面
   - 展示目标 vs 当前占比仪表盘/条形图
   - 以 Action List 形式列出具体的“买入/卖出”金额建议
   - 提供目标配置编辑入口，与 `analysis/targets` 接口打通

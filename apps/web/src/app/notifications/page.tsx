@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "../../store/useUserStore";
+import { useTranslation } from "../../hooks/useTranslation";
 import { Bell, Check, Mail } from "lucide-react";
 import clsx from "clsx";
 
@@ -13,33 +14,29 @@ type Notification = {
   content: string;
   isRead: boolean;
   createdAt: string;
-  payload?: any;
+  payload?: Record<string, unknown> | null;
 };
 
 export default function NotificationsPage() {
   const router = useRouter();
   const token = useUserStore((s) => s.token);
+  const { t } = useTranslation();
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
+  const fetchNotifications = useCallback(async () => {
     if (!token) {
-      router.replace("/login");
       return;
     }
-    fetchNotifications();
-  }, [token, router]);
-
-  const fetchNotifications = async () => {
     setLoading(true);
     try {
       const res = await fetch(`${apiBase}/notifications`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
-        const data = await res.json();
+        const data = (await res.json()) as Notification[];
         setNotifications(data);
       }
     } catch (err) {
@@ -47,7 +44,15 @@ export default function NotificationsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [apiBase, token]);
+
+  useEffect(() => {
+    if (!token) {
+      router.replace("/login");
+      return;
+    }
+    fetchNotifications();
+  }, [fetchNotifications, router, token]);
 
   const handleAccept = async (id: string) => {
     try {
@@ -84,18 +89,18 @@ export default function NotificationsPage() {
     <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-8">
       <header className="flex items-center gap-2">
         <Bell className="h-6 w-6 text-blue-600" />
-        <h1 className="text-2xl font-bold text-zinc-900">Notifications</h1>
+        <h1 className="text-2xl font-bold text-zinc-900">{t.notifications.title}</h1>
       </header>
 
-      {loading && <p className="text-sm text-zinc-500">Loading...</p>}
+      {loading && <p className="text-sm text-zinc-500">{t.common.loading}</p>}
 
       {!loading && notifications.length === 0 && (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 py-16 text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 text-zinc-400">
             <Bell className="h-6 w-6" />
           </div>
-          <h3 className="mt-4 text-lg font-semibold text-zinc-900">No Notifications</h3>
-          <p className="mt-2 text-sm text-zinc-500">You're all caught up!</p>
+          <h3 className="mt-4 text-lg font-semibold text-zinc-900">{t.notifications.empty_title}</h3>
+          <p className="mt-2 text-sm text-zinc-500">{t.notifications.empty_desc}</p>
         </div>
       )}
 
@@ -135,7 +140,7 @@ export default function NotificationsPage() {
                     className="flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
                   >
                     <Check className="h-3 w-3" />
-                    Accept Invitation
+                    {t.notifications.accept_invite}
                   </button>
                 </div>
               )}

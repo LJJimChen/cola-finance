@@ -4,6 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "../../store/useUserStore";
+import { useTranslation } from "../../hooks/useTranslation";
+import { useSettingsStore } from "../../store/useSettingsStore";
+import clsx from "clsx";
 
 type Account = {
   id: string;
@@ -17,7 +20,10 @@ type Account = {
 export default function SettingsPage() {
   const router = useRouter();
   const token = useUserStore((s) => s.token);
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+  const { t } = useTranslation();
+  const { language, setLanguage, currency, setCurrency, theme, setTheme } = useSettingsStore();
+  
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
 
   const [platform, setPlatform] = useState("MOCK");
   const [name, setName] = useState("");
@@ -71,7 +77,7 @@ export default function SettingsPage() {
       await queryClient.invalidateQueries({ queryKey: ["accounts", apiBase] });
     },
     onError: () => {
-      setError("创建账户失败");
+      setError(t.common.create_failed);
     },
   });
 
@@ -93,7 +99,7 @@ export default function SettingsPage() {
       await queryClient.invalidateQueries({ queryKey: ["accounts", apiBase] });
     },
     onError: () => {
-      setError("删除失败");
+      setError(t.common.delete_failed);
     },
   });
 
@@ -133,7 +139,7 @@ export default function SettingsPage() {
       await queryClient.invalidateQueries({ queryKey: ["accounts", apiBase] });
     },
     onError: () => {
-      setError("更新失败");
+      setError(t.common.update_failed);
     },
   });
 
@@ -161,9 +167,9 @@ export default function SettingsPage() {
     <div className="mx-auto max-w-6xl px-4 py-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-900">Settings</h1>
+          <h1 className="text-xl font-semibold text-zinc-900">{t.settings.title}</h1>
           <p className="mt-2 text-sm text-zinc-600">
-            账户连接、语言、主题等偏好设置将在这里配置。
+            {t.settings.system} & {t.settings.accounts}
           </p>
         </div>
         <button
@@ -171,20 +177,90 @@ export default function SettingsPage() {
           disabled={isBusy}
           onClick={() => void accountsQuery.refetch()}
         >
-          {isBusy ? "刷新中..." : "刷新"}
+          {isBusy ? t.common.refreshing : t.common.refresh}
         </button>
       </div>
 
-      <section className="mt-6 grid gap-4 md:grid-cols-2">
+      <section className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {/* System Settings */}
+        <div className="rounded-2xl bg-white p-4 shadow-sm md:col-span-2 lg:col-span-3">
+          <h2 className="text-sm font-semibold text-zinc-900">{t.settings.system}</h2>
+          <div className="mt-4 flex flex-wrap gap-6">
+            <div className="grid gap-1">
+              <label className="text-xs text-zinc-600">{t.settings.language}</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setLanguage("en")}
+                  className={clsx(
+                    "rounded-lg px-3 py-1 text-sm border",
+                    language === "en" ? "bg-zinc-900 text-white border-zinc-900" : "bg-white text-zinc-600 border-zinc-200"
+                  )}
+                >
+                  English
+                </button>
+                <button
+                  onClick={() => setLanguage("zh")}
+                  className={clsx(
+                    "rounded-lg px-3 py-1 text-sm border",
+                    language === "zh" ? "bg-zinc-900 text-white border-zinc-900" : "bg-white text-zinc-600 border-zinc-200"
+                  )}
+                >
+                  简体中文
+                </button>
+              </div>
+            </div>
+            <div className="grid gap-1">
+              <label className="text-xs text-zinc-600">{t.settings.currency}</label>
+              <div className="flex gap-2">
+                {(["CNY", "USD"] as const).map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setCurrency(c)}
+                    className={clsx(
+                      "rounded-lg px-3 py-1 text-sm border",
+                      currency === c ? "bg-zinc-900 text-white border-zinc-900" : "bg-white text-zinc-600 border-zinc-200"
+                    )}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="grid gap-1">
+              <label className="text-xs text-zinc-600">{t.settings.theme}</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setTheme("light")}
+                  className={clsx(
+                    "rounded-lg px-3 py-1 text-sm border",
+                    theme === "light" ? "bg-zinc-900 text-white border-zinc-900" : "bg-white text-zinc-600 border-zinc-200"
+                  )}
+                >
+                  {t.common.theme_light}
+                </button>
+                <button
+                  onClick={() => setTheme("dark")}
+                  className={clsx(
+                    "rounded-lg px-3 py-1 text-sm border",
+                    theme === "dark" ? "bg-zinc-900 text-white border-zinc-900" : "bg-white text-zinc-600 border-zinc-200"
+                  )}
+                >
+                  {t.common.theme_dark}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="rounded-2xl bg-white p-4 shadow-sm">
-          <h2 className="text-sm font-semibold text-zinc-900">连接平台账户</h2>
+          <h2 className="text-sm font-semibold text-zinc-900">{t.settings.add_account}</h2>
           <p className="mt-1 text-xs text-zinc-500">
-            目前支持 Mock 平台，用于验证端到端链路。
+            {t.settings.mock_platform}
           </p>
 
           <div className="mt-4 grid gap-3">
             <div className="grid gap-1">
-              <label className="text-xs text-zinc-600">平台</label>
+              <label className="text-xs text-zinc-600">{t.settings.platform}</label>
               <select
                 className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500"
                 value={platform}
@@ -194,21 +270,21 @@ export default function SettingsPage() {
               </select>
             </div>
             <div className="grid gap-1">
-              <label className="text-xs text-zinc-600">账户名称</label>
+              <label className="text-xs text-zinc-600">{t.settings.name}</label>
               <input
                 className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-500"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="例如：我的 Mock 账户"
+                placeholder="My Mock Account"
               />
             </div>
             <div className="grid gap-1">
-              <label className="text-xs text-zinc-600">凭证（可选）</label>
+              <label className="text-xs text-zinc-600">{t.settings.credentials}</label>
               <input
                 className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-500"
                 value={credentials}
                 onChange={(e) => setCredentials(e.target.value)}
-                placeholder="后续用于真实平台登录"
+                placeholder="For login simulation"
               />
             </div>
             <button
@@ -216,27 +292,27 @@ export default function SettingsPage() {
               disabled={isBusy || !name.trim()}
               onClick={() => createAccountMutation.mutate()}
             >
-              添加账户
+              {t.common.create}
             </button>
           </div>
         </div>
 
-        <div className="rounded-2xl bg-white p-4 shadow-sm">
-          <h2 className="text-sm font-semibold text-zinc-900">已连接账户</h2>
+        <div className="rounded-2xl bg-white p-4 shadow-sm md:col-span-1 lg:col-span-2">
+          <h2 className="text-sm font-semibold text-zinc-900">{t.settings.accounts}</h2>
           <p className="mt-1 text-xs text-zinc-500">
-            展示连接状态与上次配置。
+            {t.settings.connected_accounts}
           </p>
 
           {(error || accountsQuery.isError) && (
             <p className="mt-3 text-xs text-red-500">
-              {error ?? "加载账户失败"}
+              {error ?? t.common.loading}
             </p>
           )}
 
           <div className="mt-4 grid gap-2">
             {accounts.length === 0 ? (
               <div className="rounded-xl border border-dashed border-zinc-200 px-3 py-6 text-center text-xs text-zinc-500">
-                {accountsQuery.isFetching ? "加载中..." : "暂无账户"}
+                {accountsQuery.isFetching ? t.common.loading : t.settings.no_accounts}
               </div>
             ) : (
               accounts.map((a) => (
@@ -254,7 +330,7 @@ export default function SettingsPage() {
                       </span>
                     </div>
                     <div className="mt-1 text-xs text-zinc-500">
-                      状态：{a.status}
+                      {t.settings.status}: {a.status}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -263,14 +339,14 @@ export default function SettingsPage() {
                       disabled={isBusy}
                       onClick={() => openEdit(a)}
                     >
-                      编辑
+                      {t.common.edit}
                     </button>
                     <button
                       className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs text-red-600 disabled:opacity-60"
                       disabled={isBusy}
                       onClick={() => deleteAccountMutation.mutate(a.id)}
                     >
-                      删除
+                      {t.common.delete}
                     </button>
                   </div>
                 </div>
@@ -284,17 +360,17 @@ export default function SettingsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-4 shadow-lg">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-zinc-900">编辑账户</h3>
+              <h3 className="text-sm font-semibold text-zinc-900">{t.common.edit}</h3>
               <button
                 className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs text-zinc-700"
                 onClick={() => setEditingId(null)}
               >
-                关闭
+                {t.common.cancel}
               </button>
             </div>
             <div className="mt-4 grid gap-3">
               <div className="grid gap-1">
-                <label className="text-xs text-zinc-600">账户名称</label>
+                <label className="text-xs text-zinc-600">{t.settings.name}</label>
                 <input
                   className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-500"
                   value={editName}
@@ -302,7 +378,7 @@ export default function SettingsPage() {
                 />
               </div>
               <div className="grid gap-1">
-                <label className="text-xs text-zinc-600">凭证（可选）</label>
+                <label className="text-xs text-zinc-600">{t.settings.credentials}</label>
                 <input
                   className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-500"
                   value={editCredentials}
@@ -310,7 +386,7 @@ export default function SettingsPage() {
                 />
               </div>
               <div className="grid gap-1">
-                <label className="text-xs text-zinc-600">状态</label>
+                <label className="text-xs text-zinc-600">{t.settings.status}</label>
                 <select
                   className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500"
                   value={editStatus}
@@ -327,14 +403,14 @@ export default function SettingsPage() {
                   disabled={isBusy}
                   onClick={() => setEditingId(null)}
                 >
-                  取消
+                  {t.common.cancel}
                 </button>
                 <button
                   className="inline-flex items-center justify-center rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
                   disabled={isBusy || !editName.trim()}
                   onClick={() => updateAccountMutation.mutate()}
                 >
-                  保存
+                  {t.common.save}
                 </button>
               </div>
             </div>

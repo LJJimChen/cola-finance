@@ -1,58 +1,22 @@
-# Cola Finance Backlog
+# Product Backlog
 
-> 面向下一迭代周期的任务，不纳入当前 M1–M6 里程碑
+## 待办事项 (To Do)
 
----
+- [ ] **资产分类管理 UI**
+  - 目前 `AssetCategory` 只能通过数据库操作，需要在前端 Settings 或 Portfolio 页面提供管理界面，允许用户手动修正资产分类（如将 AAPL 归类为 "Technology" 或 "Equity"）。
 
-## 功能与数据能力
+- [ ] **批量再平衡 (Batch Rebalance)**
+  - Rebalance 页面目前仅提供聚合建议。未来可支持针对具体账户生成交易指令，甚至通过 API 自动执行（需谨慎）。
 
-- [ ] 组合分享后端能力
-  - 基于 `PortfolioShareConfig` 模型实现组合分享配置读写接口
-  - 实现匿名访问接口（根据 share token 返回脱敏组合数据）
-- [ ] 组合分享前端能力
-  - 在 Settings 中提供组合分享开关与配置入口
-  - 实现公开分享页面（无需登录，仅展示百分比分布与持仓标的）
-- [ ] AI 智能分类
-  - 为未识别资产接入 LLM 分类建议流程（用户确认后写入分类）
-  - 记录用户的最终选择用于后续提示优化
-- [ ] AI Agent 资产顾问
-  - 汇总当前资产配置与市场简报，生成自然语言配置建议
-  - 在 Analysis 页面提供“智能建议”入口与结果展示
+- [ ] **高级风险指标 (Advanced Metrics)**
+  - 在 Analysis 页面增加 Sharpe Ratio, Volatility, Max Drawdown 等风险指标的计算与展示。
 
----
+- [ ] **数据导出/导入 (Data Export/Import)**
+  - 支持将 DailySnapshot 和 Transaction 导出为 CSV/Excel。
+  - 支持从外部文件导入历史数据。
 
-## UI / UX 与交互增强
+- [ ] **Next.js Workspace Root Warning**
+  - 修复构建时关于 workspace root 的警告，确保依赖解析正确。
 
-- [ ] 图表动效与风格优化
-  - 按照 UI 设计稿对齐走势图配色、线宽、填充与动画节奏
-  - 为关键节点（最大回撤、新高）增加标记与提示
-- [ ] Dashboard 图表与组件优化
-  - 使用 Recharts 接入基础资产趋势与分布图表
-  - 使用 shadcn/ui 卡片等组件完善 Dashboard 视觉层级
-- [ ] 资产详情弹层
-  - 在持仓列表中支持点击行打开资产详情弹层或侧滑抽屉
-  - 展示更丰富的信息层级（交易记录入口、分类、币种、平台信息等）
-- [ ] 高级列表交互
-  - 实现移动端列表项左滑手势（置顶 / 隐藏等快捷操作）
-  - 支持按条件批量操作（如批量隐藏小额持仓）
-- [ ] 移动端交互体验
-  - 下拉刷新交互配合震动反馈
-  - 优化底部 TabBar 与手势返回行为，提升单手操作体验
-
----
-
-## 工程与质量提升
-
-- [ ] 前端错误边界与降级策略完善
-  - 在核心页面增加 Error Boundary，提供友好错误提示与重试入口
-  - 对关键接口失败时回退到上一次成功快照或只读模式
-- [ ] 统一 workspace 的 lockfile 与 Next.js root 配置
-  - 清理多余 lockfile（如 `apps/web/pnpm-lock.yaml`）避免 Next.js root 推断警告
-  - 或在 `next.config.ts` 中设置 `turbopack.root` 指向 workspace 根目录
-- [ ] 将 `pnpm.overrides` 移到 workspace 根目录
-  - 修复 `apps/admin/package.json` 中 overrides 不生效的警告
-- [ ] 后端审计与安全告警
-  - 扩展审计日志范围（登录失败、多次 2FA 失败、配置变更等）
-  - 为异常行为增加告警钩子，预留与监控系统集成能力
-- [ ] 完善每日快照的日收益和累计收益计算逻辑
-  - 支持基于快照序列和现金流的收益率统计
+- [ ] **多币种深度支持**
+  - 目前主要以本币（CNY/USD）展示。未来支持动态汇率转换查看不同币种视角的资产。
