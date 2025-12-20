@@ -185,7 +185,7 @@
   - 实现 `POST /api/v1/accounts/:id/crawler/login` 触发爬虫登录
   - 实现 `POST /api/v1/accounts/:id/crawler/2fa` 提交二次验证码
   - 实现 `GET /api/v1/accounts/:id/status` 查询连接与验证状态
-- [ ] 前端爬虫配置与 2FA 流程 (apps/web)
+- [x] 前端爬虫配置与 2FA 流程 (apps/web)
   - 在 Settings 平台卡片中展示“需要验证”状态与重新验证按钮
   - 新增向导式多步表单：账号密码输入 -> 触发登录 -> 根据返回决定是否展示 2FA 输入
   - 2FA 对话框中展示平台名称、风险提示与验证码输入框

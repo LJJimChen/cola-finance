@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useUserStore } from "../../store/useUserStore";
 import { useTranslation } from "../../hooks/useTranslation";
 import { useSettingsStore } from "../../store/useSettingsStore";
+import { CrawlerVerificationModal } from "../../components/CrawlerVerificationModal";
 import clsx from "clsx";
 
 type Account = {
@@ -112,6 +113,8 @@ export default function SettingsPage() {
   const [editName, setEditName] = useState("");
   const [editCredentials, setEditCredentials] = useState("");
   const [editStatus, setEditStatus] = useState("Connected");
+
+  const [verifyAccount, setVerifyAccount] = useState<Account | null>(null);
 
   const updateAccountMutation = useMutation({
     mutationFn: async (): Promise<void> => {
@@ -360,6 +363,16 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    {a.status !== "Connected" && (
+                      <button
+                        className="rounded-full border border-[var(--border)] bg-[var(--card)] px-3 py-1 text-xs text-orange-600 hover:bg-[var(--card)] disabled:opacity-60"
+                        disabled={isBusy}
+                        onClick={() => setVerifyAccount(a)}
+                        type="button"
+                      >
+                        {t.settings.verify}
+                      </button>
+                    )}
                     <button
                       className="rounded-full border border-[var(--border)] bg-[var(--card)] px-3 py-1 text-xs text-[var(--muted-foreground)] hover:bg-[var(--card)] disabled:opacity-60"
                       disabled={isBusy}
@@ -383,6 +396,17 @@ export default function SettingsPage() {
           </div>
         </div>
       </section>
+
+      <CrawlerVerificationModal
+        isOpen={!!verifyAccount}
+        onClose={() => setVerifyAccount(null)}
+        account={verifyAccount}
+        apiBase={apiBase}
+        token={token ?? ""}
+        onSuccess={() => {
+           queryClient.invalidateQueries({ queryKey: ["accounts", apiBase] });
+        }}
+      />
 
       {editingAccount && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
