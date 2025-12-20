@@ -1,0 +1,168 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AppUser {
+  id          String    @id @default(uuid())
+  username    String    @unique
+  password    String
+  email       String?
+  timezone    String    @default("Asia/Shanghai")
+  createdAt   DateTime  @default(now())
+
+  accounts              PlatformAccount[]
+  snapshots             DailySnapshot[]
+  memberships           GroupMember[]
+  notifications         UserNotification[]
+  portfolioShareConfig  PortfolioShareConfig?
+  assetCategories       AssetCategory[]
+  allocationConfigs     AllocationConfig[]
+}
+
+model PlatformAccount {
+  id          String   @id @default(uuid())
+  userId      String
+  platform    PlatformType
+  name        String
+  credentials String?
+  status      String
+
+  user    AppUser       @relation(fields: [userId], references: [id])
+  assets  AssetPosition[]
+}
+
+enum PlatformType {
+  EASTMONEY
+  TIANTIAN
+  XUEQIU
+  IBKR
+  SCHWAB
+  MOCK
+  OTHER
+}
+
+model FamilyGroup {
+  id        String    @id @default(uuid())
+  name      String
+  creatorId String
+  createdAt DateTime  @default(now())
+
+  members GroupMember[]
+}
+
+model PortfolioShareConfig {
+  id         String   @id @default(uuid())
+  userId     String   @unique
+  isEnabled  Boolean  @default(false)
+  shareToken String   @unique @default(uuid())
+  showHoldings Boolean @default(true)
+  updatedAt  DateTime @updatedAt
+
+  user AppUser @relation(fields: [userId], references: [id])
+}
+
+model GroupMember {
+  id       String    @id @default(uuid())
+  groupId  String
+  userId   String
+  role     GroupRole @default(MEMBER)
+  joinedAt DateTime  @default(now())
+
+  group FamilyGroup @relation(fields: [groupId], references: [id])
+  user  AppUser     @relation(fields: [userId], references: [id])
+
+  @@unique([groupId, userId])
+}
+
+enum GroupRole {
+  OWNER
+  MEMBER
+}
+
+model UserNotification {
+  id        String      @id @default(uuid())
+  userId    String
+  type      NotifyType
+  title     String
+  content   String
+  payload   Json?
+  isRead    Boolean     @default(false)
+  createdAt DateTime    @default(now())
+
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum NotifyType {
+  INVITATION
+  SYSTEM
+  ALERT
+}
+
+model DailySnapshot {
+  id          String   @id @default(uuid())
+  userId      String
+  date        String
+  timestamp   DateTime @default(now())
+  totalValue  Decimal
+  dayProfit   Decimal
+  totalProfit Decimal
+  status      String
+
+  holdings AssetPosition[]
+  user     AppUser        @relation(fields: [userId], references: [id])
+
+  @@unique([userId, date])
+  @@index([date])
+}
+
+model AssetPosition {
+  id          String   @id @default(uuid())
+  snapshotId  String
+  accountId   String
+  symbol      String
+  quantity    Decimal
+  price       Decimal
+  costPrice   Decimal
+  marketValue Decimal
+  dayProfit   Decimal
+
+  snapshot DailySnapshot  @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  account  PlatformAccount @relation(fields: [accountId], references: [id])
+}
+
+model CurrencyRate {
+  id        String   @id @default(uuid())
+  from      String
+  to        String
+  rate      Decimal
+  updatedAt DateTime @updatedAt
+
+  @@unique([from, to])
+}
+
+model AssetCategory {
+  id       String   @id @default(uuid())
+  userId   String
+  symbol   String
+  category String
+
+  user AppUser @relation(fields: [userId], references: [id])
+
+  @@unique([userId, symbol])
+}
+
+model AllocationConfig {
+  id         String   @id @default(uuid())
+  userId     String
+  category   String
+  percentage Decimal
+
+  user AppUser @relation(fields: [userId], references: [id])
+
+  @@unique([userId, category])
+}

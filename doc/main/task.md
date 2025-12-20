@@ -33,14 +33,14 @@
 
 ### 1.1 基础工程与基础设施
 
-- [ ] 初始化 Monorepo 结构与包管理
+- [x] 初始化 Monorepo 结构与包管理
   - 创建 `apps/web`, `apps/api`, `apps/admin`, `packages/platform-adapters`, `packages/db`, `packages/shared` 目录结构
   - 配置统一的包管理（如 pnpm + workspace）与基础脚本（lint/test/build）
-- [ ] 搭建数据库与 Prisma
+- [x] 搭建数据库与 Prisma
   - 选择并配置本地数据库（默认 PostgreSQL）
   - 在 `packages/db` 中定义 Prisma Schema（AppUser/PlatformAccount/DailySnapshot/AssetPosition/CurrencyRate 等）
   - 生成 Prisma Client 并在 `apps/api` 中封装数据库访问模块
-- [ ] 搭建 `apps/api` 基础框架 (NestJS)
+- [x] 搭建 `apps/api` 基础框架 (NestJS)
   - 初始化 NestJS 应用，配置基础模块划分（auth/asset/snapshot/family-group/notification 等）
   - 接入 Prisma Module 与全局异常处理、中间件（日志、Request ID 等）
 
@@ -64,7 +64,7 @@
   - 完成 `PlatformAccount` 的 CRUD 基础接口：创建、更新、删除、查询
   - 接口示例：`POST /accounts`，`GET /accounts`，`DELETE /accounts/:id`
   - 字段包含：平台类型、名称、凭证（加密保存）、状态（Connected/Error/NeedVerify 等）
-- [ ] 实现 Mock 平台适配器 (packages/platform-adapters)
+- [x] 实现 Mock 平台适配器 (packages/platform-adapters)
   - 定义 `IPlatformAdapter` 与 `FetchedAsset` 接口，并实现 `MockAdapter`
   - MockAdapter 自动生成若干持仓数据与价格波动逻辑
   - 在 `AdapterFactory` 中注册 Mock 平台
