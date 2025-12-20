@@ -2,6 +2,7 @@
 
 | 文档版本 | 修改日期 | 修改人 | 备注 |
 | :--- | :--- | :--- | :--- |
+| v2.8 | 2025-12-20 | AI Assistant | 设计爬虫方式登录的双重验证码与异常处理流程 |
 | v2.7 | 2025-12-20 | AI Assistant | 补全数据模型（分类/汇率/再平衡）与相关接口 |
 | v2.6 | 2025-12-20 | AI Assistant | 新增前端架构与交互实现章节，完善 API 设计 |
 | v2.5 | 2025-12-19 | AI Assistant | 新增 PWA 技术选型与 manifest 配置 |
@@ -309,6 +310,48 @@ export interface IPlatformAdapter {
 }
 ```
 
+#### 3.1.3 爬虫登录与双重验证码 (Crawler + 2FA)
+
+对于采用网页爬取方式的适配器，需要额外处理登录态维持、验证码以及双重验证等问题。为此在逻辑上引入会话与挑战 (Challenge) 的概念：
+
+- **Crawler 会话状态**：
+  - 适配器内部维护与目标平台的登录会话，仅在会话有效期内复用 Cookie / Token。
+  - 会话失效时，适配器返回结构化错误，标记为“需要重新认证”，而不是在内部无限重试。
+- **挑战 / 验证类型**：
+  - `PASSWORD_ONLY`：仅需用户名/密码。
+  - `PASSWORD_AND_2FA`：需要密码 + 短信验证码/OTP 等二次验证码。
+  - `CAPTCHA`：需要用户或后端完成图形/滑块验证码。
+
+在接口层面，可以使用结果包装类型来表达这些状态（示意）：
+
+```typescript
+export type FetchAssetsResult =
+  | { ok: true; assets: FetchedAsset[] }
+  | { ok: false; reason: "NEED_2FA" | "NEED_CAPTCHA" | "INVALID_CREDENTIALS" | "PLATFORM_CHANGED"; metadata?: any };
+
+export interface IPlatformAdapter {
+  platform: PlatformType;
+  name: string;
+  fetchAssets(credentials: Record<string, any>): Promise<FetchAssetsResult>;
+  validateCredentials?(credentials: Record<string, any>): Promise<boolean>;
+}
+```
+
+当返回 `ok: false, reason: "NEED_2FA"` 时：
+
+- 后端不再继续尝试爬取，而是将对应 `Account` 的状态更新为“需要二次验证”，并通过业务服务返回给前端。
+- 前端在设置页的账户卡片上展示“需要验证”的状态，提供“重新验证”入口，用户点击后进入专门的二次验证码输入流程。
+
+当返回 `ok: false, reason: "NEED_CAPTCHA"` 时：
+
+- 若平台允许在无验证码模式下获取部分非敏感数据，可降级为“仅展示上次快照 + 部分静态信息”。
+- 若必须完成验证码才能登录，则同样将状态标记为“需要用户验证”，由前端提示用户稍后重试或在 Desktop 环境下手动完成验证。
+
+二次验证码 (2FA) 的处理原则：
+
+- 仅在认证流程中短暂保留验证码输入，不在数据库中持久化存储。
+- 尽量利用平台的“记住设备”能力，减少用户频繁输入验证码的次数，但一旦会话过期必须重新认证。
+
 #### 3.1.2 适配器注册与工厂
 使用工厂模式管理适配器，新增平台只需注册一个新的 Class，无需修改核心调用逻辑。
 
@@ -440,6 +483,22 @@ async function saveDailySnapshot(userId: string, data: FetchedAsset[]) {
 - `POST /api/v1/assets/:symbol/classify`
   - **Body**: `{ category: string }`
   - **Desc**: 手动修正资产分类 (Upsert AssetClass)。
+
+### 4.8 爬虫认证与二次验证接口 (Crawler Auth & 2FA) [NEW]
+
+为支持网页爬取方式下的多步登录流程，后端需要暴露专门的认证接口，与前端的交互契约如下：
+
+- `POST /api/v1/accounts/:id/crawler/login`
+  - **Desc**: 使用用户名/密码触发登录流程，后端调用对应适配器。
+  - **Response**：
+    - 登录成功：返回当前连接状态，前端更新为 `Connected`。
+    - 需要二次验证：返回 `{ status: "NEED_2FA", challengeId, expiresAt }`，前端弹出 2FA 输入对话框。
+- `POST /api/v1/accounts/:id/crawler/2fa`
+  - **Body**: `{ challengeId: string, code: string }`
+  - **Desc**: 提交短信验证码/动态口令等二次验证码，完成后端登录流程并更新会话。
+  - **Response**：返回新的连接状态（成功/失败/验证码错误）。
+- `GET /api/v1/accounts/:id/status`
+  - **Desc**: 查询当前账户连接状态（包括是否需要 2FA、会话是否失效等），用于前端在设置页展示“需要验证”提示。
 
 ### 4.7 分析与再平衡接口 (Analysis & Rebalance) [NEW]
 - `GET /api/v1/analysis/rebalance`
