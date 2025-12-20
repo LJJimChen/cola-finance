@@ -46,10 +46,13 @@
 - [ ] 前端错误边界与降级策略完善
   - 在核心页面增加 Error Boundary，提供友好错误提示与重试入口
   - 对关键接口失败时回退到上一次成功快照或只读模式
+- [ ] 统一 workspace 的 lockfile 与 Next.js root 配置
+  - 清理多余 lockfile（如 `apps/web/pnpm-lock.yaml`）避免 Next.js root 推断警告
+  - 或在 `next.config.ts` 中设置 `turbopack.root` 指向 workspace 根目录
+- [ ] 将 `pnpm.overrides` 移到 workspace 根目录
+  - 修复 `apps/admin/package.json` 中 overrides 不生效的警告
 - [ ] 后端审计与安全告警
   - 扩展审计日志范围（登录失败、多次 2FA 失败、配置变更等）
   - 为异常行为增加告警钩子，预留与监控系统集成能力
-- [ ] 登录与注册接口改造为基于 react-query 的请求
-  - 复用统一的请求与错误处理层
 - [ ] 完善每日快照的日收益和累计收益计算逻辑
   - 支持基于快照序列和现金流的收益率统计

@@ -1,4 +1,19 @@
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useUserStore } from "../../store/useUserStore";
+
 export default function FamilyPage() {
+  const router = useRouter();
+  const token = useUserStore((s) => s.token);
+
+  useEffect(() => {
+    if (!token) {
+      router.replace("/login");
+    }
+  }, [router, token]);
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
       <h1 className="text-xl font-semibold text-zinc-900">Family</h1>
@@ -8,4 +23,3 @@ export default function FamilyPage() {
     </div>
   );
 }
-

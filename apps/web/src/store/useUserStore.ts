@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 type UserState = {
   token: string | null;
@@ -9,18 +10,24 @@ type UserState = {
   clear: () => void;
 };
 
-export const useUserStore = create<UserState>((set) => ({
-  token: null,
-  username: null,
-  setSession: (token, username) =>
-    set({
-      token,
-      username,
-    }),
-  clear: () =>
-    set({
+export const useUserStore = create<UserState>()(
+  persist(
+    (set) => ({
       token: null,
       username: null,
+      setSession: (token, username) =>
+        set({
+          token,
+          username,
+        }),
+      clear: () =>
+        set({
+          token: null,
+          username: null,
+        }),
     }),
-}));
-
+    {
+      name: "cola.session",
+    },
+  ),
+);

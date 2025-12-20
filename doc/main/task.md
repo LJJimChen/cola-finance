@@ -53,7 +53,7 @@
 - [x] 接入用户鉴权守卫
   - 在 NestJS 中实现 `AuthGuard`，校验 Authorization Header 中的 Bearer Token
   - 配置路由保护：资产、快照、家庭组等接口仅允许已登录用户访问
-- [ ] 前端登录/注册页面与会话管理 (apps/web)
+- [x] 前端登录/注册页面与会话管理 (apps/web)
   - 按照 App Router 结构实现 `(auth)/login` 与 `(auth)/register` 页面
   - 使用 `react-query` 发起登录请求，成功后将 Token 存入 `useUserStore`
   - 登录成功后跳转到 `dashboard`，未登录访问主路由时跳转到登录页
@@ -68,7 +68,7 @@
   - 定义 `IPlatformAdapter` 与 `FetchedAsset` 接口，并实现 `MockAdapter`
   - MockAdapter 自动生成若干持仓数据与价格波动逻辑
   - 在 `AdapterFactory` 中注册 Mock 平台
-- [ ] 平台账户前端管理页面 (apps/web)
+- [x] 平台账户前端管理页面 (apps/web)
   - 在 `Settings` 页面实现平台卡片列表，展示连接状态与上次更新时间
   - 实现新增/编辑 Mock 平台账户的表单弹窗，与后端接口打通
 
@@ -92,10 +92,10 @@
 
 ### 2.1 家庭组数据模型与接口 (apps/api)
 
-- [ ] 实现 FamilyGroup 与 GroupMember 数据表
+- [x] 实现 FamilyGroup 与 GroupMember 数据表
   - 按 `design.md` 中 Prisma 定义创建表与关联
   - 确保一个用户可加入多个家庭组，支持角色（OWNER/MEMBER）
-- [ ] 家庭组管理接口
+- [x] 家庭组管理接口
   - `POST /groups`：创建家庭组（仅登录用户）
   - `GET /groups`：列出用户参与的家庭组
   - `GET /groups/:id/members`：成员列表
@@ -105,10 +105,10 @@
 
 ### 2.2 消息中心与邀请流程
 
-- [ ] 实现 UserNotification 模型与基础接口
+- [x] 实现 UserNotification 模型与基础接口
   - 数据表字段：类型（INVITATION/SYSTEM/ALERT）、标题、内容、payload、是否已读
   - 接口：`GET /notifications`，`POST /notifications/:id/read`
-- [ ] 邀请加入家庭组流程
+- [x] 邀请加入家庭组流程
   - 接口：`POST /groups/:id/invite`，传入被邀请用户名
   - 创建邀请类型的 Notification，payload 携带 groupId、inviter 信息
   - 接口：`POST /notifications/:id/accept`，接受邀请后写入 GroupMember

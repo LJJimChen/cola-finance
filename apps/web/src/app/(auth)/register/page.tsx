@@ -1,24 +1,35 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "../../../store/useUserStore";
 
+type AuthResponse = {
+  token: string;
+  username: string;
+  userId: string;
+  kind: string;
+};
+
 export default function RegisterPage() {
   const router = useRouter();
+  const token = useUserStore((s) => s.token);
   const setSession = useUserStore((s) => s.setSession);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-    try {
+  useEffect(() => {
+    if (token) {
+      router.replace("/dashboard");
+    }
+  }, [router, token]);
+
+  const registerMutation = useMutation({
+    mutationFn: async (): Promise<AuthResponse> => {
       const res = await fetch(`${apiBase}/auth/register`, {
         method: "POST",
         headers: {
@@ -27,23 +38,23 @@ export default function RegisterPage() {
         body: JSON.stringify({ username, password }),
       });
       if (!res.ok) {
-        setError("注册失败");
-        setLoading(false);
-        return;
+        throw new Error("REGISTER_FAILED");
       }
-      const data = await res.json();
+      return (await res.json()) as AuthResponse;
+    },
+    onSuccess: (data) => {
       setSession(data.token, data.username);
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(
-          "cola.session",
-          JSON.stringify({ token: data.token, username: data.username })
-        );
-      }
       router.push("/dashboard");
-    } catch {
-      setError("网络异常");
-      setLoading(false);
-    }
+    },
+    onError: () => {
+      setError("注册失败");
+    },
+  });
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    registerMutation.mutate();
   }
 
   return (
@@ -76,14 +87,13 @@ export default function RegisterPage() {
           )}
           <button
             type="submit"
-            disabled={loading}
+            disabled={registerMutation.isPending}
             className="mt-2 inline-flex w-full items-center justify-center rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
           >
-            {loading ? "注册中..." : "注册"}
+            {registerMutation.isPending ? "注册中..." : "注册"}
           </button>
         </form>
       </div>
     </div>
   );
 }
-

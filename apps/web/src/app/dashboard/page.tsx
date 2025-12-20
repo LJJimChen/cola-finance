@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useUserStore } from "../../store/useUserStore";
 
 type Summary = {
@@ -11,6 +12,7 @@ type Summary = {
 };
 
 export default function DashboardPage() {
+  const router = useRouter();
   const token = useUserStore((s) => s.token);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(false);
@@ -19,6 +21,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!token) {
+      router.replace("/login");
       return;
     }
     let cancelled = false;
@@ -42,7 +45,7 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [token, apiBase]);
+  }, [token, apiBase, router]);
 
   const totalValue = summary?.totalValue ?? 0;
   const dayProfit = summary?.dayProfit ?? 0;
