@@ -50,9 +50,11 @@ export default function AnalysisPage() {
   const router = useRouter();
   const token = useUserStore((s) => s.token);
   const currency = useSettingsStore((s) => s.currency);
-  const { t } = useTranslation();
+  const { t, href } = useTranslation();
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
   const currencySymbol = currency === "CNY" ? "￥" : "$";
+  const loginHref = href("/login");
+  const dashboardHref = href("/dashboard");
 
   const [activeTab, setActiveTab] = useState<"trend" | "rebalance">("trend");
   
@@ -69,9 +71,9 @@ export default function AnalysisPage() {
 
   useEffect(() => {
     if (!token) {
-      router.replace("/login");
+      router.replace(loginHref);
     }
-  }, [token, router]);
+  }, [loginHref, token, router]);
 
   const fetchTrend = useCallback(async () => {
     if (!token) {
@@ -169,7 +171,7 @@ export default function AnalysisPage() {
     <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 h-screen">
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="p-2 hover:bg-zinc-100 rounded-full">
+          <Link href={dashboardHref} className="p-2 hover:bg-zinc-100 rounded-full">
             <ArrowLeft className="h-5 w-5 text-zinc-600" />
           </Link>
           <h1 className="text-xl font-semibold text-zinc-900">{t.analysis.title}</h1>

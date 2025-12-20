@@ -8,13 +8,13 @@ import { useTranslation } from "../../hooks/useTranslation";
 export default function PortfolioPage() {
   const router = useRouter();
   const token = useUserStore((s) => s.token);
-  const { t } = useTranslation();
+  const { t, href } = useTranslation();
 
   useEffect(() => {
     if (!token) {
-      router.replace("/login");
+      router.replace(href("/login"));
     }
-  }, [router, token]);
+  }, [href, router, token]);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">

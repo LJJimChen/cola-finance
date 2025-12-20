@@ -20,7 +20,7 @@ type Notification = {
 export default function NotificationsPage() {
   const router = useRouter();
   const token = useUserStore((s) => s.token);
-  const { t } = useTranslation();
+  const { t, href } = useTranslation();
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -48,11 +48,11 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     if (!token) {
-      router.replace("/login");
+      router.replace(href("/login"));
       return;
     }
     fetchNotifications();
-  }, [fetchNotifications, router, token]);
+  }, [fetchNotifications, href, router, token]);
 
   const handleAccept = async (id: string) => {
     try {
@@ -64,7 +64,7 @@ export default function NotificationsPage() {
         // Refresh notifications to show updated status (e.g. maybe remove it or mark as read)
         fetchNotifications();
         // Optionally redirect to family page
-        router.push("/family");
+        router.push(href("/family"));
       }
     } catch (err) {
       console.error(err);

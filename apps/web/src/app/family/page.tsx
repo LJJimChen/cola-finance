@@ -35,7 +35,7 @@ export default function FamilyPage() {
   const router = useRouter();
   const token = useUserStore((s) => s.token);
   const currency = useSettingsStore((s) => s.currency);
-  const { t } = useTranslation();
+  const { t, href } = useTranslation();
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
 
   const [groups, setGroups] = useState<Group[]>([]);
@@ -107,11 +107,11 @@ export default function FamilyPage() {
 
   useEffect(() => {
     if (!token) {
-      router.replace("/login");
+      router.replace(href("/login"));
       return;
     }
     fetchGroups();
-  }, [fetchGroups, router, token]);
+  }, [fetchGroups, href, router, token]);
 
   useEffect(() => {
     if (selectedGroupId && token) {

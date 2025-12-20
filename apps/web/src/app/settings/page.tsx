@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useUserStore } from "../../store/useUserStore";
 import { useTranslation } from "../../hooks/useTranslation";
 import { useSettingsStore } from "../../store/useSettingsStore";
@@ -19,8 +19,9 @@ type Account = {
 
 export default function SettingsPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const token = useUserStore((s) => s.token);
-  const { t } = useTranslation();
+  const { t, href } = useTranslation();
   const { language, setLanguage, currency, setCurrency, theme, setTheme } = useSettingsStore();
   
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
@@ -145,9 +146,18 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!token) {
-      router.replace("/login");
+      router.replace(href("/login"));
     }
-  }, [router, token]);
+  }, [href, router, token]);
+
+  const switchLocale = (nextLocale: "en" | "zh") => {
+    const parts = pathname.split("/");
+    const currentLocale = parts[1] === "en" || parts[1] === "zh" ? parts[1] : null;
+    const rest = currentLocale ? `/${parts.slice(2).join("/")}` : pathname;
+    const nextPath = rest === "/" ? `/${nextLocale}` : `/${nextLocale}${rest}`;
+    setLanguage(nextLocale);
+    router.replace(nextPath);
+  };
 
   const accounts = accountsQuery.data ?? [];
   const isBusy =
@@ -190,7 +200,7 @@ export default function SettingsPage() {
               <label className="text-xs text-zinc-600">{t.settings.language}</label>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setLanguage("en")}
+                  onClick={() => switchLocale("en")}
                   className={clsx(
                     "rounded-lg px-3 py-1 text-sm border",
                     language === "en" ? "bg-zinc-900 text-white border-zinc-900" : "bg-white text-zinc-600 border-zinc-200"
@@ -199,7 +209,7 @@ export default function SettingsPage() {
                   English
                 </button>
                 <button
-                  onClick={() => setLanguage("zh")}
+                  onClick={() => switchLocale("zh")}
                   className={clsx(
                     "rounded-lg px-3 py-1 text-sm border",
                     language === "zh" ? "bg-zinc-900 text-white border-zinc-900" : "bg-white text-zinc-600 border-zinc-200"

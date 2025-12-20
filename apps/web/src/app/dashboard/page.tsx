@@ -20,7 +20,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const token = useUserStore((s) => s.token);
   const currency = useSettingsStore((s) => s.currency);
-  const { t } = useTranslation();
+  const { t, href } = useTranslation();
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -30,7 +30,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!token) {
-      router.replace("/login");
+      router.replace(href("/login"));
       return;
     }
     let cancelled = false;
@@ -65,7 +65,7 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [token, apiBase, router]);
+  }, [token, apiBase, router, href]);
 
   const totalValue = summary?.totalValue ?? 0;
   const dayProfit = summary?.dayProfit ?? 0;
@@ -80,14 +80,14 @@ export default function DashboardPage() {
         </div>
         <div className="flex items-center gap-3 text-xs">
           <Link
-            href="/family"
+            href={href("/family")}
             className="flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-3 py-1 text-zinc-600 hover:bg-zinc-50"
           >
             <Users className="h-4 w-4" />
             {t.dashboard.nav_family}
           </Link>
           <Link
-            href="/analysis"
+            href={href("/analysis")}
             className="flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-3 py-1 text-zinc-600 hover:bg-zinc-50"
           >
             <LineChart className="h-4 w-4" />
@@ -119,7 +119,7 @@ export default function DashboardPage() {
             {loading ? t.common.refreshing : t.common.refresh}
           </button>
           <Link
-            href="/notifications"
+            href={href("/notifications")}
             className="relative flex items-center justify-center rounded-full border border-zinc-200 bg-white p-2 hover:bg-zinc-50"
           >
             <Bell className="h-4 w-4" />

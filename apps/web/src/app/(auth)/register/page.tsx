@@ -17,7 +17,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const token = useUserStore((s) => s.token);
   const setSession = useUserStore((s) => s.setSession);
-  const { t } = useTranslation();
+  const { t, href } = useTranslation();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -26,9 +26,9 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (token) {
-      router.replace("/dashboard");
+      router.replace(href("/dashboard"));
     }
-  }, [router, token]);
+  }, [href, router, token]);
 
   const registerMutation = useMutation({
     mutationFn: async (): Promise<AuthResponse> => {
@@ -46,7 +46,7 @@ export default function RegisterPage() {
     },
     onSuccess: (data) => {
       setSession(data.token, data.username);
-      router.push("/dashboard");
+      router.push(href("/dashboard"));
     },
     onError: () => {
       setError(t.auth.register_failed);

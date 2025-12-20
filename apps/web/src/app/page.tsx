@@ -5,7 +5,7 @@ import { useTranslation } from "../hooks/useTranslation";
 import { useSettingsStore } from "../store/useSettingsStore";
 
 export default function Home() {
-  const { t } = useTranslation();
+  const { t, href } = useTranslation();
   const currency = useSettingsStore((s) => s.currency);
   const currencySymbol = currency === "CNY" ? "￥" : "$";
 
@@ -41,13 +41,13 @@ export default function Home() {
           </div>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
-              href="/dashboard"
+              href={href("/dashboard")}
               className="inline-flex items-center justify-center rounded-full bg-blue-600 px-5 py-2 text-sm font-medium text-white shadow-sm"
             >
               {t.landing.enter_dashboard}
             </Link>
             <Link
-              href="/login"
+              href={href("/login")}
               className="inline-flex items-center justify-center rounded-full border border-zinc-300 px-5 py-2 text-sm font-medium text-zinc-700 bg-white"
             >
               {t.landing.login_register}
@@ -74,7 +74,7 @@ export default function Home() {
             {navItems.map((item) => (
               <Link
                 key={item.href}
-                href={item.href}
+                href={href(item.href)}
                 className="flex flex-col items-center rounded-lg bg-zinc-50 px-2 py-2"
               >
                 <span className="font-medium text-zinc-800">
