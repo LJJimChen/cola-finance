@@ -127,6 +127,7 @@ model AssetPosition {
   snapshotId  String
   accountId   String
   symbol      String
+  name        String?
   quantity    Decimal
   price       Decimal
   costPrice   Decimal

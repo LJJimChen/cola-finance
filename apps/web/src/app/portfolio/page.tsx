@@ -10,6 +10,7 @@ import { Edit3, LayoutGrid, List, Search } from "lucide-react";
 type Holding = {
   id: string;
   symbol: string;
+  name?: string;
   quantity: string | number;
   price: string | number;
   costPrice: string | number;
@@ -339,7 +340,9 @@ export default function PortfolioPage() {
                         >
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <div className="text-sm font-medium text-[var(--card-foreground)]">{h.symbol}</div>
+                              <div className="text-sm font-medium text-[var(--card-foreground)]">
+                                {h.name || h.symbol}
+                              </div>
                               <button
                                 type="button"
                                 onClick={() => openEdit(h.symbol)}
@@ -350,7 +353,7 @@ export default function PortfolioPage() {
                               </button>
                             </div>
                             <div className="mt-1 text-xs text-[var(--muted-foreground)]">
-                              {t.portfolio.market_value}: {Number(h.marketValue).toFixed(2)}
+                              {h.symbol} · {t.portfolio.market_value}: {Number(h.marketValue).toFixed(2)}
                             </div>
                           </div>
                           <div className={clsx("text-sm font-medium", Number(h.dayProfit) >= 0 ? "text-emerald-600" : "text-red-500")}>
@@ -411,14 +414,16 @@ export default function PortfolioPage() {
             {filteredHoldings.map((h) => (
               <div key={h.id} className="rounded-2xl border border-[var(--border)] bg-[var(--muted)] p-4">
                 <div className="flex items-center justify-between gap-3">
-                  <div className="text-sm font-semibold text-[var(--card-foreground)]">{h.symbol}</div>
+                  <div className="text-sm font-semibold text-[var(--card-foreground)]">
+                    {h.name || h.symbol}
+                  </div>
                   <div className={clsx("text-sm font-medium", Number(h.dayProfit) >= 0 ? "text-emerald-600" : "text-red-500")}>
                     {Number(h.dayProfit) > 0 ? "+" : ""}
                     {Number(h.dayProfit).toFixed(2)}
                   </div>
                 </div>
                 <div className="mt-2 text-xs text-[var(--muted-foreground)]">
-                  {h.account?.platform} · {h.account?.name}
+                  {h.symbol} · {h.account?.platform} · {h.account?.name}
                 </div>
                 <div className="mt-3 flex items-center justify-between">
                   <div className="text-xs text-[var(--muted-foreground)]">{t.portfolio.market_value}</div>

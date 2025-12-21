@@ -84,8 +84,10 @@ export default function AnalysisPage() {
       });
       if (res.ok) {
         const data = (await res.json()) as any[];
+        // Sort data by date ascending
+        const sortedData = data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
         setTrendData(
-          data.map((d) => ({
+          sortedData.map((d) => ({
             ...d,
             totalValue: Number(d.totalValue),
             dayProfit: Number(d.dayProfit),

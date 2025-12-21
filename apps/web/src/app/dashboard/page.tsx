@@ -132,9 +132,18 @@ export default function DashboardPage() {
     };
   }, [token, apiBase, router, href]);
 
-  const totalValue = summary?.totalValue ?? 0;
-  const dayProfit = summary?.dayProfit ?? 0;
-  const totalProfit = summary?.totalProfit ?? 0;
+  const totalValue = (() => {
+    const v = Number(summary?.totalValue ?? 0);
+    return Number.isFinite(v) ? v : 0;
+  })();
+  const dayProfit = (() => {
+    const v = Number(summary?.dayProfit ?? 0);
+    return Number.isFinite(v) ? v : 0;
+  })();
+  const totalProfit = (() => {
+    const v = Number(summary?.totalProfit ?? 0);
+    return Number.isFinite(v) ? v : 0;
+  })();
   const trendPreview = trendData.slice(-14);
 
   const distribution = (() => {
@@ -329,9 +338,23 @@ export default function DashboardPage() {
                   }).then((res) => res.json()),
                 ])
                   .then(([nextSummary, nextTrend, nextHoldings, nextNotifications]) => {
-                    setSummary(nextSummary);
+                    if (nextSummary) {
+                      setSummary({
+                        ...nextSummary,
+                        totalValue: Number(nextSummary.totalValue),
+                        dayProfit: Number(nextSummary.dayProfit),
+                        totalProfit: Number(nextSummary.totalProfit),
+                      });
+                    }
                     if (Array.isArray(nextTrend)) {
-                      setTrendData(nextTrend as TrendPoint[]);
+                      setTrendData(
+                        nextTrend.map((d: any) => ({
+                          ...d,
+                          totalValue: Number(d.totalValue),
+                          dayProfit: Number(d.dayProfit),
+                          totalProfit: Number(d.totalProfit),
+                        }))
+                      );
                     }
                     if (Array.isArray(nextHoldings)) {
                       setHoldings(nextHoldings as Holding[]);

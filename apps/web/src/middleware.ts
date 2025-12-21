@@ -19,8 +19,13 @@ function detectLocale(req: NextRequest): Locale {
   return DEFAULT_LOCALE;
 }
 
-export function proxy(req: NextRequest) {
+export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  // Skip internal paths
+  if (pathname.startsWith("/_next") || pathname.startsWith("/api") || pathname.includes(".")) {
+    return;
+  }
 
   const firstSegment = pathname.split("/")[1] ?? "";
   const isLocalePath = SUPPORTED_LOCALES.includes(firstSegment as Locale);

@@ -6,7 +6,8 @@
   "scripts": {
     "lint": "pnpm -r --if-present lint",
     "build": "pnpm -r --if-present build",
-    "test": "pnpm -r --if-present test"
+    "test": "pnpm -r --if-present test",
+    "dev": "pnpm --parallel --filter api --filter @cola-finance/web run dev"
   },
   "keywords": [],
   "author": "",

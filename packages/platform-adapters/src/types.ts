@@ -25,10 +25,23 @@ export type FetchAssetsResult =
       metadata?: Record<string, unknown>;
     };
 
+export interface DailyAssets {
+  date: string;
+  assets: FetchedAsset[];
+}
+
+export type FetchHistoryResult =
+  | { ok: true; history: DailyAssets[] }
+  | {
+      ok: false;
+      reason: "NOT_SUPPORTED" | "NEED_2FA" | "INVALID_CREDENTIALS" | string;
+    };
+
 export interface IPlatformAdapter {
   platform: PlatformType;
   name: string;
   fetchAssets(credentials: Record<string, unknown>): Promise<FetchAssetsResult>;
+  fetchHistory?(credentials: Record<string, unknown>): Promise<FetchHistoryResult>;
   validateCredentials?(credentials: Record<string, unknown>): Promise<boolean>;
   submitChallenge?(sessionId: string, challengeResponse: string): Promise<FetchAssetsResult>;
 }

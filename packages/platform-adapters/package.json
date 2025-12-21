@@ -5,13 +5,13 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && mkdir -p dist/mock-data && cp src/mock-data/*.csv dist/mock-data/",
     "lint": "echo \"skip lint\"",
     "test": "echo \"no tests yet\""
   },
-  "dependencies": {},
   "devDependencies": {
-    "typescript": "^5.9.0",
-    "eslint": "^9.0.0"
+    "@types/node": "^25.0.3",
+    "eslint": "^9.0.0",
+    "typescript": "^5.9.0"
   }
 }
