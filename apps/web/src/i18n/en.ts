@@ -90,6 +90,7 @@ export const en = {
     buy: 'BUY',
     sell: 'SELL',
     hold: 'HOLD',
+    no_trend_data: 'No trend data available',
   },
   settings: {
     title: 'Settings',

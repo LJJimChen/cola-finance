@@ -253,6 +253,10 @@ export default function AnalysisPage() {
               <div className="flex h-full items-center justify-center text-sm text-zinc-500">
                 {t.common.loading}
               </div>
+            ) : trendData.length === 0 ? (
+              <div className="flex h-full items-center justify-center text-sm text-zinc-500">
+                {t.analysis.no_trend_data}
+              </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={trendData}>

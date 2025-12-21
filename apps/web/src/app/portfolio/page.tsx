@@ -185,6 +185,7 @@ export default function PortfolioPage() {
           items,
           marketValue: items.reduce((sum, it) => sum + Number(it.marketValue), 0),
           dayProfit: items.reduce((sum, it) => sum + Number(it.dayProfit), 0),
+          totalProfit: items.reduce((sum, it) => sum + (Number(it.marketValue) - Number(it.costPrice) * Number(it.quantity)), 0),
         })),
       })),
     };
@@ -341,17 +342,14 @@ export default function PortfolioPage() {
                           key={h.id}
                           className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-[var(--muted)] px-4 py-3"
                         >
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
-                              <div className="text-sm font-medium text-[var(--card-foreground)]">
-                                {h.name ? (
-                                  <>
-                                    {h.name} <span className="ml-1 text-xs font-normal text-[var(--muted-foreground)]">{h.symbol}</span>
-                                  </>
-                                ) : (
-                                  h.symbol
-                                )}
+                              <div className="text-base font-medium text-[var(--card-foreground)]">
+                                {h.name || h.symbol}
                               </div>
+                            </div>
+                            <div className="mt-1 flex items-center gap-2">
+                              {h.name && <span className="text-xs text-[var(--muted-foreground)]">{h.symbol}</span>}
                               <button
                                 type="button"
                                 onClick={() => openEdit(h.symbol)}
@@ -361,18 +359,21 @@ export default function PortfolioPage() {
                                 {categoryMap[h.symbol] ?? t.portfolio.unclassified}
                               </button>
                             </div>
-                            <div className="mt-1 text-xs text-[var(--muted-foreground)]">
-                              {t.portfolio.market_value}: {Number(h.marketValue).toFixed(2)}
-                            </div>
                           </div>
                           <div className="flex flex-col items-end gap-1">
-                            <div className={clsx("text-sm font-medium", Number(h.dayProfit) >= 0 ? "text-emerald-600" : "text-red-500")}>
-                              {Number(h.dayProfit) > 0 ? "+" : ""}
-                              {Number(h.dayProfit).toFixed(2)}
+                            <div className="text-sm font-medium text-[var(--card-foreground)]">
+                              {Number(h.marketValue).toFixed(2)}
                             </div>
-                            <div className={clsx("text-xs", (Number(h.marketValue) - Number(h.costPrice)) >= 0 ? "text-emerald-600" : "text-red-500")}>
-                              {(Number(h.marketValue) - Number(h.costPrice)) > 0 ? "+" : ""}
-                              {(Number(h.marketValue) - Number(h.costPrice)).toFixed(2)}
+                            <div className="flex items-center gap-2 text-xs">
+                              <span className={clsx(Number(h.dayProfit) >= 0 ? "text-emerald-600" : "text-red-500")}>
+                                {Number(h.dayProfit) > 0 ? "+" : ""}
+                                {Number(h.dayProfit).toFixed(2)}
+                              </span>
+                              <span className="text-[var(--border)]">|</span>
+                              <span className={clsx((Number(h.marketValue) - (Number(h.costPrice) * Number(h.quantity))) >= 0 ? "text-emerald-600" : "text-red-500")}>
+                                {(Number(h.marketValue) - (Number(h.costPrice) * Number(h.quantity))) > 0 ? "+" : ""}
+                                {(Number(h.marketValue) - (Number(h.costPrice) * Number(h.quantity))).toFixed(2)}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -396,11 +397,14 @@ export default function PortfolioPage() {
                       key={s.symbol}
                       className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-[var(--muted)] px-4 py-3"
                     >
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <div className="text-sm font-medium text-[var(--card-foreground)]">
+                          <div className="text-base font-medium text-[var(--card-foreground)]">
                             {s.name || s.symbol}
                           </div>
+                        </div>
+                        <div className="mt-1 flex items-center gap-2">
+                          {s.name && <span className="text-xs text-[var(--muted-foreground)]">{s.symbol}</span>}
                           <button
                             type="button"
                             onClick={() => openEdit(s.symbol)}
@@ -410,13 +414,22 @@ export default function PortfolioPage() {
                             {categoryMap[s.symbol] ?? t.portfolio.unclassified}
                           </button>
                         </div>
-                        <div className="mt-1 text-xs text-[var(--muted-foreground)]">
-                          {t.portfolio.market_value}: {s.marketValue.toFixed(2)}
-                        </div>
                       </div>
-                      <div className={clsx("text-sm font-medium", s.dayProfit >= 0 ? "text-emerald-600" : "text-red-500")}>
-                        {s.dayProfit > 0 ? "+" : ""}
-                        {s.dayProfit.toFixed(2)}
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="text-sm font-medium text-[var(--card-foreground)]">
+                          {s.marketValue.toFixed(2)}
+                        </div>
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className={clsx(s.dayProfit >= 0 ? "text-emerald-600" : "text-red-500")}>
+                            {s.dayProfit > 0 ? "+" : ""}
+                            {s.dayProfit.toFixed(2)}
+                          </span>
+                          <span className="text-[var(--border)]">|</span>
+                          <span className={clsx(s.totalProfit >= 0 ? "text-emerald-600" : "text-red-500")}>
+                            {s.totalProfit > 0 ? "+" : ""}
+                            {s.totalProfit.toFixed(2)}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -440,9 +453,15 @@ export default function PortfolioPage() {
                       h.symbol
                     )}
                   </div>
-                  <div className={clsx("text-sm font-medium", Number(h.dayProfit) >= 0 ? "text-emerald-600" : "text-red-500")}>
-                    {Number(h.dayProfit) > 0 ? "+" : ""}
-                    {Number(h.dayProfit).toFixed(2)}
+                  <div className="flex flex-col items-end gap-1">
+                    <div className={clsx("text-sm font-medium", Number(h.dayProfit) >= 0 ? "text-emerald-600" : "text-red-500")}>
+                      {Number(h.dayProfit) > 0 ? "+" : ""}
+                      {Number(h.dayProfit).toFixed(2)}
+                    </div>
+                    <div className={clsx("text-xs", (Number(h.marketValue) - (Number(h.costPrice) * Number(h.quantity))) >= 0 ? "text-emerald-600" : "text-red-500")}>
+                      {(Number(h.marketValue) - (Number(h.costPrice) * Number(h.quantity))) > 0 ? "+" : ""}
+                      {(Number(h.marketValue) - (Number(h.costPrice) * Number(h.quantity))).toFixed(2)}
+                    </div>
                   </div>
                 </div>
                 <div className="mt-2 text-xs text-[var(--muted-foreground)]">

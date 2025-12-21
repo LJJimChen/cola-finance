@@ -92,6 +92,7 @@ export const zh: typeof en = {
     buy: '买入',
     sell: '卖出',
     hold: '持有',
+    no_trend_data: '暂无走势数据',
   },
   settings: {
     title: '设置',
