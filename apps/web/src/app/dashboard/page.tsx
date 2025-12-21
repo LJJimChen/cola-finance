@@ -53,6 +53,7 @@ export default function DashboardPage() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [trendData, setTrendData] = useState<TrendPoint[]>([]);
   const [holdings, setHoldings] = useState<Holding[]>([]);
+  const [isMounted] = useState(() => typeof window !== "undefined");
 
   const currencySymbol = currency === "CNY" ? "￥" : "$";
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
@@ -87,8 +88,8 @@ export default function DashboardPage() {
     fetch(`${apiBase}/api/v1/history/trend?range=1M`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((res) => res.json())
-      .then((data: any[]) => {
+      .then((res) => res.json() as Promise<TrendPoint[]>)
+      .then((data) => {
         if (!cancelled && Array.isArray(data)) {
           setTrendData(
             data.map((d) => ({
@@ -145,6 +146,17 @@ export default function DashboardPage() {
     return Number.isFinite(v) ? v : 0;
   })();
   const trendPreview = trendData.slice(-14);
+
+  const lastUpdatedText = (() => {
+    if (!summary?.lastUpdated) {
+      return "-";
+    }
+    if (!isMounted) {
+      return "-";
+    }
+    const date = new Date(summary.lastUpdated);
+    return date.toLocaleString();
+  })();
 
   const distribution = (() => {
     const map = new Map<string, number>();
@@ -214,6 +226,29 @@ export default function DashboardPage() {
             {currencySymbol}
             {Math.abs(totalProfit).toFixed(2)}
           </p>
+          <div className="mt-2 h-10">
+            {trendPreview.length > 1 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={trendPreview} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                  <Tooltip
+                    cursor={false}
+                    contentStyle={{ borderRadius: 12, border: "1px solid var(--border)", background: "var(--card)" }}
+                    labelStyle={{ color: "var(--muted-foreground)" }}
+                    formatter={(value) => {
+                      const num = typeof value === "number" ? value : Number(value);
+                      return [
+                        `${currencySymbol}${Number.isFinite(num) ? num.toFixed(2) : "-"}`,
+                        t.dashboard.total_profit,
+                      ];
+                    }}
+                  />
+                  <Area type="monotone" dataKey="totalProfit" stroke="#2563eb" fill="#93c5fd" fillOpacity={0.35} />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full rounded-xl bg-[var(--muted)]" />
+            )}
+          </div>
         </div>
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
           <div className="flex items-start justify-between gap-3">
@@ -229,9 +264,7 @@ export default function DashboardPage() {
               <Bell className="h-4 w-4" />
             </Link>
           </div>
-          <p className="mt-3 text-xs text-[var(--muted-foreground)]">
-            {summary?.lastUpdated ? new Date(summary.lastUpdated).toLocaleString() : "-"}
-          </p>
+          <p className="mt-3 text-xs text-[var(--muted-foreground)]">{lastUpdatedText}</p>
         </div>
       </section>
 
@@ -326,16 +359,16 @@ export default function DashboardPage() {
                 Promise.all([
                   fetch(`${apiBase}/api/v1/dashboard/summary`, {
                     headers: { Authorization: `Bearer ${token}` },
-                  }).then((res) => res.json()),
+                  }).then((res) => res.json() as Promise<Summary>),
                   fetch(`${apiBase}/api/v1/history/trend?range=1M`, {
                     headers: { Authorization: `Bearer ${token}` },
-                  }).then((res) => res.json()),
+                  }).then((res) => res.json() as Promise<TrendPoint[]>),
                   fetch(`${apiBase}/api/v1/assets`, {
                     headers: { Authorization: `Bearer ${token}` },
-                  }).then((res) => res.json()),
+                  }).then((res) => res.json() as Promise<Holding[]>),
                   fetch(`${apiBase}/notifications`, {
                     headers: { Authorization: `Bearer ${token}` },
-                  }).then((res) => res.json()),
+                  }).then((res) => res.json() as Promise<{ isRead?: boolean }[]>),
                 ])
                   .then(([nextSummary, nextTrend, nextHoldings, nextNotifications]) => {
                     if (nextSummary) {
@@ -346,9 +379,9 @@ export default function DashboardPage() {
                         totalProfit: Number(nextSummary.totalProfit),
                       });
                     }
-                    if (Array.isArray(nextTrend)) {
+                    if (nextTrend && Array.isArray(nextTrend)) {
                       setTrendData(
-                        nextTrend.map((d: any) => ({
+                        nextTrend.map((d) => ({
                           ...d,
                           totalValue: Number(d.totalValue),
                           dayProfit: Number(d.dayProfit),
@@ -356,12 +389,12 @@ export default function DashboardPage() {
                         }))
                       );
                     }
-                    if (Array.isArray(nextHoldings)) {
-                      setHoldings(nextHoldings as Holding[]);
+                    if (nextHoldings && Array.isArray(nextHoldings)) {
+                      setHoldings(nextHoldings);
                     }
-                    if (Array.isArray(nextNotifications)) {
+                    if (nextNotifications && Array.isArray(nextNotifications)) {
                       const count = nextNotifications.filter(
-                        (n) => typeof n === "object" && n !== null && "isRead" in n && !(n as { isRead?: boolean }).isRead
+                        (n) => typeof n === "object" && n !== null && "isRead" in n && !n.isRead
                       ).length;
                       setUnreadCount(count);
                     }

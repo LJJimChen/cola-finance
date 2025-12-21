@@ -90,8 +90,7 @@ export default function AnalysisPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
-        const data = (await res.json()) as any[];
-        // Sort data by date ascending
+        const data = (await res.json()) as TrendPoint[];
         const sortedData = data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
         setTrendData(
           sortedData.map((d) => ({
@@ -122,14 +121,24 @@ export default function AnalysisPage() {
         const rawData = await res.json();
         const data: RebalanceData = {
           totalValue: Number(rawData.totalValue),
-          categories: rawData.categories.map((c: any) => ({
-            ...c,
-            currentAmount: Number(c.currentAmount),
-            currentPercent: Number(c.currentPercent),
-            targetPercent: Number(c.targetPercent),
-            targetAmount: Number(c.targetAmount),
-            diffAmount: Number(c.diffAmount),
-          })),
+          categories: rawData.categories.map(
+            (c: {
+              category: string;
+              currentAmount: number | string;
+              currentPercent: number | string;
+              targetPercent: number | string;
+              targetAmount: number | string;
+              diffAmount: number | string;
+              action: "BUY" | "SELL" | "HOLD";
+            }) => ({
+              ...c,
+              currentAmount: Number(c.currentAmount),
+              currentPercent: Number(c.currentPercent),
+              targetPercent: Number(c.targetPercent),
+              targetAmount: Number(c.targetAmount),
+              diffAmount: Number(c.diffAmount),
+            })
+          ),
         };
         setRebalanceData(data);
         setEditTargets(

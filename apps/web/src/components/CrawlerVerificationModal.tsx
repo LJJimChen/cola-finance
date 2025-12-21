@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useTranslation } from "../hooks/useTranslation";
-import clsx from "clsx";
 
 type Account = {
   id: string;
@@ -74,8 +73,12 @@ export function CrawlerVerificationModal({
       } else {
         setError(`Failed: ${data.reason}`);
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Login failed");
+      }
     } finally {
       setLoading(false);
     }
@@ -108,8 +111,12 @@ export function CrawlerVerificationModal({
       } else {
         setError(`Failed: ${data.reason}`);
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Verification failed");
+      }
     } finally {
       setLoading(false);
     }
