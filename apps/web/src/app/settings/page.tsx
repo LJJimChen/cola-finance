@@ -16,6 +16,7 @@ type Account = {
   status: string;
   credentials: string | null;
   userId: string;
+  createdAt?: string;
 };
 
 export default function SettingsPage() {
@@ -112,7 +113,6 @@ export default function SettingsPage() {
   );
   const [editName, setEditName] = useState("");
   const [editCredentials, setEditCredentials] = useState("");
-  const [editStatus, setEditStatus] = useState("Connected");
 
   const [verifyAccount, setVerifyAccount] = useState<Account | null>(null);
 
@@ -130,7 +130,6 @@ export default function SettingsPage() {
         body: JSON.stringify({
           name: editName,
           credentials: editCredentials ? editCredentials : null,
-          status: editStatus,
         }),
       });
       if (!res.ok) {
@@ -173,7 +172,6 @@ export default function SettingsPage() {
     setEditingId(a.id);
     setEditName(a.name);
     setEditCredentials(a.credentials ?? "");
-    setEditStatus(a.status);
   };
 
   return (
@@ -363,7 +361,7 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {a.status !== "Connected" && (
+                    {a.status === "NeedVerify" && (
                       <button
                         className="rounded-full border border-[var(--border)] bg-[var(--card)] px-3 py-1 text-xs text-orange-600 hover:bg-[var(--card)] disabled:opacity-60"
                         disabled={isBusy}
@@ -437,18 +435,6 @@ export default function SettingsPage() {
                   value={editCredentials}
                   onChange={(e) => setEditCredentials(e.target.value)}
                 />
-              </div>
-              <div className="grid gap-1">
-                <label className="text-xs text-[var(--muted-foreground)]">{t.settings.status}</label>
-                <select
-                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-[var(--card-foreground)] outline-none focus:border-blue-500"
-                  value={editStatus}
-                  onChange={(e) => setEditStatus(e.target.value)}
-                >
-                  <option value="Connected">Connected</option>
-                  <option value="Error">Error</option>
-                  <option value="NeedVerify">NeedVerify</option>
-                </select>
               </div>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <button
