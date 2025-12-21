@@ -33,7 +33,8 @@ export class AnalysisService {
         start.setMonth(start.getMonth() - 1);
     }
 
-    const startDate = start.toISOString().split('T')[0];
+    start.setHours(0, 0, 0, 0);
+    const startDate = start;
 
     const snapshots = await this.prisma.dailySnapshot.findMany({
       where: {

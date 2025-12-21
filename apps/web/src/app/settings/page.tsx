@@ -97,9 +97,11 @@ export default function SettingsPage() {
         throw new Error("DELETE_ACCOUNT_FAILED");
       }
     },
-    onSuccess: async () => {
+    onSuccess: (_, id) => {
       setError(null);
-      await queryClient.invalidateQueries({ queryKey: ["accounts", apiBase] });
+      queryClient.setQueryData<Account[]>(["accounts", apiBase], (prev) =>
+        (prev ?? []).filter((a) => a.id === id ? false : true),
+      );
     },
     onError: () => {
       setError(t.common.delete_failed);

@@ -23,7 +23,7 @@ type UpsertAssetCategoryBody = {
   category: string;
 };
 
-function resolveTrendStartDate(range: TrendRange): string {
+function resolveTrendStartDate(range: TrendRange): Date {
   const now = new Date();
   const start = new Date(now.getTime());
 
@@ -42,15 +42,15 @@ function resolveTrendStartDate(range: TrendRange): string {
       break;
     case 'YTD':
       start.setMonth(0, 1);
-      start.setHours(0, 0, 0, 0);
       break;
     case 'ALL': {
       const allStart = new Date(0);
-      return allStart.toISOString().split('T')[0];
+      return allStart;
     }
   }
 
-  return start.toISOString().split('T')[0];
+  start.setHours(0, 0, 0, 0);
+  return start;
 }
 
 @Controller('api/v1')
