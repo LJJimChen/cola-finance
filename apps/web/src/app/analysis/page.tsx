@@ -7,17 +7,15 @@ import dynamic from "next/dynamic";
 import { useUserStore } from "../../store/useUserStore";
 import { useSettingsStore } from "../../store/useSettingsStore";
 import { useTranslation } from "../../hooks/useTranslation";
-import {
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-} from "recharts";
 import { RefreshCw, Save } from "lucide-react";
 import clsx from "clsx";
 
 const TrendChart = dynamic(() => import("../../components/TrendChart"), {
+  ssr: false,
+  loading: () => null,
+});
+
+const AllocationPieChart = dynamic(() => import("../../components/AllocationPieChart"), {
   ssr: false,
   loading: () => null,
 });
@@ -295,25 +293,12 @@ export default function AnalysisPage() {
               <h3 className="text-sm font-medium text-zinc-500 mb-4">{t.analysis.current_allocation}</h3>
               <div className="w-full h-[200px]">
                 {isMounted && (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={rebalanceData?.categories || []}
-                        dataKey="currentAmount"
-                        nameKey="category"
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        paddingAngle={5}
-                      >
-                        {rebalanceData?.categories.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <AllocationPieChart
+                    data={rebalanceData?.categories || []}
+                    dataKey="currentAmount"
+                    nameKey="category"
+                    colors={COLORS}
+                  />
                 )}
               </div>
             </div>
@@ -323,25 +308,12 @@ export default function AnalysisPage() {
               <h3 className="text-sm font-medium text-zinc-500 mb-4">{t.analysis.target_allocation}</h3>
               <div className="w-full h-[200px]">
                 {isMounted && (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={rebalanceData?.categories || []}
-                        dataKey="targetAmount"
-                        nameKey="category"
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        paddingAngle={5}
-                      >
-                        {rebalanceData?.categories.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <AllocationPieChart
+                    data={rebalanceData?.categories || []}
+                    dataKey="targetAmount"
+                    nameKey="category"
+                    colors={COLORS}
+                  />
                 )}
               </div>
             </div>
