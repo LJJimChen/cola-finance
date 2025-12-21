@@ -77,7 +77,6 @@ export function Providers({
     const token = useUserStore((s) => s.token);
     const username = useUserStore((s) => s.username);
     const clearSession = useUserStore((s) => s.clear);
-    const setLanguage = useSettingsStore((s) => s.setLanguage);
     const { t, href } = useTranslation();
     const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
     const [unreadCount, setUnreadCount] = useState(0);
@@ -202,58 +201,6 @@ export function Providers({
         </aside>
 
         <div className="flex-1 flex flex-col min-w-0 bg-[var(--background)]">
-          <header className="sticky top-0 z-40 h-16 flex items-center justify-between px-4 lg:px-6 border-b border-[var(--border)] bg-[var(--card)] text-[var(--card-foreground)]">
-            <div className="min-w-0">
-              <div className="text-sm font-semibold truncate">{title}</div>
-              <div className="text-[11px] text-[var(--muted-foreground)] truncate">{t.common.welcome_back}</div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="hidden lg:flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--muted)] px-3 py-2">
-                <input
-                  className="w-56 bg-transparent text-sm outline-none placeholder:text-[var(--muted-foreground)]"
-                  placeholder={t.common.search}
-                  type="search"
-                />
-              </div>
-              <button
-                type="button"
-                className="inline-flex h-10 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 text-sm hover:bg-[var(--muted)]"
-                onClick={() => {
-                  const next = routeLanguage === "zh" ? "en" : "zh";
-                  setLanguage(next);
-                  const segments = pathname.split("/").filter(Boolean);
-                  if (segments.length === 0) {
-                    router.push(`/${next}`);
-                    return;
-                  }
-                  if (segments[0] === "en" || segments[0] === "zh") {
-                    segments[0] = next;
-                  } else {
-                    segments.unshift(next);
-                  }
-                  router.push("/" + segments.join("/"));
-                }}
-              >
-                {routeLanguage === "zh" ? "English" : "中文"}
-              </button>
-              <div className="hidden md:flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2">
-                <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                <div className="text-xs text-[var(--muted-foreground)]">{username ?? "User"}</div>
-              </div>
-              <Link
-                href={href("/notifications")}
-                className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--muted)]"
-                aria-label={t.notifications.title}
-              >
-                <Bell className="h-4 w-4" />
-                {unreadCount > 0 && (
-                  <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] leading-none text-white">
-                    {unreadCount > 99 ? "99+" : unreadCount}
-                  </span>
-                )}
-              </Link>
-            </div>
-          </header>
           <main className="flex-1 min-w-0 overflow-y-auto bg-[var(--background)]">
             <div className="mx-auto w-full max-w-7xl p-4 lg:p-6 pb-[calc(env(safe-area-inset-bottom)+6rem)] lg:pb-6">
               {shellChildren}
@@ -272,17 +219,17 @@ export function Providers({
                       href={href(item.to)}
                       aria-current={active ? "page" : undefined}
                       className={
-                        "flex flex-col items-center justify-center gap-1 py-2 " +
+                        "flex flex-col items-center justify-center gap-1 py-3 min-[380px]:py-3.5 " +
                         (active ? "text-blue-600 dark:text-blue-400" : "text-[var(--muted-foreground)]")
                       }
                     >
-                      <Icon className="h-5 w-5" />
-                      <span className="text-[10px] leading-none">{item.label}</span>
+                      <Icon className="h-5 w-5 min-[380px]:h-6 min-[380px]:w-6" />
+                      <span className="text-[10px] min-[380px]:text-[11px] leading-none">{item.label}</span>
                     </Link>
                   );
                 })}
               </div>
-              <div className="h-[env(safe-area-inset-bottom)]" />
+              <div className="h-[env(safe-area-inset-bottom)] min-[380px]:h-[calc(env(safe-area-inset-bottom)+12px)] min-[480px]:h-[calc(env(safe-area-inset-bottom)+16px)]" />
             </div>
           </nav>
         </div>
