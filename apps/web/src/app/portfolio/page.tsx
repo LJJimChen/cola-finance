@@ -181,6 +181,7 @@ export default function PortfolioPage() {
         category,
         symbols: Array.from(symbols.entries()).map(([symbol, items]) => ({
           symbol,
+          name: items[0]?.name,
           items,
           marketValue: items.reduce((sum, it) => sum + Number(it.marketValue), 0),
           dayProfit: items.reduce((sum, it) => sum + Number(it.dayProfit), 0),
@@ -309,9 +310,9 @@ export default function PortfolioPage() {
       </div>
 
       <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div className="text-sm font-semibold text-[var(--card-foreground)]">{t.portfolio.holdings}</div>
-          <div className="text-xs text-[var(--muted-foreground)]">
+        <div className="flex items-center gap-2">
+          <div className="text-lg font-bold text-[var(--card-foreground)]">{t.portfolio.holdings}</div>
+          <div className="rounded-full bg-[var(--muted)] px-2 py-0.5 text-xs font-medium text-[var(--muted-foreground)]">
             {loading ? t.common.loading : `${filteredHoldings.length}`}
           </div>
         </div>
@@ -328,10 +329,12 @@ export default function PortfolioPage() {
           <div className="mt-4 space-y-5">
             {grouped.platforms.map((p) => (
               <div key={p.platform} className="space-y-3">
-                <div className="text-xs font-medium text-[var(--muted-foreground)]">{p.platform}</div>
                 {p.accounts.map((a) => (
                   <div key={a.accountName} className="space-y-2">
-                    <div className="text-xs text-[var(--muted-foreground)]">{a.accountName}</div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-sm font-bold text-[var(--card-foreground)]">{p.platform}</div>
+                      <div className="text-sm text-[var(--muted-foreground)]">{a.accountName}</div>
+                    </div>
                     <div className="grid gap-2">
                       {a.items.map((h) => (
                         <div
@@ -341,7 +344,13 @@ export default function PortfolioPage() {
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
                               <div className="text-sm font-medium text-[var(--card-foreground)]">
-                                {h.name || h.symbol}
+                                {h.name ? (
+                                  <>
+                                    {h.name} <span className="ml-1 text-xs font-normal text-[var(--muted-foreground)]">{h.symbol}</span>
+                                  </>
+                                ) : (
+                                  h.symbol
+                                )}
                               </div>
                               <button
                                 type="button"
@@ -353,12 +362,18 @@ export default function PortfolioPage() {
                               </button>
                             </div>
                             <div className="mt-1 text-xs text-[var(--muted-foreground)]">
-                              {h.symbol} · {t.portfolio.market_value}: {Number(h.marketValue).toFixed(2)}
+                              {t.portfolio.market_value}: {Number(h.marketValue).toFixed(2)}
                             </div>
                           </div>
-                          <div className={clsx("text-sm font-medium", Number(h.dayProfit) >= 0 ? "text-emerald-600" : "text-red-500")}>
-                            {Number(h.dayProfit) > 0 ? "+" : ""}
-                            {Number(h.dayProfit).toFixed(2)}
+                          <div className="flex flex-col items-end gap-1">
+                            <div className={clsx("text-sm font-medium", Number(h.dayProfit) >= 0 ? "text-emerald-600" : "text-red-500")}>
+                              {Number(h.dayProfit) > 0 ? "+" : ""}
+                              {Number(h.dayProfit).toFixed(2)}
+                            </div>
+                            <div className={clsx("text-xs", (Number(h.marketValue) - Number(h.costPrice)) >= 0 ? "text-emerald-600" : "text-red-500")}>
+                              {(Number(h.marketValue) - Number(h.costPrice)) > 0 ? "+" : ""}
+                              {(Number(h.marketValue) - Number(h.costPrice)).toFixed(2)}
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -383,7 +398,9 @@ export default function PortfolioPage() {
                     >
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <div className="text-sm font-medium text-[var(--card-foreground)]">{s.symbol}</div>
+                          <div className="text-sm font-medium text-[var(--card-foreground)]">
+                            {s.name || s.symbol}
+                          </div>
                           <button
                             type="button"
                             onClick={() => openEdit(s.symbol)}
@@ -415,7 +432,13 @@ export default function PortfolioPage() {
               <div key={h.id} className="rounded-2xl border border-[var(--border)] bg-[var(--muted)] p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-sm font-semibold text-[var(--card-foreground)]">
-                    {h.name || h.symbol}
+                    {h.name ? (
+                      <>
+                        {h.name} <span className="ml-1 text-xs font-normal text-[var(--muted-foreground)]">{h.symbol}</span>
+                      </>
+                    ) : (
+                      h.symbol
+                    )}
                   </div>
                   <div className={clsx("text-sm font-medium", Number(h.dayProfit) >= 0 ? "text-emerald-600" : "text-red-500")}>
                     {Number(h.dayProfit) > 0 ? "+" : ""}

@@ -15,6 +15,7 @@ export interface FetchedAsset {
   costPrice: number;
   currency: string;
   marketValue: number;
+  dayProfit?: number;
 }
 
 export type FetchAssetsResult =

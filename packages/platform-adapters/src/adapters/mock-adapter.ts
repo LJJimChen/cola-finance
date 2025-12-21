@@ -76,6 +76,9 @@ export class MockAdapter implements IPlatformAdapter {
 
     const sortedDates = Array.from(allDates).sort();
     const history: DailyAssets[] = [];
+    
+    // Store last price for each symbol to calculate dayProfit
+    const lastPrices = new Map<string, number>();
 
     for (const date of sortedDates) {
       const assets: FetchedAsset[] = [];
@@ -104,6 +107,22 @@ export class MockAdapter implements IPlatformAdapter {
            const costPrice = asset.records[0].close;
            const price = validRecord.close;
            
+           // Calculate dayProfit
+           let dayProfit = 0;
+           const prevPrice = lastPrices.get(asset.symbol);
+           
+           if (prevPrice !== undefined) {
+             dayProfit = (price - prevPrice) * quantity;
+           } else {
+             // First day holding, profit is change from cost? Or 0?
+             // Usually dayProfit is 0 on day 1 unless price changed intraday.
+             // Here we have daily close.
+             dayProfit = (price - costPrice) * quantity;
+           }
+           
+           // Update last price for next day iteration
+           lastPrices.set(asset.symbol, price);
+
            assets.push({
              symbol: asset.symbol,
              name: asset.name,
@@ -112,6 +131,7 @@ export class MockAdapter implements IPlatformAdapter {
              costPrice,
              currency: 'CNY',
              marketValue: price * quantity,
+             dayProfit,
            });
         }
       }
@@ -191,13 +211,24 @@ export class MockAdapter implements IPlatformAdapter {
         // Find the last record where date <= targetDate
         const validRecord = records.slice().reverse().find(r => r.date <= targetDate);
         
+        let currentRecordDate = records[records.length - 1].date;
         if (validRecord) {
           price = validRecord.close;
+          currentRecordDate = validRecord.date;
         }
         
-        // Initial holding assumptions
-        const quantity = 10000;
         const costPrice = records[0].close;
+        
+        // Calculate dayProfit
+        // Find the record immediately before the current one
+        let prevPrice = costPrice;
+        const currentIndex = records.findIndex(r => r.date === currentRecordDate);
+        if (currentIndex > 0) {
+          prevPrice = records[currentIndex - 1].close;
+        }
+        
+        const quantity = 10000;
+        const dayProfit = (price - prevPrice) * quantity;
 
         assets.push({
           symbol,
@@ -207,6 +238,7 @@ export class MockAdapter implements IPlatformAdapter {
           costPrice,
           currency: 'CNY', // Assuming CNY for these CSVs
           marketValue: price * quantity,
+          dayProfit,
         });
       } catch (err) {
         console.error(`Error processing mock file ${file}:`, err);
