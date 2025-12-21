@@ -3,23 +3,25 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { useUserStore } from "../../store/useUserStore";
 import { useSettingsStore } from "../../store/useSettingsStore";
 import { useTranslation } from "../../hooks/useTranslation";
 import {
-  Area,
-  AreaChart,
-  CartesianGrid,
   Cell,
   Pie,
   PieChart,
   ResponsiveContainer,
   Tooltip,
-  XAxis,
-  YAxis,
 } from "recharts";
 import { RefreshCw, Save } from "lucide-react";
 import clsx from "clsx";
+
+const TrendChart = dynamic(() => import("../../components/TrendChart"), {
+  ssr: false,
+  loading: () => null,
+});
+
 
 type TrendPoint = {
   date: string;
@@ -60,6 +62,11 @@ export default function AnalysisPage() {
   const [range, setRange] = useState("1M");
   const [trendData, setTrendData] = useState<TrendPoint[]>([]);
   const [trendLoading, setTrendLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Rebalance State
   const [rebalanceData, setRebalanceData] = useState<RebalanceData | null>(null);
@@ -249,7 +256,11 @@ export default function AnalysisPage() {
             ))}
           </div>
           <div className="flex-1 min-h-[400px] w-full rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
-            {trendLoading ? (
+            {!isMounted ? (
+              <div className="flex h-full items-center justify-center text-sm text-zinc-500">
+                {t.common.loading}
+              </div>
+            ) : trendLoading ? (
               <div className="flex h-full items-center justify-center text-sm text-zinc-500">
                 {t.common.loading}
               </div>
@@ -258,51 +269,7 @@ export default function AnalysisPage() {
                 {t.analysis.no_trend_data}
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={trendData}>
-                  <defs>
-                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1} />
-                      <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                  <XAxis 
-                    dataKey="date" 
-                    tickFormatter={(val) => val.slice(5)} 
-                    tick={{ fontSize: 12, fill: "#9ca3af" }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis 
-                    tickFormatter={(val) => `${currencySymbol}${(val / 1000).toFixed(0)}k`} 
-                    tick={{ fontSize: 12, fill: "#9ca3af" }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
-                    formatter={(value) => {
-                      if (typeof value === "number") {
-                        return `${currencySymbol}${value.toLocaleString()}`;
-                      }
-                      if (typeof value === "string") {
-                        const n = Number(value);
-                        return Number.isFinite(n) ? `${currencySymbol}${n.toLocaleString()}` : value;
-                      }
-                      return "";
-                    }}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="totalValue" 
-                    stroke="#2563eb" 
-                    strokeWidth={2}
-                    fill="url(#colorValue)" 
-                    name={t.analysis.total_value}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              <TrendChart data={trendData} />
             )}
           </div>
         </div>
@@ -318,25 +285,27 @@ export default function AnalysisPage() {
             <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm flex flex-col items-center">
               <h3 className="text-sm font-medium text-zinc-500 mb-4">{t.analysis.current_allocation}</h3>
               <div className="w-full h-[200px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={rebalanceData?.categories || []}
-                      dataKey="currentAmount"
-                      nameKey="category"
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={80}
-                      paddingAngle={5}
-                    >
-                      {rebalanceData?.categories.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
+                {isMounted && (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={rebalanceData?.categories || []}
+                        dataKey="currentAmount"
+                        nameKey="category"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                      >
+                        {rebalanceData?.categories.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
               </div>
             </div>
 
@@ -344,25 +313,27 @@ export default function AnalysisPage() {
             <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm flex flex-col items-center">
               <h3 className="text-sm font-medium text-zinc-500 mb-4">{t.analysis.target_allocation}</h3>
               <div className="w-full h-[200px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={rebalanceData?.categories || []}
-                      dataKey="targetAmount"
-                      nameKey="category"
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={80}
-                      paddingAngle={5}
-                    >
-                      {rebalanceData?.categories.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
+                {isMounted && (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={rebalanceData?.categories || []}
+                        dataKey="targetAmount"
+                        nameKey="category"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                      >
+                        {rebalanceData?.categories.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
               </div>
             </div>
 
