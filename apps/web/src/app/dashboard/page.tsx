@@ -54,9 +54,9 @@ export default function DashboardPage() {
   const [trendData, setTrendData] = useState<TrendPoint[]>([]);
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [isMounted] = useState(() => typeof window !== "undefined");
-
+ 
   const currencySymbol = currency === "CNY" ? "￥" : "$";
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3100";
 
   useEffect(() => {
     if (!token) {

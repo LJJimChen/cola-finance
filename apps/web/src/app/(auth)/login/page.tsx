@@ -22,7 +22,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3100";
 
   useEffect(() => {
     if (token) {

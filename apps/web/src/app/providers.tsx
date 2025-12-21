@@ -78,7 +78,7 @@ export function Providers({
     const username = useUserStore((s) => s.username);
     const clearSession = useUserStore((s) => s.clear);
     const { t, href } = useTranslation();
-    const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
+    const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3100";
     const [unreadCount, setUnreadCount] = useState(0);
 
     const segments = pathname.split("/").filter(Boolean);
