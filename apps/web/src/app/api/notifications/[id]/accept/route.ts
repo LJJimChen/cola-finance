@@ -1,14 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "../../../../../lib/prisma";
 import { getUserIdFromRequest } from "@/lib/auth";
 import { NotifyType } from "@cola-finance/db";
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
-  const userId = getUserIdFromRequest(req);
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const userId = getUserIdFromRequest(request);
   if (!userId) {
     return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
   }
-  const notif = await prisma.userNotification.findUnique({ where: { id: params.id } });
+  const notif = await prisma.userNotification.findUnique({ where: { id } });
   if (!notif || notif.userId !== userId) {
     return NextResponse.json({ ok: true });
   }
@@ -27,7 +28,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       update: {},
     });
     await tx.userNotification.update({
-      where: { id: params.id },
+      where: { id },
       data: { isRead: true },
     });
   });

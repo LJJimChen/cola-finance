@@ -37,7 +37,12 @@ async function verifyJwt(token: string): Promise<JwtPayload | null> {
     "verify",
   ]);
   const signature = base64UrlToUint8Array(signatureB64);
-  const ok = await crypto.subtle.verify("HMAC", key, signature, data);
+  const ok = await crypto.subtle.verify(
+    "HMAC",
+    key,
+    signature as unknown as BufferSource,
+    data as unknown as BufferSource,
+  );
   if (!ok) {
     return null;
   }

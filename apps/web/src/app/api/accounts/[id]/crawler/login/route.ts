@@ -1,16 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "../../../../../../lib/prisma";
 import { getUserIdFromRequest } from "@/lib/auth";
 import { AdapterFactory, type FetchAssetsResult } from "@cola-finance/platform-adapters";
 import { decodeCredentials } from "../../../../../../lib/credentials";
 import { AccountStatus } from "@cola-finance/db";
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
-  const userId = getUserIdFromRequest(req);
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const userId = getUserIdFromRequest(request);
   if (!userId) {
     return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
   }
-  const account = await prisma.platformAccount.findUnique({ where: { id: params.id } });
+  const account = await prisma.platformAccount.findUnique({ where: { id } });
   if (!account || account.userId !== userId) {
     return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
   }
@@ -25,7 +26,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const result: FetchAssetsResult = await adapter.fetchAssets(creds);
   if (result.ok) {
     await prisma.platformAccount.update({
-      where: { id: params.id },
+      where: { id },
       data: { status: AccountStatus.Connected },
     });
   } else {
@@ -36,7 +37,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       status = AccountStatus.Unauthorized;
     }
     await prisma.platformAccount.update({
-      where: { id: params.id },
+      where: { id },
       data: { status },
     });
   }
