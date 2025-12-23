@@ -16,7 +16,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { AccountStatus, PlatformType } from '@prisma/client';
+import { AccountStatus, PlatformType } from '@cola-finance/db';
 import {
   createCipheriv,
   createDecipheriv,

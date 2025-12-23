@@ -1,6 +1,6 @@
 import { Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { Request } from 'express';
-import { NotifyType } from '@prisma/client';
+import { NotifyType } from '@cola-finance/db';
 import { PrismaService } from '../prisma.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 

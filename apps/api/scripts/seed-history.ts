@@ -1,5 +1,4 @@
-
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@cola-finance/db';
 
 const prisma = new PrismaClient();
 

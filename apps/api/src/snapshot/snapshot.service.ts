@@ -7,7 +7,7 @@ import {
   type DailyAssets,
 } from '@cola-finance/platform-adapters';
 import { createDecipheriv, createHash } from 'crypto';
-import { AccountStatus, SnapshotStatus } from '@prisma/client';
+import { AccountStatus, SnapshotStatus } from '@cola-finance/db';
 import { PrismaService } from '../prisma.service';
 
 function toDateOnly(value: string): Date {

@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@cola-finance/db';
 import { MockAdapter } from '../../../packages/platform-adapters/src/adapters/mock-adapter';
 import { DailyAssets } from '../../../packages/platform-adapters/src/types';
 
