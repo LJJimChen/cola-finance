@@ -56,7 +56,7 @@ export default function DashboardPage() {
   const [isMounted] = useState(() => typeof window !== "undefined");
  
   const currencySymbol = currency === "CNY" ? "￥" : "$";
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "/api";
+  const apiBase = process.env.API_URL ?? "/api";
 
   useEffect(() => {
     if (!token) {
