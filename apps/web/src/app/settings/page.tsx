@@ -26,7 +26,7 @@ export default function SettingsPage() {
   const { t, href } = useTranslation();
   const { language, setLanguage, currency, setCurrency, theme, setTheme } = useSettingsStore();
   
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3100";
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 
   const [platform, setPlatform] = useState("MOCK");
   const [name, setName] = useState("");

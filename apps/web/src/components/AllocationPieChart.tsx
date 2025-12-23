@@ -1,15 +1,11 @@
 "use client";
 
-import {
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-} from "recharts";
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+
+type AllocationDatum = Record<string, string | number>;
 
 type Props = {
-  data: any[];
+  data: AllocationDatum[];
   dataKey: string;
   nameKey: string;
   colors: string[];

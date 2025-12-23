@@ -32,7 +32,7 @@ export default function PortfolioPage() {
   const router = useRouter();
   const token = useUserStore((s) => s.token);
   const { t, href } = useTranslation();
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3100";
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

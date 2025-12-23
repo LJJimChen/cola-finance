@@ -21,7 +21,7 @@ export default function NotificationsPage() {
   const router = useRouter();
   const token = useUserStore((s) => s.token);
   const { t, href } = useTranslation();
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3100";
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);

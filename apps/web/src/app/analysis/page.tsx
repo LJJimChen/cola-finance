@@ -50,7 +50,7 @@ export default function AnalysisPage() {
   const token = useUserStore((s) => s.token);
   const currency = useSettingsStore((s) => s.currency);
   const { t, href } = useTranslation();
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3100";
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "/api";
   const currencySymbol = currency === "CNY" ? "￥" : "$";
   const loginHref = href("/login");
 
