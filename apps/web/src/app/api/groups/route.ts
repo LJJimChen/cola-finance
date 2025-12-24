@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "../../../lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { getUserIdFromRequest } from "@/lib/auth";
 import { GroupRole } from "@cola-finance/db";
 

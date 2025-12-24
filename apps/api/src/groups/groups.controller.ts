@@ -9,7 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { GroupRole, NotifyType } from '@prisma/client';
+import { GroupRole, NotifyType } from '@cola-finance/db';
 import { PrismaService } from '../prisma.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 

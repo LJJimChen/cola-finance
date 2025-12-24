@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "../../../../lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { getUserIdFromRequest } from "@/lib/auth";
-import { encryptCredentials, decryptCredentialsSafe } from "../../../../lib/credentials";
+import { encryptCredentials, decryptCredentialsSafe } from "@/lib/credentials";
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

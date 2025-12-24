@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "../../../lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { getUserIdFromRequest } from "@/lib/auth";
-import { encryptCredentials, decryptCredentialsSafe } from "../../../lib/credentials";
+import { encryptCredentials, decryptCredentialsSafe } from "@/lib/credentials";
 import type { PlatformType } from "@cola-finance/db";
 
 export async function GET(req: Request) {
@@ -14,7 +14,7 @@ export async function GET(req: Request) {
     orderBy: { name: "asc" },
   });
   return NextResponse.json(
-    accounts.map((a) => ({
+    accounts.map((a: (typeof accounts)[number]) => ({
       ...a,
       credentials: decryptCredentialsSafe(a.credentials),
     })),

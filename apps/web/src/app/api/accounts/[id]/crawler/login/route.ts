@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserIdFromRequest } from "@/lib/auth";
 import { AdapterFactory, type FetchAssetsResult } from "@cola-finance/platform-adapters";
-import { decodeCredentials } from "../../../../../../lib/credentials";
+import { decodeCredentials } from "@/lib/credentials";
 import { AccountStatus } from "@cola-finance/db";
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
