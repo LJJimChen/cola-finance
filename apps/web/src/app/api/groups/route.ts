@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserIdFromRequest } from "@/lib/auth";
-import { GroupRole } from "@cola-finance/db";
+import { GroupRole } from "@prisma/client";
 
 export async function GET(req: Request) {
   const userId = getUserIdFromRequest(req);

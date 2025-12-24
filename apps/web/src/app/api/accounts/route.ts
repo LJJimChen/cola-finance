@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserIdFromRequest } from "@/lib/auth";
 import { encryptCredentials, decryptCredentialsSafe } from "@/lib/credentials";
-import type { PlatformType } from "@cola-finance/db";
+import type { PlatformType } from "@prisma/client";
 
 export async function GET(req: Request) {
   const userId = getUserIdFromRequest(req);

@@ -9,7 +9,6 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@cola-finance/db": "workspace:*",
     "@cola-finance/platform-adapters": "workspace:*",
     "@tanstack/react-query": "^5.90.12",
     "@prisma/client": "^6.3.0",
