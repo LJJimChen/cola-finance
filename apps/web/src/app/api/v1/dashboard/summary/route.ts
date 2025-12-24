@@ -7,8 +7,6 @@ export async function GET(req: Request) {
   if (!userId) {
     return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
   }
-  const url = new URL(req.url);
-  const limit = url.searchParams.get("limit");
   const snapshots = await prisma.dailySnapshot.findMany({
     where: { userId },
     orderBy: [{ date: "desc" }, { timestamp: "desc" }],
@@ -16,12 +14,18 @@ export async function GET(req: Request) {
   });
   const snapshot = snapshots[0];
   if (!snapshot) {
-    return NextResponse.json([]);
+    return NextResponse.json({
+      totalValue: 0,
+      dayProfit: 0,
+      totalProfit: 0,
+      lastUpdated: null,
+    });
   }
-  const holdings = await prisma.assetPosition.findMany({
-    where: { snapshotId: snapshot.id },
-    take: limit ? Number(limit) : undefined,
-    include: { account: true },
+  return NextResponse.json({
+    totalValue: snapshot.totalValue,
+    dayProfit: snapshot.dayProfit,
+    totalProfit: snapshot.totalProfit,
+    lastUpdated: snapshot.timestamp,
   });
-  return NextResponse.json(holdings);
 }
+

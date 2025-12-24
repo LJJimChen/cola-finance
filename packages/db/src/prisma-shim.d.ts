@@ -33,3 +33,4 @@ declare module '@prisma/client' {
     MEMBER = 'MEMBER',
   }
 }
+
