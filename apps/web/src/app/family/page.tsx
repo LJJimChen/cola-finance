@@ -36,7 +36,7 @@ export default function FamilyPage() {
   const token = useUserStore((s) => s.token);
   const currency = useSettingsStore((s) => s.currency);
   const { t, href } = useTranslation();
-  const apiBase = process.env.API_URL ?? "/api";
+  const apiBase = "/api";
 
   const [groups, setGroups] = useState<Group[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);

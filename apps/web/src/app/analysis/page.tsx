@@ -50,7 +50,7 @@ export default function AnalysisPage() {
   const token = useUserStore((s) => s.token);
   const currency = useSettingsStore((s) => s.currency);
   const { t, href } = useTranslation();
-  const apiBase = process.env.API_URL ?? "/api";
+  const apiBase = "/api";
   const currencySymbol = currency === "CNY" ? "￥" : "$";
   const loginHref = href("/login");
 
@@ -84,7 +84,7 @@ export default function AnalysisPage() {
     }
     setTrendLoading(true);
     try {
-      const res = await fetch(`${apiBase}/api/v1/history/trend?range=${range}`, {
+      const res = await fetch(`${apiBase}/api/history/trend?range=${range}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -112,7 +112,7 @@ export default function AnalysisPage() {
     }
     setRebalanceLoading(true);
     try {
-      const res = await fetch(`${apiBase}/api/v1/analysis/rebalance`, {
+      const res = await fetch(`${apiBase}/api/analysis/rebalance`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -171,7 +171,7 @@ export default function AnalysisPage() {
 
   const saveTargets = async () => {
     try {
-      const res = await fetch(`${apiBase}/api/v1/analysis/targets`, {
+      const res = await fetch(`${apiBase}/api/analysis/targets`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

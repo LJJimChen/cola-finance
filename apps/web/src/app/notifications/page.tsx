@@ -21,7 +21,7 @@ export default function NotificationsPage() {
   const router = useRouter();
   const token = useUserStore((s) => s.token);
   const { t, href } = useTranslation();
-  const apiBase = process.env.API_URL ?? "/api";
+  const apiBase = "/api";
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);

@@ -32,7 +32,7 @@ export default function PortfolioPage() {
   const router = useRouter();
   const token = useUserStore((s) => s.token);
   const { t, href } = useTranslation();
-  const apiBase = process.env.API_URL ?? "/api";
+  const apiBase = "/api";
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +67,7 @@ export default function PortfolioPage() {
       setError(null);
       try {
         const [nextHoldings, nextCategories] = await Promise.all([
-          fetch(`${apiBase}/api/v1/assets`, {
+          fetch(`${apiBase}/api/assets`, {
             headers: { Authorization: `Bearer ${token}` },
           }).then((res) => {
             if (!res.ok) {
@@ -75,7 +75,7 @@ export default function PortfolioPage() {
             }
             return res.json();
           }),
-          fetch(`${apiBase}/api/v1/asset-categories`, {
+          fetch(`${apiBase}/api/asset-categories`, {
             headers: { Authorization: `Bearer ${token}` },
           }).then((res) => {
             if (!res.ok) {
@@ -205,7 +205,7 @@ export default function PortfolioPage() {
     if (!category) {
       return;
     }
-    const res = await fetch(`${apiBase}/api/v1/asset-categories`, {
+    const res = await fetch(`${apiBase}/api/asset-categories`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
