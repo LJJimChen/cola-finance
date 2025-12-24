@@ -2,6 +2,33 @@
 
 本模块管理项目的数据库 Schema、迁移历史以及 Prisma Client。
 
+## 全新环境初始化 (Setup in New Environment)
+
+当你在一台全新的机器上初始化数据库时，推荐按照以下步骤操作：
+
+1. 确保数据库服务已启动  
+   在项目根目录启动 PostgreSQL（使用内置的 docker-compose）：
+   ```bash
+   docker compose up -d db
+   ```
+
+2. 配置环境变量  
+   在 `packages/db` 目录下创建或编辑 `.env` 文件，至少包含：
+   ```env
+   DATABASE_URL="postgresql://<user>:<password>@<host>:<port>/<database>?schema=public"
+   ```
+
+3. 初始化数据库结构并生成 Prisma Client  
+   在 `packages/db` 目录下运行：
+   ```bash
+   pnpm prisma:init
+   ```
+   或等价的手动命令：
+   ```bash
+   npx prisma migrate dev
+   npx prisma generate
+   ```
+
 ## 常用开发流程 (Workflow)
 
 当你需要修改数据库结构时，请遵循以下标准流程：

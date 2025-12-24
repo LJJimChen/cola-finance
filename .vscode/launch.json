@@ -2,31 +2,31 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug API (NestJS)",
-      "type": "node",
+      "name": "Next.js: debug server-side",
+      "type": "node-terminal",
       "request": "launch",
-      "cwd": "${workspaceFolder}/apps/api",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["run", "start:debug"],
-      "restart": true,
-      "console": "integratedTerminal",
-      "autoAttachChildProcesses": true
+      "command": "pnpm dev -- --inspect",
+      "cwd": "${workspaceFolder}/apps/web",
     },
     {
-      "name": "Debug Web (Next.js)",
-      "type": "node",
+      "name": "Next.js: debug client-side",
+      "type": "chrome",
       "request": "launch",
-      "cwd": "${workspaceFolder}/apps/web",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["run", "dev"],
-      "restart": true,
-      "console": "integratedTerminal"
-    }
-  ],
-  "compounds": [
+      "url": "http://localhost:3101",
+      "webRoot": "${workspaceFolder}/apps/web"
+    },
+    // .vscode/launch.json
     {
-      "name": "Debug Full Stack",
-      "configurations": ["Debug API (NestJS)", "Debug Web (Next.js)"]
+      "name": "Next.js: debug full stack",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "pnpm dev",
+      "cwd": "${workspaceFolder}/apps/web",
+      "serverReadyAction": {
+        "pattern": "started server on .+, url: (https?://.+)",
+        "uriFormat": "%s",
+        "action": "debugWithChrome"
+      }
     }
   ]
 }
