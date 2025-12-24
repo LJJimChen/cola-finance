@@ -69,7 +69,7 @@ export default function DashboardPage() {
       typeof value === "object" && value !== null && "isRead" in value;
 
     // Fetch Summary
-    fetch(`${apiBase}/api/dashboard/summary`, {
+    fetch(`${apiBase}/dashboard/summary`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -85,7 +85,7 @@ export default function DashboardPage() {
       })
       .catch(console.error);
 
-    fetch(`${apiBase}/api/history/trend?range=1M`, {
+    fetch(`${apiBase}/history/trend?range=1M`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json() as Promise<TrendPoint[]>)
@@ -103,7 +103,7 @@ export default function DashboardPage() {
       })
       .catch(console.error);
 
-    fetch(`${apiBase}/api/assets`, {
+    fetch(`${apiBase}/assets`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -357,13 +357,13 @@ export default function DashboardPage() {
                 }
                 setLoading(true);
                 Promise.all([
-                  fetch(`${apiBase}/api/dashboard/summary`, {
+                  fetch(`${apiBase}/dashboard/summary`, {
                     headers: { Authorization: `Bearer ${token}` },
                   }).then((res) => res.json() as Promise<Summary>),
-                  fetch(`${apiBase}/api/history/trend?range=1M`, {
+                  fetch(`${apiBase}/history/trend?range=1M`, {
                     headers: { Authorization: `Bearer ${token}` },
                   }).then((res) => res.json() as Promise<TrendPoint[]>),
-                  fetch(`${apiBase}/api/assets`, {
+                  fetch(`${apiBase}/assets`, {
                     headers: { Authorization: `Bearer ${token}` },
                   }).then((res) => res.json() as Promise<Holding[]>),
                   fetch(`${apiBase}/notifications`, {

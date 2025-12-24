@@ -84,7 +84,7 @@ export default function AnalysisPage() {
     }
     setTrendLoading(true);
     try {
-      const res = await fetch(`${apiBase}/api/history/trend?range=${range}`, {
+      const res = await fetch(`${apiBase}/history/trend?range=${range}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -112,7 +112,7 @@ export default function AnalysisPage() {
     }
     setRebalanceLoading(true);
     try {
-      const res = await fetch(`${apiBase}/api/analysis/rebalance`, {
+      const res = await fetch(`${apiBase}/analysis/rebalance`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -171,7 +171,7 @@ export default function AnalysisPage() {
 
   const saveTargets = async () => {
     try {
-      const res = await fetch(`${apiBase}/api/analysis/targets`, {
+      const res = await fetch(`${apiBase}/analysis/targets`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
