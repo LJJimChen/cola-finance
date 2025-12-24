@@ -135,9 +135,6 @@ importers:
 
   apps/web:
     dependencies:
-      '@cola-finance/db':
-        specifier: workspace:*
-        version: link:../../packages/db
       '@cola-finance/platform-adapters':
         specifier: workspace:*
         version: link:../../packages/platform-adapters
