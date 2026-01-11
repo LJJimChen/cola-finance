@@ -3,7 +3,7 @@
 **Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
 **Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
 
-**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
+**Note**: This template is filled in by the `/speckit.plan` command. See `.codebuddy/commands/speckit.plan.md` for the execution workflow.
 
 ## Summary
 
@@ -31,7 +31,17 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+Use `.specify/memory/constitution.md` as the source of truth. This plan MUST explicitly
+confirm each gate below, or document an exception with rationale.
+
+- [ ] No silent failures or magic defaults in critical paths
+- [ ] Type safety enforced (no unjustified `any`/type suppression; public types are precise)
+- [ ] Clear boundaries and ownership (front-end ↔ BFF ↔ Engine; no cross-boundary leakage)
+- [ ] Database treated as the single source of truth; migrations are forward-only and reviewable
+- [ ] Defensive error handling (no swallowed errors; errors carry actionable context)
+- [ ] Testability: core business logic is isolated and has a test strategy (unit + integration where needed)
+- [ ] Function documentation: public/domain/cross-boundary functions have intent + contract comments
+- [ ] Dependency discipline: any new dependency is justified; global side effects avoided
 
 ## Project Structure
 

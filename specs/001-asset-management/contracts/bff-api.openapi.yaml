@@ -1,0 +1,1017 @@
+openapi: 3.1.0
+info:
+  title: Cola Finance BFF API
+  version: 1.0.0
+  description: |
+    Backend-for-Frontend API for the Asset Management System (MVP).
+    
+    This API is the only public interface exposed to the frontend.
+    All endpoints require authentication (JWT Bearer token from Better Auth).
+
+servers:
+  - url: https://api.cola-finance.app
+    description: Production
+  - url: http://localhost:8787
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Auth
+    description: Authentication and user management
+  - name: Brokers
+    description: Broker connection management
+  - name: Portfolio
+    description: Portfolio data and holdings
+  - name: Classification
+    description: Classification schemes and rebalancing
+  - name: Tasks
+    description: Task status tracking
+
+paths:
+  # ========== Auth ==========
+  /auth/signup:
+    post:
+      tags: [Auth]
+      summary: Sign up a new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  minLength: 8
+                  example: SecurePassword123!
+                locale:
+                  type: string
+                  enum: [en, zh]
+                  description: Language preference (auto-detected if not provided)
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/signin:
+    post:
+      tags: [Auth]
+      summary: Sign in with email and password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Sign in successful
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [token, user]
+                properties:
+                  token:
+                    type: string
+                    description: JWT Bearer token
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current user profile
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/me/preferences:
+    patch:
+      tags: [Auth]
+      summary: Update user preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                locale:
+                  type: string
+                  enum: [en, zh]
+                display_currency:
+                  type: string
+                  example: USD
+      responses:
+        '200':
+          description: Preferences updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ========== Brokers ==========
+  /brokers:
+    get:
+      tags: [Brokers]
+      summary: List supported brokers
+      responses:
+        '200':
+          description: List of brokers
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Broker'
+
+  /brokers/connections:
+    get:
+      tags: [Brokers]
+      summary: List user's broker connections
+      responses:
+        '200':
+          description: List of connections
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BrokerConnection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /brokers/{brokerId}/connect:
+    post:
+      tags: [Brokers]
+      summary: Initiate broker connection
+      description: |
+        Creates an authorization task and returns a short-lived JWT token for Engine.
+        Frontend polls /tasks/{taskId} to track authorization progress.
+      parameters:
+        - in: path
+          name: brokerId
+          required: true
+          schema:
+            type: string
+          example: futu
+      responses:
+        '201':
+          description: Authorization task created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [task_id, token]
+                properties:
+                  task_id:
+                    type: string
+                    format: uuid
+                  token:
+                    type: string
+                    description: 5-minute JWT token for Engine
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Broker not found or not supported
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /brokers/connections/{connectionId}:
+    delete:
+      tags: [Brokers]
+      summary: Revoke a broker connection
+      parameters:
+        - in: path
+          name: connectionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Connection revoked
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Connection not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /brokers/connections/{connectionId}/refresh:
+    post:
+      tags: [Brokers]
+      summary: Trigger portfolio refresh for a connection
+      description: Creates a collection task. Frontend polls /tasks/{taskId} for progress.
+      parameters:
+        - in: path
+          name: connectionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201':
+          description: Collection task created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [task_id]
+                properties:
+                  task_id:
+                    type: string
+                    format: uuid
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Connection not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ========== Portfolio ==========
+  /portfolio:
+    get:
+      tags: [Portfolio]
+      summary: Get portfolio summary
+      description: Returns aggregated portfolio metrics (total value, returns, currency breakdown)
+      parameters:
+        - in: query
+          name: currency
+          schema:
+            type: string
+          description: Display currency (defaults to user's preference)
+          example: USD
+      responses:
+        '200':
+          description: Portfolio summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortfolioSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /portfolio/holdings:
+    get:
+      tags: [Portfolio]
+      summary: List all holdings
+      parameters:
+        - in: query
+          name: currency
+          schema:
+            type: string
+          description: Display currency for normalization
+        - in: query
+          name: connection_id
+          schema:
+            type: string
+            format: uuid
+          description: Filter by broker connection
+      responses:
+        '200':
+          description: List of holdings
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Holding'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /portfolio/holdings/{holdingId}:
+    get:
+      tags: [Portfolio]
+      summary: Get holding details
+      parameters:
+        - in: path
+          name: holdingId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Holding details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HoldingDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Holding not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ========== Classification ==========
+  /classification/schemes:
+    get:
+      tags: [Classification]
+      summary: List classification schemes
+      description: Returns preset schemes and user's custom schemes
+      responses:
+        '200':
+          description: List of schemes
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ClassificationScheme'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [Classification]
+      summary: Create custom classification scheme
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, categories]
+              properties:
+                name:
+                  type: string
+                  example: My Asset Classes
+                name_zh:
+                  type: string
+                  example: 我的资产类别
+                description:
+                  type: string
+                categories:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Category'
+      responses:
+        '201':
+          description: Scheme created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClassificationScheme'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /classification/schemes/{schemeId}/targets:
+    get:
+      tags: [Classification]
+      summary: Get target allocation for a scheme
+      parameters:
+        - in: path
+          name: schemeId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Target allocation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TargetAllocation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Scheme not found or no targets set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags: [Classification]
+      summary: Set target allocation for a scheme
+      description: Target weights MUST sum to exactly 100%
+      parameters:
+        - in: path
+          name: schemeId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [targets]
+              properties:
+                targets:
+                  type: object
+                  description: Map of category_id to weight percentage
+                  example:
+                    stocks: 60
+                    bonds: 30
+                    cash: 10
+      responses:
+        '200':
+          description: Targets updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TargetAllocation'
+        '400':
+          description: Validation error (e.g., weights don't sum to 100%)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Scheme not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /classification/schemes/{schemeId}/rebalance-preview:
+    get:
+      tags: [Classification]
+      summary: Get rebalance preview
+      description: Computes current allocation, drift, and suggested adjustments
+      parameters:
+        - in: path
+          name: schemeId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: currency
+          schema:
+            type: string
+          description: Display currency for calculations
+      responses:
+        '200':
+          description: Rebalance preview
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RebalancePreview'
+        '400':
+          description: No target allocation set for this scheme
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Scheme not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ========== Tasks ==========
+  /tasks/{taskId}:
+    get:
+      tags: [Tasks]
+      summary: Get task status
+      description: Used for polling authorization and collection task progress
+      parameters:
+        - in: path
+          name: taskId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Task status
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/AuthorizationTaskStatus'
+                  - $ref: '#/components/schemas/CollectionTaskStatus'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # ========== Auth & User ==========
+    User:
+      type: object
+      required: [id, email, locale, display_currency, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        display_name:
+          type: string
+          nullable: true
+        locale:
+          type: string
+          enum: [en, zh]
+        display_currency:
+          type: string
+          example: USD
+        created_at:
+          type: string
+          format: date-time
+        last_login_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    # ========== Brokers ==========
+    Broker:
+      type: object
+      required: [id, name, name_zh, logo_url, supported]
+      properties:
+        id:
+          type: string
+          example: futu
+        name:
+          type: string
+          example: Futu Securities
+        name_zh:
+          type: string
+          example: 富途证券
+        logo_url:
+          type: string
+          format: uri
+        supported:
+          type: boolean
+        requires_verification:
+          type: boolean
+          description: Whether broker typically requires human-in-the-loop
+
+    BrokerConnection:
+      type: object
+      required: [id, broker_id, status, authorized_at, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        broker_id:
+          type: string
+        broker:
+          $ref: '#/components/schemas/Broker'
+        status:
+          type: string
+          enum: [active, expired, revoked, failed]
+        authorized_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_refresh_at:
+          type: string
+          format: date-time
+          nullable: true
+        consecutive_failures:
+          type: integer
+          minimum: 0
+        last_error_message:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    # ========== Portfolio ==========
+    PortfolioSummary:
+      type: object
+      required: [total_value, currency, holdings_count, last_updated_at]
+      properties:
+        total_value:
+          type: string
+          description: Decimal string
+          example: "125430.56"
+        currency:
+          type: string
+          example: USD
+        holdings_count:
+          type: integer
+          example: 42
+        total_return:
+          type: string
+          nullable: true
+          description: Decimal percentage (e.g., "0.1234" for 12.34%)
+          example: "0.0823"
+        daily_return:
+          type: string
+          nullable: true
+          example: "0.0052"
+        last_updated_at:
+          type: string
+          format: date-time
+        currency_breakdown:
+          type: array
+          items:
+            type: object
+            required: [currency, value]
+            properties:
+              currency:
+                type: string
+              value:
+                type: string
+        has_stale_data:
+          type: boolean
+          description: Whether any holdings are >24h old
+
+    Holding:
+      type: object
+      required: [id, symbol, instrument_type, instrument_name, quantity, currency, market_value, last_updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        connection_id:
+          type: string
+          format: uuid
+        symbol:
+          type: string
+          example: AAPL
+        instrument_type:
+          type: string
+          enum: [stock, fund, bond, cash, crypto, other]
+        instrument_name:
+          type: string
+          example: Apple Inc.
+        instrument_name_zh:
+          type: string
+          nullable: true
+          example: 苹果公司
+        quantity:
+          type: string
+          example: "100"
+        currency:
+          type: string
+          example: USD
+        market_value:
+          type: string
+          example: "17523.50"
+        cost_basis:
+          type: string
+          nullable: true
+          example: "15000.00"
+        unrealized_pnl:
+          type: string
+          nullable: true
+          example: "2523.50"
+        daily_return:
+          type: string
+          nullable: true
+          example: "0.0231"
+        total_return:
+          type: string
+          nullable: true
+          example: "0.1682"
+        category:
+          type: string
+          nullable: true
+          example: US Stocks
+        last_updated_at:
+          type: string
+          format: date-time
+        is_stale:
+          type: boolean
+
+    HoldingDetail:
+      allOf:
+        - $ref: '#/components/schemas/Holding'
+        - type: object
+          properties:
+            historical_values:
+              type: array
+              items:
+                type: object
+                required: [date, value]
+                properties:
+                  date:
+                    type: string
+                    format: date
+                  value:
+                    type: string
+
+    # ========== Classification ==========
+    Category:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+          example: stocks
+        name:
+          type: string
+          example: Stocks
+        name_zh:
+          type: string
+          nullable: true
+          example: 股票
+        rules:
+          type: object
+          nullable: true
+          description: Auto-classification rules (future feature)
+
+    ClassificationScheme:
+      type: object
+      required: [id, name, categories, is_preset, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Asset Class
+        name_zh:
+          type: string
+          nullable: true
+          example: 资产类别
+        description:
+          type: string
+          nullable: true
+        is_preset:
+          type: boolean
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+        created_at:
+          type: string
+          format: date-time
+
+    TargetAllocation:
+      type: object
+      required: [id, scheme_id, targets, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        scheme_id:
+          type: string
+          format: uuid
+        targets:
+          type: object
+          description: Map of category_id to weight percentage
+          example:
+            stocks: 60
+            bonds: 30
+            cash: 10
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    RebalancePreview:
+      type: object
+      required: [id, scheme_id, current_allocation, drift, adjustments, portfolio_value, currency, computed_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        scheme_id:
+          type: string
+          format: uuid
+        current_allocation:
+          type: object
+          description: Map of category_id to current percentage
+          example:
+            stocks: 55.3
+            bonds: 32.1
+            cash: 12.6
+        drift:
+          type: object
+          description: Map of category_id to drift percentage (current - target)
+          example:
+            stocks: -4.7
+            bonds: 2.1
+            cash: 2.6
+        adjustments:
+          type: array
+          items:
+            type: object
+            required: [category, action, amount]
+            properties:
+              category:
+                type: string
+                example: stocks
+              action:
+                type: string
+                enum: [buy, sell]
+              amount:
+                type: string
+                description: Amount in display currency
+                example: "5892.35"
+        portfolio_value:
+          type: string
+          example: "125430.56"
+        currency:
+          type: string
+          example: USD
+        computed_at:
+          type: string
+          format: date-time
+
+    # ========== Tasks ==========
+    AuthorizationTaskStatus:
+      type: object
+      required: [id, type, broker_id, status, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [authorization]
+        broker_id:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_progress, paused, completed, failed, expired]
+        verification_url:
+          type: string
+          nullable: true
+          description: URL for user to complete verification (if status=paused)
+        verification_type:
+          type: string
+          nullable: true
+          enum: [captcha, 2fa, consent]
+        connection_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Created connection ID (if status=completed)
+        error_code:
+          type: string
+          nullable: true
+        error_message:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    CollectionTaskStatus:
+      type: object
+      required: [id, type, connection_id, status, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [collection]
+        connection_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, in_progress, completed, failed, partial]
+        holdings_collected:
+          type: integer
+          minimum: 0
+        holdings_failed:
+          type: integer
+          minimum: 0
+        partial_reason:
+          type: string
+          nullable: true
+        error_code:
+          type: string
+          nullable: true
+        error_message:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    # ========== Error ==========
+    Error:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+          example: validation_error
+        message:
+          type: string
+          example: Invalid request parameters
+        details:
+          type: object
+          nullable: true
+
+  responses:
+    BadRequest:
+      description: Bad request (validation error)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized (invalid or missing token)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
