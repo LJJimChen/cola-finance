@@ -25,16 +25,16 @@
 
 **Purpose**: Project initialization and monorepo structure
 
-- [ ] T001 Initialize pnpm workspace with monorepo configuration in root package.json and pnpm-workspace.yaml
-- [ ] T002 [P] Create apps/web/ directory structure with Vite + React + TypeScript configuration
-- [ ] T003 [P] Create apps/bff/ directory structure with Cloudflare Workers + Hono + TypeScript configuration
-- [ ] T004 [P] Create apps/engine/ directory structure with Node.js + Fastify + TypeScript configuration
-- [ ] T005 [P] Create packages/schema/ directory structure for shared types and contracts
-- [ ] T006 Configure TypeScript for monorepo with path mappings in root tsconfig.json
-- [ ] T007 [P] Setup ESLint and Prettier with monorepo configuration
-- [ ] T008 [P] Configure Vitest workspace configuration in vitest.workspace.ts
-- [ ] T009 [P] Setup Git pre-commit hooks with Husky for linting and type checking
-- [ ] T010 [P] Create .env.example files for apps/web/, apps/bff/, apps/engine/
+- [X] T001 Initialize pnpm workspace with monorepo configuration in root package.json and pnpm-workspace.yaml
+- [X] T002 [P] Create apps/web/ directory structure with Vite + React + TypeScript configuration
+- [X] T003 [P] Create apps/bff/ directory structure with Cloudflare Workers + Hono + TypeScript configuration
+- [X] T004 [P] Create apps/engine/ directory structure with Node.js + Fastify + TypeScript configuration
+- [X] T005 [P] Create packages/schema/ directory structure for shared types and contracts
+- [X] T006 Configure TypeScript for monorepo with path mappings in root tsconfig.json
+- [X] T007 [P] Setup ESLint and Prettier with monorepo configuration
+- [X] T008 [P] Configure Vitest workspace configuration in vitest.workspace.ts
+- [X] T009 [P] Setup Git pre-commit hooks with Husky for linting and type checking
+- [X] T010 [P] Create .env.example files for apps/web/, apps/bff/, apps/engine/
 
 ---
 
@@ -46,45 +46,45 @@
 
 ### Shared Schema (Cross-App Types)
 
-- [ ] T011 [P] Define domain entity types in packages/schema/src/entities/user.ts
-- [ ] T012 [P] Define domain entity types in packages/schema/src/entities/broker.ts
-- [ ] T013 [P] Define domain entity types in packages/schema/src/entities/holding.ts
-- [ ] T014 [P] Define task state types in packages/schema/src/tasks/authorization-task.ts
-- [ ] T015 [P] Define task state types in packages/schema/src/tasks/collection-task.ts
-- [ ] T016 Copy OpenAPI specs to packages/schema/src/api/ and configure type generation
+- [X] T011 [P] Define domain entity types in packages/schema/src/entities/user.ts
+- [X] T012 [P] Define domain entity types in packages/schema/src/entities/broker.ts
+- [X] T013 [P] Define domain entity types in packages/schema/src/entities/holding.ts
+- [X] T014 [P] Define task state types in packages/schema/src/tasks/authorization-task.ts
+- [X] T015 [P] Define task state types in packages/schema/src/tasks/collection-task.ts
+- [X] T016 Copy OpenAPI specs to packages/schema/src/api/ and configure type generation
 
 ### BFF Foundation
 
-- [ ] T017 Setup Drizzle ORM configuration in apps/bff/drizzle.config.ts for Cloudflare D1
-- [ ] T018 Create base database schema in apps/bff/src/db/schema/users.ts (User table)
-- [ ] T019 [P] Create base database schema in apps/bff/src/db/schema/brokers.ts (Broker table)
-- [ ] T020 [P] Create base database schema in apps/bff/src/db/schema/broker-connections.ts (BrokerConnection table)
-- [ ] T021 [P] Create base database schema in apps/bff/src/db/schema/exchange-rates.ts (ExchangeRate table with USD/CNY, HKD/CNY support)
-- [ ] T022 Generate initial migration with `drizzle-kit generate` in apps/bff/
-- [ ] T023 Create database seed script in apps/bff/src/db/seeds.ts (preset brokers and classification schemes)
-- [ ] T024 Setup Better Auth configuration in apps/bff/src/lib/auth.ts (email/password authentication)
-- [ ] T025 Implement JWT token generation utility in apps/bff/src/lib/jwt.ts (for Engine delegation tokens with 5-minute expiry)
-- [ ] T026 Create Hono app instance in apps/bff/src/index.ts with middleware pipeline (CORS, error handling, auth)
-- [ ] T027 [P] Implement authentication middleware in apps/bff/src/middleware/auth.ts (JWT verification for protected routes)
-- [ ] T028 [P] Implement error handling middleware in apps/bff/src/middleware/error.ts (structured error responses with error_code and message)
-- [ ] T029 [P] Implement validation middleware in apps/bff/src/middleware/validation.ts (zod schema validation)
+- [X] T017 Setup Drizzle ORM configuration in apps/bff/drizzle.config.ts for Cloudflare D1
+- [X] T018 Create base database schema in apps/bff/src/db/schema/users.ts (User table)
+- [X] T019 [P] Create base database schema in apps/bff/src/db/schema/brokers.ts (Broker table)
+- [X] T020 [P] Create base database schema in apps/bff/src/db/schema/broker-connections.ts (BrokerConnection table)
+- [X] T021 [P] Create base database schema in apps/bff/src/db/schema/exchange-rates.ts (ExchangeRate table with USD/CNY, HKD/CNY support)
+- [X] T022 Generate initial migration with `drizzle-kit generate` in apps/bff/
+- [X] T023 Create database seed script in apps/bff/src/db/seeds.ts (preset brokers and classification schemes)
+- [X] T024 Setup Better Auth configuration in apps/bff/src/lib/auth.ts (email/password authentication)
+- [X] T025 Implement JWT token generation utility in apps/bff/src/lib/jwt.ts (for Engine delegation tokens with 5-minute expiry)
+- [X] T026 Create Hono app instance in apps/bff/src/index.ts with middleware pipeline (CORS, error handling, auth)
+- [X] T027 [P] Implement authentication middleware in apps/bff/src/middleware/auth.ts (JWT verification for protected routes)
+- [X] T028 [P] Implement error handling middleware in apps/bff/src/middleware/error.ts (structured error responses with error_code and message)
+- [X] T029 [P] Implement validation middleware in apps/bff/src/middleware/validation.ts (zod schema validation)
 
 ### Engine Foundation
 
-- [ ] T030 Setup Fastify app instance in apps/engine/src/index.ts with JWT authentication plugin
-- [ ] T031 Implement JWT validation middleware in apps/engine/src/middleware/validate-delegation-token.ts (verify BFF-issued tokens)
-- [ ] T032 [P] Setup Playwright browser pool in apps/engine/src/lib/browser-pool.ts (persistent context management)
-- [ ] T033 [P] Create base broker adapter interface in apps/engine/src/brokers/adapter.interface.ts
-- [ ] T034 Create xstate configuration utilities in apps/engine/src/lib/state-machine-utils.ts (state persistence, error handling)
+- [X] T030 Setup Fastify app instance in apps/engine/src/index.ts with JWT authentication plugin
+- [X] T031 Implement JWT validation middleware in apps/engine/src/middleware/validate-delegation-token.ts (verify BFF-issued tokens)
+- [X] T032 [P] Setup Playwright browser pool in apps/engine/src/lib/browser-pool.ts (persistent context management)
+- [X] T033 [P] Create base broker adapter interface in apps/engine/src/brokers/adapter.interface.ts
+- [X] T034 Create xstate configuration utilities in apps/engine/src/lib/state-machine-utils.ts (state persistence, error handling)
 
 ### Frontend Foundation
 
-- [ ] T035 Setup TanStack Router configuration in apps/web/src/routes/__root.tsx
-- [ ] T036 Setup TanStack Query configuration in apps/web/src/lib/query-client.ts
-- [ ] T037 Generate TypeScript API client from OpenAPI spec using ky in apps/web/src/lib/api-client.ts
-- [ ] T038 [P] Configure Tailwind CSS with shadcn/ui in apps/web/tailwind.config.ts
-- [ ] T039 [P] Setup i18n configuration in apps/web/src/lib/i18n.ts (English and Chinese locales)
-- [ ] T040 Create authentication context in apps/web/src/lib/auth-context.tsx (JWT token management, auto-detect locale)
+- [X] T035 Setup TanStack Router configuration in apps/web/src/routes/__root.tsx
+- [X] T036 Setup TanStack Query configuration in apps/web/src/lib/query-client.ts
+- [X] T037 Generate TypeScript API client from OpenAPI spec using ky in apps/web/src/lib/api-client.ts
+- [X] T038 [P] Configure Tailwind CSS with shadcn/ui in apps/web/tailwind.config.ts
+- [X] T039 [P] Setup i18n configuration in apps/web/src/lib/i18n.ts (English and Chinese locales)
+- [X] T040 Create authentication context in apps/web/src/lib/auth-context.tsx (JWT token management, auto-detect locale)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
