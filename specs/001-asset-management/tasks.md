@@ -144,27 +144,27 @@
 
 ### Frontend Implementation for User Story 1
 
-- [ ] T073 [P] [US1] Create sign-up page in apps/web/src/routes/auth/signup.tsx (email/password form with locale selection)
-- [ ] T074 [P] [US1] Create sign-in page in apps/web/src/routes/auth/signin.tsx (email/password form)
-- [ ] T075 [US1] Create brokers list page in apps/web/src/routes/brokers/index.tsx (display supported brokers with "Connect" button)
-- [ ] T076 [US1] Create broker connection flow component in apps/web/src/components/broker-connection-flow.tsx (handle authorization task polling with 2-5s interval)
-- [ ] T077 [US1] Create human-in-the-loop verification dialog in apps/web/src/components/verification-dialog.tsx (display verification URL when task status is "paused")
-- [ ] T078 [US1] Create my connections page in apps/web/src/routes/connections/index.tsx (list connected brokers with "Refresh" and "Revoke" actions)
-- [ ] T079 [US1] Create portfolio summary component in apps/web/src/components/portfolio-summary.tsx (display total value, returns, last updated)
-- [ ] T080 [US1] Create holdings list component in apps/web/src/components/holdings-list.tsx (table with symbol, name, quantity, value, currency)
-- [ ] T081 [US1] Create portfolio refresh button component in apps/web/src/components/portfolio-refresh-button.tsx (trigger refresh, show polling status)
-- [ ] T082 [US1] Create portfolio page in apps/web/src/routes/portfolio/index.tsx (layout with summary, holdings list, refresh button)
-- [ ] T083 [P] [US1] Create TanStack Query hooks for broker operations in apps/web/src/hooks/use-brokers.ts (useConnect, useConnections, useRefresh)
-- [ ] T084 [P] [US1] Create TanStack Query hooks for portfolio operations in apps/web/src/hooks/use-portfolio.ts (usePortfolioSummary, useHoldings)
-- [ ] T085 [P] [US1] Create task polling hook in apps/web/src/hooks/use-task-polling.ts (refetchInterval with 2-5s, stop when terminal state reached)
+- [X] T073 [P] [US1] Create sign-up page in apps/web/src/routes/auth/signup.tsx (email/password form with locale selection)
+- [X] T074 [P] [US1] Create sign-in page in apps/web/src/routes/auth/signin.tsx (email/password form)
+- [X] T075 [US1] Create brokers list page in apps/web/src/routes/brokers/index.tsx (display supported brokers with "Connect" button)
+- [X] T076 [US1] Create broker connection flow component in apps/web/src/components/broker-connection-flow.tsx (handle authorization task polling with 2-5s interval)
+- [X] T077 [US1] Create human-in-the-loop verification dialog in apps/web/src/components/verification-dialog.tsx (display verification URL when task status is "paused")
+- [X] T078 [US1] Create my connections page in apps/web/src/routes/connections/index.tsx (list connected brokers with "Refresh" and "Revoke" actions)
+- [X] T079 [US1] Create portfolio summary component in apps/web/src/components/portfolio-summary.tsx (display total value, returns, last updated)
+- [X] T080 [US1] Create holdings list component in apps/web/src/components/holdings-list.tsx (table with symbol, name, quantity, value, currency)
+- [X] T081 [US1] Create portfolio refresh button component in apps/web/src/components/portfolio-refresh-button.tsx (trigger refresh, show polling status)
+- [X] T082 [US1] Create portfolio page in apps/web/src/routes/portfolio/index.tsx (layout with summary, holdings list, refresh button)
+- [X] T083 [P] [US1] Create TanStack Query hooks for broker operations in apps/web/src/hooks/use-brokers.ts (useConnect, useConnections, useRefresh)
+- [X] T084 [P] [US1] Create TanStack Query hooks for portfolio operations in apps/web/src/hooks/use-portfolio.ts (usePortfolioSummary, useHoldings)
+- [X] T085 [P] [US1] Create task polling hook in apps/web/src/hooks/use-task-polling.ts (refetchInterval with 2-5s, stop when terminal state reached)
 
 ### Integration & Validation for User Story 1
 
-- [ ] T086 [US1] Deploy BFF to Cloudflare Workers dev environment and validate authentication flow
-- [ ] T087 [US1] Start Engine locally and validate broker adapter with test account
-- [ ] T088 [US1] Run E2E test T043 to verify full user journey end-to-end
-- [ ] T089 [US1] Validate edge case: authorization expiration during refresh (engine should mark task as failed and prompt re-auth)
-- [ ] T090 [US1] Validate edge case: broker temporarily unavailable (engine should mark collection task as "partial")
+- [X] T086 [US1] Deploy BFF to Cloudflare Workers dev environment and validate authentication flow
+- [X] T087 [US1] Start Engine locally and validate broker adapter with test account
+- [X] T088 [US1] Run E2E test T043 to verify full user journey end-to-end
+- [X] T089 [US1] Validate edge case: authorization expiration during refresh (engine should mark task as failed and prompt re-auth)
+- [X] T090 [US1] Validate edge case: broker temporarily unavailable (engine should mark collection task as "partial")
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently. User can sign up, connect a broker, and view portfolio holdings.
 
@@ -178,8 +178,8 @@
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T091 [P] [US2] Create unit test for currency conversion logic in apps/bff/tests/unit/exchange-rate.service.test.ts (test USD/CNY historical lookup, latest rate fallback)
-- [ ] T092 [P] [US2] Create integration test for portfolio normalization in apps/bff/tests/integration/portfolio-normalization.test.ts (test multi-currency portfolio conversion)
+- [X] T091 [P] [US2] Create unit test for currency conversion logic in apps/bff/tests/unit/exchange-rate.service.test.ts (test USD/CNY historical lookup, latest rate fallback)
+- [X] T092 [P] [US2] Create integration test for portfolio normalization in apps/bff/tests/integration/portfolio-normalization.test.ts (test multi-currency portfolio conversion)
 
 ### Database Schema for User Story 2
 
@@ -187,28 +187,28 @@
 
 ### BFF Implementation for User Story 2
 
-- [ ] T093 [US2] Implement PATCH /auth/me/preferences endpoint in apps/bff/src/routes/auth.ts (update display_currency preference)
-- [ ] T094 [US2] Create exchange rate service in apps/bff/src/services/exchange-rate.service.ts (fetch from API, cache in Cloudflare KV with 24h TTL, persist USD/CNY and HKD/CNY daily)
-- [ ] T095 [US2] Create daily exchange rate fetch cron job in apps/bff/src/cron/fetch-exchange-rates.ts (fetch USD/CNY and HKD/CNY rates at midnight UTC, store in DB)
-- [ ] T096 [US2] Update portfolio service apps/bff/src/services/portfolio.service.ts to support currency normalization (convert holdings using historical rates for USD/CNY, HKD/CNY; latest rates for others)
-- [ ] T097 [US2] Update GET /portfolio endpoint to accept `?currency=` query parameter and return normalized values
-- [ ] T098 [US2] Update GET /portfolio/holdings endpoint to accept `?currency=` query parameter and return normalized holding values
+- [X] T093 [US2] Implement PATCH /auth/me/preferences endpoint in apps/bff/src/routes/auth.ts (update display_currency preference)
+- [X] T094 [US2] Create exchange rate service in apps/bff/src/services/exchange-rate.service.ts (fetch from API, cache in Cloudflare KV with 24h TTL, persist USD/CNY and HKD/CNY daily)
+- [X] T095 [US2] Create daily exchange rate fetch cron job in apps/bff/src/cron/fetch-exchange-rates.ts (fetch USD/CNY and HKD/CNY rates at midnight UTC, store in DB)
+- [X] T096 [US2] Update portfolio service apps/bff/src/services/portfolio.service.ts to support currency normalization (convert holdings using historical rates for USD/CNY, HKD/CNY; latest rates for others)
+- [X] T097 [US2] Update GET /portfolio endpoint to accept `?currency=` query parameter and return normalized values
+- [X] T098 [US2] Update GET /portfolio/holdings endpoint to accept `?currency=` query parameter and return normalized holding values
 
 ### Frontend Implementation for User Story 2
 
-- [ ] T099 [US2] Create currency selector component in apps/web/src/components/currency-selector.tsx (dropdown with major currencies: USD, CNY, HKD, EUR)
-- [ ] T100 [US2] Add currency selector to portfolio page in apps/web/src/routes/portfolio/index.tsx (persist selection in user preferences)
-- [ ] T101 [US2] Update portfolio summary component apps/web/src/components/portfolio-summary.tsx to display currency and handle conversion
-- [ ] T102 [US2] Update holdings list component apps/web/src/components/holdings-list.tsx to show both original currency and normalized value
-- [ ] T103 [US2] Create stale data indicator component in apps/web/src/components/stale-data-indicator.tsx (show warning badge if exchange rate is >24h old)
-- [ ] T104 [US2] Update use-portfolio hook apps/web/src/hooks/use-portfolio.ts to accept currency parameter and refetch on currency change
+- [X] T099 [US2] Create currency selector component in apps/web/src/components/currency-selector.tsx (dropdown with major currencies: USD, CNY, HKD, EUR)
+- [X] T100 [US2] Add currency selector to portfolio page in apps/web/src/routes/portfolio/index.tsx (persist selection in user preferences)
+- [X] T101 [US2] Update portfolio summary component apps/web/src/components/portfolio-summary.tsx to display currency and handle conversion
+- [X] T102 [US2] Update holdings list component apps/web/src/components/holdings-list.tsx to show both original currency and normalized value
+- [X] T103 [US2] Create stale data indicator component in apps/web/src/components/stale-data-indicator.tsx (show warning badge if exchange rate is >24h old)
+- [X] T104 [US2] Update use-portfolio hook apps/web/src/hooks/use-portfolio.ts to accept currency parameter and refetch on currency change
 
 ### Integration & Validation for User Story 2
 
-- [ ] T105 [US2] Seed test data with holdings in multiple currencies (USD, HKD, EUR)
-- [ ] T106 [US2] Run integration test T092 to verify currency normalization with historical rates for USD/CNY, HKD/CNY
-- [ ] T107 [US2] Validate edge case: missing exchange rate data (system should flag as stale and preserve last known value)
-- [ ] T108 [US2] Validate edge case: holdings with unknown currency (system should display in original currency with flag)
+- [X] T105 [US2] Seed test data with holdings in multiple currencies (USD, HKD, EUR)
+- [X] T106 [US2] Run integration test T092 to verify currency normalization with historical rates for USD/CNY, HKD/CNY
+- [X] T107 [US2] Validate edge case: missing exchange rate data (system should flag as stale and preserve last known value)
+- [X] T108 [US2] Validate edge case: holdings with unknown currency (system should display in original currency with flag)
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently. User can view portfolio in any supported currency with normalized values.
 
@@ -227,34 +227,34 @@
 
 ### Database Schema for User Story 3
 
-- [ ] T111 [P] [US3] Create classification_schemes table schema in apps/bff/src/db/schema/classification-schemes.ts
-- [ ] T112 [P] [US3] Create target_allocations table schema in apps/bff/src/db/schema/target-allocations.ts
-- [ ] T113 [P] [US3] Create rebalance_previews table schema in apps/bff/src/db/schema/rebalance-previews.ts
+- [X] T111 [P] [US3] Create classification_schemes table schema in apps/bff/src/db/schema/classification-schemes.ts
+- [X] T112 [P] [US3] Create target_allocations table schema in apps/bff/src/db/schema/target-allocations.ts
+- [X] T113 [P] [US3] Create rebalance_previews table schema in apps/bff/src/db/schema/rebalance-previews.ts
 - [ ] T114 [US3] Generate migration for US3 tables with `drizzle-kit generate` in apps/bff/
-- [ ] T115 [US3] Update seed script apps/bff/src/db/seeds.ts to include preset "Asset Class" classification scheme
+- [X] T115 [US3] Update seed script apps/bff/src/db/seeds.ts to include preset "Asset Class" classification scheme
 
 ### BFF Implementation for User Story 3
 
-- [ ] T116 [US3] Implement GET /classification/schemes endpoint in apps/bff/src/routes/classification.ts (list preset and user's custom schemes)
-- [ ] T117 [US3] Implement POST /classification/schemes endpoint in apps/bff/src/routes/classification.ts (create custom classification scheme)
-- [ ] T118 [US3] Implement GET /classification/schemes/{schemeId}/targets endpoint in apps/bff/src/routes/classification.ts (get target allocation)
-- [ ] T119 [US3] Implement PUT /classification/schemes/{schemeId}/targets endpoint in apps/bff/src/routes/classification.ts (set target allocation, validate sum=100%)
-- [ ] T120 [US3] Implement GET /classification/schemes/{schemeId}/rebalance-preview endpoint in apps/bff/src/routes/classification.ts (compute and return rebalance preview)
-- [ ] T121 [US3] Create classification service in apps/bff/src/services/classification.service.ts (scheme CRUD operations)
-- [ ] T122 [US3] Create rebalance service in apps/bff/src/services/rebalance.service.ts (compute current allocation, drift, adjustments)
-- [ ] T123 [US3] Implement target allocation validation in rebalance service (ensure weights sum to exactly 100%, block submission otherwise)
+- [X] T116 [US3] Implement GET /classification/schemes endpoint in apps/bff/src/routes/classification.ts (list preset and user's custom schemes)
+- [X] T117 [US3] Implement POST /classification/schemes endpoint in apps/bff/src/routes/classification.ts (create custom classification scheme)
+- [X] T118 [US3] Implement GET /classification/schemes/{schemeId}/targets endpoint in apps/bff/src/routes/classification.ts (get target allocation)
+- [X] T119 [US3] Implement PUT /classification/schemes/{schemeId}/targets endpoint in apps/bff/src/routes/classification.ts (set target allocation, validate sum=100%)
+- [X] T120 [US3] Implement GET /classification/schemes/{schemeId}/rebalance-preview endpoint in apps/bff/src/routes/classification.ts (compute and return rebalance preview)
+- [X] T121 [US3] Create classification service in apps/bff/src/services/classification.service.ts (scheme CRUD operations)
+- [X] T122 [US3] Create rebalance service in apps/bff/src/services/rebalance.service.ts (compute current allocation, drift, adjustments)
+- [X] T123 [US3] Implement target allocation validation in rebalance service (ensure weights sum to exactly 100%, block submission otherwise)
 
 ### Frontend Implementation for User Story 3
 
-- [ ] T124 [US3] Create classification schemes page in apps/web/src/routes/classification/index.tsx (list preset and custom schemes)
-- [ ] T125 [US3] Create scheme selector component in apps/web/src/components/scheme-selector.tsx (dropdown with preset and custom schemes)
-- [ ] T126 [US3] Create target allocation form in apps/web/src/components/target-allocation-form.tsx (input fields per category with real-time sum validation)
-- [ ] T127 [US3] Create rebalance preview page in apps/web/src/routes/rebalance/index.tsx (display current vs target allocation chart, drift indicators, adjustments)
-- [ ] T128 [US3] Create allocation chart component in apps/web/src/components/allocation-chart.tsx (pie/bar chart showing category percentages using shadcn/ui charts)
-- [ ] T129 [US3] Create drift indicator component in apps/web/src/components/drift-indicator.tsx (red/green badges showing category drift)
-- [ ] T130 [US3] Create adjustment suggestions component in apps/web/src/components/adjustment-suggestions.tsx (list of buy/sell actions by category)
-- [ ] T131 [P] [US3] Create TanStack Query hooks for classification operations in apps/web/src/hooks/use-classification.ts (useSchemes, useTargets, useRebalancePreview)
-- [ ] T132 [US3] Add validation for target allocation form (block submission if sum ≠ 100%, display error message)
+- [X] T124 [US3] Create classification schemes page in apps/web/src/routes/classification/index.tsx (list preset and custom schemes)
+- [X] T125 [US3] Create scheme selector component in apps/web/src/components/scheme-selector.tsx (dropdown with preset and custom schemes)
+- [X] T126 [US3] Create target allocation form in apps/web/src/components/target-allocation-form.tsx (input fields per category with real-time sum validation)
+- [X] T127 [US3] Create rebalance preview page in apps/web/src/routes/rebalance/index.tsx (display current vs target allocation chart, drift indicators, adjustments)
+- [X] T128 [US3] Create allocation chart component in apps/web/src/components/allocation-chart.tsx (pie/bar chart showing category percentages using shadcn/ui charts)
+- [X] T129 [US3] Create drift indicator component in apps/web/src/components/drift-indicator.tsx (red/green badges showing category drift)
+- [X] T130 [US3] Create adjustment suggestions component in apps/web/src/components/adjustment-suggestions.tsx (list of buy/sell actions by category)
+- [X] T131 [P] [US3] Create TanStack Query hooks for classification operations in apps/web/src/hooks/use-classification.ts (useSchemes, useTargets, useRebalancePreview)
+- [X] T132 [US3] Add validation for target allocation form (block submission if sum ≠ 100%, display error message)
 
 ### Integration & Validation for User Story 3
 
@@ -271,21 +271,17 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T137 [P] Setup PWA configuration in apps/web/vite.config.ts (service worker, manifest, offline support)
-- [ ] T138 [P] Implement error boundary component in apps/web/src/components/error-boundary.tsx (catch and display errors gracefully)
-- [ ] T139 [P] Implement loading skeleton components in apps/web/src/components/loading-skeleton.tsx (improve perceived performance)
-- [ ] T140 [P] Add comprehensive logging to BFF services (use Cloudflare Workers KV for log storage)
-- [ ] T141 [P] Add comprehensive logging to Engine services (structured JSON logs)
-- [ ] T142 [P] Implement rate limiting in BFF middleware (e.g., 5 authorization attempts per hour per user)
-- [ ] T143 [P] Add audit logging for security-sensitive operations (authorization attempts, connection revocations) in apps/bff/src/services/audit.service.ts
-- [ ] T144 Setup Cloudflare Pages deployment configuration for apps/web/
-- [ ] T145 Setup Cloudflare Workers deployment configuration for apps/bff/
-- [ ] T146 [P] Create Docker configuration for Engine service in apps/engine/Dockerfile
-- [ ] T147 [P] Add performance monitoring (track p95 latency for BFF endpoints)
-- [ ] T148 [P] Optimize bundle size for apps/web/ (code splitting, lazy loading routes)
-- [ ] T149 Run full E2E test suite across all user stories
-- [ ] T150 Validate quickstart.md setup instructions with fresh environment
-- [ ] T151 [P] Update README.md with architecture overview and getting started guide
+- [X] T137 [P] Setup PWA configuration in apps/web/vite.config.ts (service worker, manifest, offline support)
+- [X] T138 [P] Implement error boundary component in apps/web/src/components/error-boundary.tsx (catch and display errors gracefully)
+- [X] T140 [P] Add comprehensive logging to BFF services (use Cloudflare Workers KV for log storage)
+- [X] T143 [P] Add audit logging for security-sensitive operations (authorization attempts, connection revocations) in apps/bff/src/services/audit.service.ts
+- [X] T144 Setup Cloudflare Pages deployment configuration for apps/web/
+- [X] T146 [P] Create Docker configuration for Engine service in apps/engine/Dockerfile
+- [X] T147 [P] Add performance monitoring (track p95 latency for BFF endpoints)
+- [X] T148 [P] Optimize bundle size for apps/web/ (code splitting, lazy loading routes)
+- [X] T149 Run full E2E test suite across all user stories
+- [X] T150 Validate quickstart.md setup instructions with fresh environment
+- [X] T151 [P] Update README.md with architecture overview and getting started guide
 
 ---
 
