@@ -100,17 +100,17 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T041 [P] [US1] Create integration test for broker authorization flow in apps/bff/tests/integration/auth-flow.test.ts (test JWT token generation, task creation)
-- [ ] T042 [P] [US1] Create integration test for portfolio refresh flow in apps/bff/tests/integration/collection-flow.test.ts (test task status polling)
-- [ ] T043 [P] [US1] Create E2E test for full user journey in apps/web/tests/e2e/broker-connection.spec.ts (sign up, connect broker, view portfolio)
+- [X] T041 [P] [US1] Create integration test for broker authorization flow in apps/bff/tests/integration/auth-flow.test.ts (test JWT token generation, task creation)
+- [X] T042 [P] [US1] Create integration test for portfolio refresh flow in apps/bff/tests/integration/collection-flow.test.ts (test task status polling)
+- [X] T043 [P] [US1] Create E2E test for full user journey in apps/web/tests/e2e/broker-connection.spec.ts (sign up, connect broker, view portfolio)
 
 ### Database Schema for User Story 1
 
-- [ ] T044 [P] [US1] Create authorization_tasks table schema in apps/bff/src/db/schema/authorization-tasks.ts
-- [ ] T045 [P] [US1] Create collection_tasks table schema in apps/bff/src/db/schema/collection-tasks.ts
-- [ ] T046 [P] [US1] Create holdings table schema in apps/bff/src/db/schema/holdings.ts
-- [ ] T047 [P] [US1] Create holding_snapshots table schema in apps/bff/src/db/schema/holding-snapshots.ts
-- [ ] T048 [US1] Generate migration for US1 tables with `drizzle-kit generate` in apps/bff/
+- [X] T044 [P] [US1] Create authorization_tasks table schema in apps/bff/src/db/schema/authorization-tasks.ts
+- [X] T045 [P] [US1] Create collection_tasks table schema in apps/bff/src/db/schema/collection-tasks.ts
+- [X] T046 [P] [US1] Create holdings table schema in apps/bff/src/db/schema/holdings.ts
+- [X] T047 [P] [US1] Create holding_snapshots table schema in apps/bff/src/db/schema/holding-snapshots.ts
+- [X] T048 [US1] Generate migration for US1 tables with `drizzle-kit generate` in apps/bff/
 
 ### BFF Implementation for User Story 1
 
