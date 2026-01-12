@@ -1,29 +1,45 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { RefreshCw, Trash2 } from 'lucide-react';
-import { useConnections } from '@/hooks/use-brokers';
+import React from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { RefreshCw, Trash2 } from 'lucide-react'
+import { useBrokerOperations } from '@/hooks/use-brokers'
+
+type Connection = {
+  id: string
+  status: 'active' | 'expired' | 'revoked' | 'failed'
+  authorized_at: string
+  expires_at: string | null
+  last_refresh_at: string | null
+  last_error_message: string | null
+  broker: {
+    name: string
+    name_zh: string
+  }
+}
 
 export const MyConnectionsPage: React.FC = () => {
-  const { connections, isLoading, error, refreshConnection, revokeConnection } = useConnections();
+  const { connections, isLoadingConnections, errorConnections, refreshConnection, revokeConnection } =
+    useBrokerOperations()
 
-  if (isLoading) {
+  if (isLoadingConnections) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
       </div>
-    );
+    )
   }
 
-  if (error) {
+  if (errorConnections) {
+    const message =
+      errorConnections instanceof Error ? errorConnections.message : String(errorConnections)
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-          <span className="block sm:inline">Error loading connections: {error}</span>
+          <span className="block sm:inline">Error loading connections: {message}</span>
         </div>
       </div>
-    );
+    )
   }
 
   const getConnectionStatusColor = (status: string) => {
@@ -39,7 +55,9 @@ export const MyConnectionsPage: React.FC = () => {
       default:
         return 'bg-gray-500';
     }
-  };
+  }
+
+  const list = (connections ?? []) as Connection[]
 
   return (
     <div className="container mx-auto py-8">
@@ -49,9 +67,9 @@ export const MyConnectionsPage: React.FC = () => {
           Manage your connected broker accounts
         </p>
 
-        {connections && connections.length > 0 ? (
+        {list.length > 0 ? (
           <div className="space-y-6">
-            {connections.map((connection) => (
+            {list.map((connection) => (
               <Card key={connection.id}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <div>
@@ -112,16 +130,16 @@ export const MyConnectionsPage: React.FC = () => {
         ) : (
           <Card>
             <CardContent className="pt-8 text-center">
-              <p className="text-gray-600">You don't have any broker connections yet.</p>
-              <Button className="mt-4">
-                <a href="/brokers">Connect a Broker</a>
+              <p className="text-gray-600">You do not have any broker connections yet.</p>
+              <Button className="mt-4" onClick={() => (window.location.href = '/brokers')}>
+                Connect a Broker
               </Button>
             </CardContent>
           </Card>
         )}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default MyConnectionsPage;
+export default MyConnectionsPage

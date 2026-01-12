@@ -28,9 +28,10 @@ interface AuthContextValue {
   user: UserPublic | null
   token: string | null
   isLoading: boolean
-  signin: (email: string, password: string) => Promise<void>
-  signup: (email: string, password: string) => Promise<void>
+  signIn: (email: string, password: string) => Promise<void>
+  signUp: (email: string, password: string, displayName?: string, locale?: 'en' | 'zh') => Promise<void>
   signout: () => void
+  updateUserPreferences: (updates: Partial<Pick<UserPublic, 'display_currency' | 'locale' | 'display_name'>>) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -60,19 +61,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /**
    * Sign in with email and password
    */
-  const signin = async (email: string, password: string) => {
-    // TODO: Implement signin API call in Phase 3
-    console.log('Signin:', { email, password })
+  const signIn = async (_email: string, _password: string) => {
     throw new Error('Not implemented')
   }
 
   /**
    * Sign up with email and password
    */
-  const signup = async (email: string, password: string) => {
-    // TODO: Implement signup API call in Phase 3
-    console.log('Signup:', { email, password })
+  const signUp = async (_email: string, _password: string, _displayName?: string, _locale?: 'en' | 'zh') => {
     throw new Error('Not implemented')
+  }
+
+  const updateUserPreferences = async (
+    updates: Partial<Pick<UserPublic, 'display_currency' | 'locale' | 'display_name'>>
+  ) => {
+    setUser((prev) => {
+      if (!prev) return prev
+      return { ...prev, ...updates }
+    })
   }
 
   /**
@@ -90,9 +96,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         token,
         isLoading,
-        signin,
-        signup,
+        signIn,
+        signUp,
         signout,
+        updateUserPreferences,
       }}
     >
       {children}

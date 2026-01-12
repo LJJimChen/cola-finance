@@ -38,7 +38,9 @@ export async function authorizationRoutes(fastify: FastifyInstance) {
    * POST /authorize
    * Start the authorization process for a broker
    */
-  fastify.post('/authorize', 
+  fastify.post(
+    '/authorize',
+    { schema: authorizeSchema },
     async (request: FastifyRequest<{ Body: { taskId: string; brokerId: string }; Headers: { authorization: string } }>, reply: FastifyReply) => {
       try {
         // Extract and verify the delegation token
@@ -121,7 +123,9 @@ export async function authorizationRoutes(fastify: FastifyInstance) {
    * POST /authorize/{taskId}/resume
    * Resume a paused authorization after user verification
    */
-  fastify.post('/authorize/:taskId/resume',
+  fastify.post(
+    '/authorize/:taskId/resume',
+    { schema: resumeSchema },
     async (request: FastifyRequest<{ Params: { taskId: string }; Headers: { authorization: string } }>, reply: FastifyReply) => {
       try {
         // Extract and verify the delegation token

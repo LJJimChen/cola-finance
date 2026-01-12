@@ -10,11 +10,11 @@
  * - Updates task status in database
  * - Persists holdings data via BFF callback or direct DB write
  */
-import { Interpreter } from 'xstate'
+import { createActor } from 'xstate'
 import { collectionMachine } from '../tasks/collection.machine'
 import { createBrokerAdapter } from '../brokers/adapter.factory'
-import { chromium } from 'playwright'
-import { Holding } from '../../../../schema/src/entities/holding'
+import { chromium, type Page } from 'playwright'
+import type { Holding } from '@cola-finance/schema'
 
 // Define input for executing a collection task
 interface ExecuteCollectionTaskInput {
@@ -69,7 +69,7 @@ export class CollectionOrchestrator {
       // Create a browser context for this task
       const browser = await chromium.launch({ headless: true })
       const context = await browser.newContext()
-      const page = await context.newPage()
+      const page: Page = await context.newPage()
 
       try {
         // Determine the brokerId from the connectionId
@@ -86,104 +86,109 @@ export class CollectionOrchestrator {
           console.log(`Restoring state for collection task ${taskId}`)
         }
 
-        // Interpret the machine
-        const service: Interpreter<any> = {} as Interpreter<any> // Placeholder - would use interpret() in real implementation
+        const service = createActor(restoredMachine)
+        service.start()
 
-        // Start the collection process with the adapter
         const collectionResult = await adapter.collectHoldings(connectionId)
 
+        const holdingsCollected = collectionResult.holdings.length
+        const holdingsFailed = collectionResult.failed_holdings.length
+
         // Update progress as holdings are collected
-        if (collectionResult.progress) {
-          service.send({
-            type: 'COLLECTION_IN_PROGRESS',
-            holdingsCollected: collectionResult.progress.holdingsCollected,
-            holdingsFailed: collectionResult.progress.holdingsFailed
-          })
+        service.send({
+          type: 'COLLECTION_IN_PROGRESS',
+          holdingsCollected,
+          holdingsFailed,
+        })
 
-          // Update the task in the database with progress
-          await this.updateTaskInDatabase(taskId, {
-            status: 'in_progress',
-            holdingsCollected: collectionResult.progress.holdingsCollected,
-            holdingsFailed: collectionResult.progress.holdingsFailed,
-            stateSnapshot: JSON.stringify(service.state) // Save current state
-          })
-        }
+        const progressSnapshot = service.getSnapshot()
 
-        if (collectionResult.success) {
-          // Persist the collected holdings
+        await this.updateTaskInDatabase(taskId, {
+          status: 'in_progress',
+          holdingsCollected,
+          holdingsFailed,
+          stateSnapshot: JSON.stringify({ value: progressSnapshot.value, context: progressSnapshot.context }),
+        })
+
+        if (!collectionResult.partial && holdingsFailed === 0) {
           await this.persistHoldings(userId, connectionId, collectionResult.holdings)
 
-          // Transition to completed state
           service.send({
             type: 'COLLECTION_COMPLETED',
-            holdingsCollected: collectionResult.holdings.length
+            holdingsCollected,
           })
 
-          // Update the task in the database
+          const snapshot = service.getSnapshot()
+
           await this.updateTaskInDatabase(taskId, {
             status: 'completed',
-            holdingsCollected: collectionResult.holdings.length,
-            holdingsFailed: collectionResult.holdingsFailed || 0,
-            stateSnapshot: JSON.stringify(service.state) // Save final state
+            holdingsCollected,
+            holdingsFailed,
+            stateSnapshot: JSON.stringify({ value: snapshot.value, context: snapshot.context }),
           })
 
           return {
             status: 'completed',
-            holdingsCollected: collectionResult.holdings.length,
-            holdingsFailed: collectionResult.holdingsFailed || 0
+            holdingsCollected,
+            holdingsFailed,
           }
-        } else if (collectionResult.partialSuccess) {
-          // Persist the collected holdings (the ones that succeeded)
+        }
+
+        if (collectionResult.partial) {
           await this.persistHoldings(userId, connectionId, collectionResult.holdings)
 
-          // Transition to partial state
           service.send({
             type: 'COLLECTION_PARTIAL',
-            holdingsCollected: collectionResult.holdings.length,
-            holdingsFailed: collectionResult.holdingsFailed || 0,
-            partialReason: collectionResult.partialReason
+            holdingsCollected,
+            holdingsFailed,
+            partialReason: 'Some holdings failed to collect',
           })
 
-          // Update the task in the database
+          const snapshot = service.getSnapshot()
+
           await this.updateTaskInDatabase(taskId, {
             status: 'partial',
-            holdingsCollected: collectionResult.holdings.length,
-            holdingsFailed: collectionResult.holdingsFailed || 0,
-            partialReason: collectionResult.partialReason,
-            stateSnapshot: JSON.stringify(service.state) // Save final state
+            holdingsCollected,
+            holdingsFailed,
+            partialReason: 'Some holdings failed to collect',
+            stateSnapshot: JSON.stringify({ value: snapshot.value, context: snapshot.context }),
           })
 
           return {
             status: 'partial',
-            holdingsCollected: collectionResult.holdings.length,
-            holdingsFailed: collectionResult.holdingsFailed || 0,
-            partialReason: collectionResult.partialReason
+            holdingsCollected,
+            holdingsFailed,
+            partialReason: 'Some holdings failed to collect',
           }
-        } else {
-          // Transition to failed state
-          service.send({
-            type: 'COLLECTION_FAILED',
-            errorCode: collectionResult.errorCode || 'COLLECTION_ERROR',
-            errorMessage: collectionResult.errorMessage || 'Collection failed'
-          })
+        }
 
-          // Update the task in the database
-          await this.updateTaskInDatabase(taskId, {
-            status: 'failed',
-            holdingsCollected: 0,
-            holdingsFailed: collectionResult.holdingsFailed || collectionResult.holdings.length || 0,
-            errorCode: collectionResult.errorCode || 'COLLECTION_ERROR',
-            errorMessage: collectionResult.errorMessage || 'Collection failed',
-            stateSnapshot: JSON.stringify(service.state) // Save final state
-          })
+        const firstError = collectionResult.failed_holdings[0]
+        const errorCode = firstError?.error_code ?? 'COLLECTION_ERROR'
+        const errorMessage = firstError?.error_message ?? 'Collection failed'
 
-          return {
-            status: 'failed',
-            holdingsCollected: 0,
-            holdingsFailed: collectionResult.holdingsFailed || collectionResult.holdings.length || 0,
-            errorCode: collectionResult.errorCode || 'COLLECTION_ERROR',
-            errorMessage: collectionResult.errorMessage || 'Collection failed'
-          }
+        service.send({
+          type: 'COLLECTION_FAILED',
+          errorCode,
+          errorMessage,
+        })
+
+        const snapshot = service.getSnapshot()
+
+        await this.updateTaskInDatabase(taskId, {
+          status: 'failed',
+          holdingsCollected,
+          holdingsFailed,
+          errorCode,
+          errorMessage,
+          stateSnapshot: JSON.stringify({ value: snapshot.value, context: snapshot.context }),
+        })
+
+        return {
+          status: 'failed',
+          holdingsCollected,
+          holdingsFailed,
+          errorCode,
+          errorMessage,
         }
       } finally {
         // Close the browser regardless of success or failure

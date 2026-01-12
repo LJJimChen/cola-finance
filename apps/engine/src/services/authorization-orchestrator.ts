@@ -10,12 +10,11 @@
  * - Updates task status in database
  * - Handles human-in-the-loop verification requirements
  */
-import { Interpreter } from 'xstate'
+import { createActor } from 'xstate'
 import { authorizationMachine } from '../tasks/authorization.machine'
 import { createBrokerAdapter } from '../brokers/adapter.factory'
 import { ulid } from 'ulidx'
-import { chromium, Page } from 'playwright'
-import { BrokerConnectionStatus } from '../../../../schema/src/entities/broker-connection'
+import { chromium, type Page } from 'playwright'
 
 // Define input for executing an authorization task
 interface ExecuteAuthorizationTaskInput {
@@ -36,6 +35,8 @@ interface AuthorizationTaskResult {
   verificationUrl?: string
   verificationType?: 'captcha' | '2fa' | 'consent'
   connectionId?: string
+  errorCode?: string
+  errorMessage?: string
 }
 
 // Define the authorization task data structure
@@ -74,7 +75,7 @@ export class AuthorizationOrchestrator {
       // Create a browser context for this task
       const browser = await chromium.launch({ headless: true })
       const context = await browser.newContext()
-      const page = await context.newPage()
+      const page: Page = await context.newPage()
 
       try {
         // Create the broker adapter for the specified broker
@@ -88,75 +89,80 @@ export class AuthorizationOrchestrator {
           console.log(`Restoring state for task ${taskId}`)
         }
 
-        // Interpret the machine
-        const service: Interpreter<any> = {} as Interpreter<any> // Placeholder - would use interpret() in real implementation
+        const service = createActor(restoredMachine)
+        service.start()
 
-        // Start the authorization process with the adapter
         const authResult = await adapter.authorize()
 
         // Based on the result, transition the state machine
-        if (authResult.requiresVerification) {
+        if (authResult.status === 'needs_verification') {
           // Transition to paused state
           service.send({
             type: 'REQUIRES_VERIFICATION',
-            verificationUrl: authResult.verificationUrl,
-            verificationType: authResult.verificationType
+            verificationUrl: authResult.verification_url,
+            verificationType: authResult.verification_type,
           })
+
+          const snapshot = service.getSnapshot()
 
           // Update the task in the database
           await this.updateTaskInDatabase(taskId, {
             status: 'paused',
-            verificationUrl: authResult.verificationUrl,
-            verificationType: authResult.verificationType,
-            stateSnapshot: JSON.stringify(service.state) // Save current state
+            verificationUrl: authResult.verification_url,
+            verificationType: authResult.verification_type,
+            stateSnapshot: JSON.stringify({ value: snapshot.value, context: snapshot.context }),
           })
 
           return {
             status: 'paused',
-            verificationUrl: authResult.verificationUrl,
-            verificationType: authResult.verificationType
+            verificationUrl: authResult.verification_url,
+            verificationType: authResult.verification_type,
           }
-        } else if (authResult.success) {
+        } else if (authResult.status === 'success') {
           // Create a new broker connection record
           const connectionId = await this.createBrokerConnection(userId, brokerId)
 
           // Transition to completed state
           service.send({
             type: 'AUTHORIZATION_COMPLETED',
-            connectionId
+            connectionId,
           })
+
+          const snapshot = service.getSnapshot()
 
           // Update the task in the database
           await this.updateTaskInDatabase(taskId, {
             status: 'completed',
             connectionId,
-            stateSnapshot: JSON.stringify(service.state) // Save final state
+            stateSnapshot: JSON.stringify({ value: snapshot.value, context: snapshot.context }),
           })
 
           return {
             status: 'completed',
-            connectionId
+            connectionId,
           }
         } else {
           // Transition to failed state
           service.send({
             type: 'AUTHORIZATION_FAILED',
-            errorCode: authResult.errorCode || 'AUTHORIZATION_ERROR',
-            errorMessage: authResult.errorMessage || 'Authorization failed'
+            errorCode: authResult.error_code || 'AUTHORIZATION_ERROR',
+            errorMessage: authResult.error_message || 'Authorization failed',
           })
+
+          const snapshot = service.getSnapshot()
 
           // Update the task in the database
           await this.updateTaskInDatabase(taskId, {
             status: 'failed',
-            errorCode: authResult.errorCode || 'AUTHORIZATION_ERROR',
-            errorMessage: authResult.errorMessage || 'Authorization failed',
-            stateSnapshot: JSON.stringify(service.state) // Save final state
+            errorCode: authResult.error_code || 'AUTHORIZATION_ERROR',
+            errorMessage: authResult.error_message || 'Authorization failed',
+            stateSnapshot: JSON.stringify({ value: snapshot.value, context: snapshot.context }),
           })
 
           return {
             status: 'failed',
-            errorCode: authResult.errorCode || 'AUTHORIZATION_ERROR',
-            errorMessage: authResult.errorMessage || 'Authorization failed'
+            errorCode: authResult.error_code || 'AUTHORIZATION_ERROR',
+            errorMessage: authResult.error_message || 'Authorization failed',
           }
         }
       } finally {
@@ -170,13 +176,13 @@ export class AuthorizationOrchestrator {
       await this.updateTaskInDatabase(taskId, {
         status: 'failed',
         errorCode: 'EXECUTION_ERROR',
-        errorMessage: error instanceof Error ? error.message : 'Unknown error during execution'
+        errorMessage: error instanceof Error ? error.message : 'Unknown error during execution',
       })
 
       return {
         status: 'failed',
         errorCode: 'EXECUTION_ERROR',
-        errorMessage: error instanceof Error ? error.message : 'Unknown error during execution'
+        errorMessage: error instanceof Error ? error.message : 'Unknown error during execution',
       }
     }
   }
@@ -206,7 +212,7 @@ export class AuthorizationOrchestrator {
       // Create a browser context for this task
       const browser = await chromium.launch({ headless: true })
       const context = await browser.newContext()
-      const page = await context.newPage()
+      const page: Page = await context.newPage()
 
       try {
         // Create the broker adapter for the broker in the task
@@ -219,8 +225,8 @@ export class AuthorizationOrchestrator {
           console.log(`Restoring state for task ${taskId}`)
         }
 
-        // Interpret the machine
-        const service: Interpreter<any> = {} as Interpreter<any> // Placeholder
+        const service = createActor(restoredMachine)
+        service.start()
 
         // Resume the authorization process with the adapter
         const resumeResult = await adapter.completeAuthorization()
@@ -228,47 +234,51 @@ export class AuthorizationOrchestrator {
         // Transition to in-progress state first
         service.send({ type: 'RESUME_AFTER_VERIFICATION' })
 
-        if (resumeResult.success) {
+        if (resumeResult.status === 'success') {
           // Create a new broker connection record
           const connectionId = await this.createBrokerConnection(userId, taskData.brokerId)
 
           // Transition to completed state
           service.send({
             type: 'AUTHORIZATION_COMPLETED',
-            connectionId
+            connectionId,
           })
+
+          const snapshot = service.getSnapshot()
 
           // Update the task in the database
           await this.updateTaskInDatabase(taskId, {
             status: 'completed',
             connectionId,
-            stateSnapshot: JSON.stringify(service.state) // Save final state
+            stateSnapshot: JSON.stringify({ value: snapshot.value, context: snapshot.context }),
           })
 
           return {
             status: 'completed',
-            connectionId
+            connectionId,
           }
         } else {
           // Transition to failed state
           service.send({
             type: 'AUTHORIZATION_FAILED',
-            errorCode: resumeResult.errorCode || 'RESUME_ERROR',
-            errorMessage: resumeResult.errorMessage || 'Resume authorization failed'
+            errorCode: resumeResult.error_code || 'RESUME_ERROR',
+            errorMessage: resumeResult.error_message || 'Resume authorization failed',
           })
+
+          const snapshot = service.getSnapshot()
 
           // Update the task in the database
           await this.updateTaskInDatabase(taskId, {
             status: 'failed',
-            errorCode: resumeResult.errorCode || 'RESUME_ERROR',
-            errorMessage: resumeResult.errorMessage || 'Resume authorization failed',
-            stateSnapshot: JSON.stringify(service.state) // Save final state
+            errorCode: resumeResult.error_code || 'RESUME_ERROR',
+            errorMessage: resumeResult.error_message || 'Resume authorization failed',
+            stateSnapshot: JSON.stringify({ value: snapshot.value, context: snapshot.context }),
           })
 
           return {
             status: 'failed',
-            errorCode: resumeResult.errorCode || 'RESUME_ERROR',
-            errorMessage: resumeResult.errorMessage || 'Resume authorization failed'
+            errorCode: resumeResult.error_code || 'RESUME_ERROR',
+            errorMessage: resumeResult.error_message || 'Resume authorization failed',
           }
         }
       } finally {
@@ -282,13 +292,13 @@ export class AuthorizationOrchestrator {
       await this.updateTaskInDatabase(taskId, {
         status: 'failed',
         errorCode: 'RESUME_EXECUTION_ERROR',
-        errorMessage: error instanceof Error ? error.message : 'Unknown error during resume execution'
+        errorMessage: error instanceof Error ? error.message : 'Unknown error during resume execution',
       })
 
       return {
         status: 'failed',
         errorCode: 'RESUME_EXECUTION_ERROR',
-        errorMessage: error instanceof Error ? error.message : 'Unknown error during resume execution'
+        errorMessage: error instanceof Error ? error.message : 'Unknown error during resume execution',
       }
     }
   }

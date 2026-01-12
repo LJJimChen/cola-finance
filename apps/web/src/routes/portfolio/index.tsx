@@ -1,12 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { PortfolioSummary } from '@/components/portfolio-summary';
-import { HoldingsList } from '@/components/holdings-list';
-import { PortfolioRefreshButton } from '@/components/portfolio-refresh-button';
-import { CurrencySelector } from '@/components/currency-selector';
-import { usePortfolio } from '@/hooks/use-portfolio';
-import { useConnections } from '@/hooks/use-brokers';
-import { useAuth } from '@/lib/auth-context';
+import React, { useEffect, useState } from 'react'
+import { Card, CardContent } from '@/components/ui/card'
+import { PortfolioSummary } from '@/components/portfolio-summary'
+import { HoldingsList } from '@/components/holdings-list'
+import { PortfolioRefreshButton } from '@/components/portfolio-refresh-button'
+import { CurrencySelector } from '@/components/currency-selector'
+import { usePortfolio } from '@/hooks/use-portfolio'
+import { useBrokerOperations } from '@/hooks/use-brokers'
+import { useAuth } from '@/lib/auth-context'
+
+type Connection = {
+  id: string
+  status: 'active' | 'expired' | 'revoked' | 'failed'
+}
 
 export const PortfolioPage: React.FC = () => {
   const {
@@ -16,17 +21,15 @@ export const PortfolioPage: React.FC = () => {
     refetch: refetchPortfolio
   } = usePortfolio();
 
-  const {
-    connections,
-    isLoading: isConnectionsLoading
-  } = useConnections();
+  const { connections, isLoadingConnections } = useBrokerOperations()
 
   const {
     user,
     updateUserPreferences
   } = useAuth();
 
-  const activeConnection = connections?.find(conn => conn.status === 'active');
+  const list = (connections ?? []) as Connection[]
+  const activeConnection = list.find((conn) => conn.status === 'active')
 
   // State for selected currency
   const [selectedCurrency, setSelectedCurrency] = useState<string>(
@@ -41,12 +44,12 @@ export const PortfolioPage: React.FC = () => {
   }, [portfolioSummary?.displayCurrency]);
 
   const handleRefreshStart = () => {
-    console.log('Refresh started');
+    console.warn('Refresh started')
   };
 
   const handleRefreshComplete = () => {
     refetchPortfolio();
-    console.log('Refresh completed');
+    console.warn('Refresh completed')
   };
 
   const handleRefreshError = (error: string) => {
@@ -92,7 +95,7 @@ export const PortfolioPage: React.FC = () => {
           </div>
         </div>
 
-        {(isPortfolioLoading || isConnectionsLoading) ? (
+        {(isPortfolioLoading || isLoadingConnections) ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-1">
               <PortfolioSummary isLoading={true} />
@@ -131,7 +134,7 @@ export const PortfolioPage: React.FC = () => {
 
         {!activeConnection && (
           <div className="mt-8 text-center">
-            <p className="text-gray-600 mb-4">You don't have any active broker connections.</p>
+            <p className="text-gray-600 mb-4">You do not have any active broker connections.</p>
             <a href="/brokers" className="text-blue-600 hover:underline">
               Connect a broker to view your portfolio
             </a>
@@ -139,7 +142,7 @@ export const PortfolioPage: React.FC = () => {
         )}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default PortfolioPage;
+export default PortfolioPage

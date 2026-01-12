@@ -11,8 +11,6 @@
  * - All adapters return standardized data structures
  * - Constitution: No credentials stored, only session management
  */
-import type { BrowserContext } from 'playwright'
-
 /**
  * Authorization result
  * 
@@ -98,10 +96,7 @@ export interface BrokerAdapter {
    * Output: Authorization result
    * Side effects: Browser automation, session creation
    */
-  authorize(
-    context: BrowserContext,
-    credentials: BrokerCredentials
-  ): Promise<AuthorizationResult>
+  authorize(credentials?: BrokerCredentials): Promise<AuthorizationResult>
 
   /**
    * Resume authorization after human verification
@@ -112,10 +107,7 @@ export interface BrokerAdapter {
    * Output: Authorization result
    * Side effects: Browser automation
    */
-  resumeAuthorization(
-    context: BrowserContext,
-    verificationResponse: unknown
-  ): Promise<AuthorizationResult>
+  completeAuthorization(): Promise<AuthorizationResult>
 
   /**
    * Collect holdings data from broker
@@ -126,7 +118,7 @@ export interface BrokerAdapter {
    * Output: Collection result with holdings data
    * Side effects: Browser automation, HTTP requests to broker
    */
-  collectHoldings(context: BrowserContext): Promise<CollectionResult>
+  collectHoldings(connectionId: string): Promise<CollectionResult>
 
   /**
    * Check if session is still valid
@@ -137,7 +129,7 @@ export interface BrokerAdapter {
    * Output: Boolean indicating session validity
    * Side effects: Browser navigation (lightweight check)
    */
-  checkSession(context: BrowserContext): Promise<boolean>
+  checkSession(): Promise<boolean>
 }
 
 /**

@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from '@tanstack/react-router';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, CheckCircle, Clock, ExternalLink } from 'lucide-react';
-import { useTaskPolling } from '@/hooks/use-task-polling';
-import { useBrokers } from '@/hooks/use-brokers';
-import { VerificationDialog } from './verification-dialog';
+import React, { useEffect, useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Progress } from '@/components/ui/progress'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { AlertCircle, CheckCircle, Clock } from 'lucide-react'
+import { useTaskPolling } from '@/hooks/use-task-polling'
+import { useConnectBroker } from '@/hooks/use-brokers'
+import { VerificationDialog } from './verification-dialog'
 
 interface BrokerConnectionFlowProps {
   brokerId: string;
@@ -20,7 +20,7 @@ export const BrokerConnectionFlow: React.FC<BrokerConnectionFlowProps> = ({ brok
   const [showVerificationDialog, setShowVerificationDialog] = useState(false);
   const [verificationUrl, setVerificationUrl] = useState<string | null>(null);
   
-  const { connectBroker } = useBrokers();
+  const connectBrokerMutation = useConnectBroker()
   const { task, startPolling, stopPolling, reset } = useTaskPolling();
 
   // Start the connection process
@@ -29,7 +29,7 @@ export const BrokerConnectionFlow: React.FC<BrokerConnectionFlowProps> = ({ brok
       if (!taskId) {
         setIsConnecting(true);
         try {
-          const result = await connectBroker(brokerId);
+          const result = await connectBrokerMutation.mutateAsync(brokerId)
           setTaskId(result.taskId);
           startPolling(result.taskId);
         } catch (error) {
@@ -46,7 +46,7 @@ export const BrokerConnectionFlow: React.FC<BrokerConnectionFlowProps> = ({ brok
       stopPolling();
       reset();
     };
-  }, [brokerId, taskId, connectBroker, startPolling, stopPolling, reset]);
+  }, [brokerId, taskId, connectBrokerMutation, startPolling, stopPolling, reset]);
 
   // Handle task status changes
   useEffect(() => {
@@ -180,7 +180,6 @@ export const BrokerConnectionFlow: React.FC<BrokerConnectionFlowProps> = ({ brok
           onClose={() => setShowVerificationDialog(false)}
           verificationUrl={verificationUrl}
           onVerificationComplete={() => {
-            // After verification, continue polling
             setShowVerificationDialog(false);
           }}
         />

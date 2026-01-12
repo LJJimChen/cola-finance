@@ -28,7 +28,9 @@ export async function collectionRoutes(fastify: FastifyInstance) {
    * POST /collect
    * Start the collection process for a broker connection
    */
-  fastify.post('/collect',
+  fastify.post(
+    '/collect',
+    { schema: collectSchema },
     async (request: FastifyRequest<{ Body: { taskId: string; connectionId: string }; Headers: { authorization: string } }>, reply: FastifyReply) => {
       try {
         // Extract and verify the delegation token

@@ -37,7 +37,7 @@ export const SignInPage: React.FC = () => {
 
     try {
       await signIn(data.email, data.password);
-      navigate({ to: '/dashboard' });
+      navigate({ to: '/portfolio' });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred during sign in');
     } finally {
@@ -92,7 +92,7 @@ export const SignInPage: React.FC = () => {
               {isLoading ? 'Signing In...' : 'Sign In'}
             </Button>
             <div className="mt-4 text-center text-sm">
-              Don't have an account?{' '}
+              Do not have an account?{' '}
               <Link to="/auth/signup" className="underline">
                 Sign up
               </Link>

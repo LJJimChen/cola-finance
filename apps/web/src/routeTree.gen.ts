@@ -5,12 +5,87 @@
  * For now, providing manual structure
  */
 import { createRoute, createRootRoute } from '@tanstack/react-router'
+import React from 'react'
+import RootLayout from './routes/__root'
+import HomePage from './routes'
+import BrokersListPage from './routes/brokers'
+import MyConnectionsPage from './routes/connections'
+import ClassificationSchemesPage from './routes/classification'
+import PortfolioPage from './routes/portfolio'
+import RebalancePreviewPage from './routes/rebalance'
+import SignInPage from './routes/auth/signin'
+import SignUpPage from './routes/auth/signup'
+import BrokerConnectionFlow from './components/broker-connection-flow'
 
-const rootRoute = createRootRoute()
+const rootRoute = createRootRoute({
+  component: RootLayout,
+})
 
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
+  component: HomePage,
 })
 
-export const routeTree = rootRoute.addChildren([indexRoute])
+const brokersRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/brokers',
+  component: BrokersListPage,
+})
+
+const brokerConnectRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/brokers/connect/$brokerId',
+  component: function BrokerConnectPage() {
+    const { brokerId } = brokerConnectRoute.useParams()
+    return React.createElement(BrokerConnectionFlow, { brokerId })
+  },
+})
+
+const connectionsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/connections',
+  component: MyConnectionsPage,
+})
+
+const classificationRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/classification',
+  component: ClassificationSchemesPage,
+})
+
+const portfolioRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/portfolio',
+  component: PortfolioPage,
+})
+
+const rebalanceRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/rebalance',
+  component: RebalancePreviewPage,
+})
+
+const signInRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/auth/signin',
+  component: SignInPage,
+})
+
+const signUpRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/auth/signup',
+  component: SignUpPage,
+})
+
+export const routeTree = rootRoute.addChildren([
+  indexRoute,
+  brokersRoute,
+  brokerConnectRoute,
+  connectionsRoute,
+  classificationRoute,
+  portfolioRoute,
+  rebalanceRoute,
+  signInRoute,
+  signUpRoute,
+])

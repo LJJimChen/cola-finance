@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Plus } from 'lucide-react';
-import { useNavigate } from '@tanstack/react-router';
+import React from 'react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Plus } from 'lucide-react'
+import { useNavigate } from '@tanstack/react-router'
 
 interface ClassificationScheme {
   id: string;
@@ -20,8 +20,8 @@ interface ClassificationScheme {
 }
 
 export const ClassificationSchemesPage: React.FC = () => {
-  const navigate = useNavigate();
-  const [schemes, setSchemes] = useState<ClassificationScheme[]>([
+  const navigate = useNavigate()
+  const schemes: ClassificationScheme[] = [
     {
       id: 'preset_asset_class',
       name: 'Asset Class',
@@ -52,12 +52,11 @@ export const ClassificationSchemesPage: React.FC = () => {
       ],
       createdAt: '2026-01-12T10:30:00Z',
     }
-  ]);
+  ]
 
   const handleCreateScheme = () => {
-    // Navigate to create scheme form
-    navigate({ to: '/classification/create' });
-  };
+    navigate({ to: '/classification' })
+  }
 
   return (
     <div className="container mx-auto py-8">
@@ -115,7 +114,9 @@ export const ClassificationSchemesPage: React.FC = () => {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => navigate({ to: `/classification/${scheme.id}/targets` })}
+                    onClick={() => {
+                      window.location.href = `/classification/${scheme.id}/targets`
+                    }}
                   >
                     {scheme.isPreset ? 'View Targets' : 'Edit Targets'}
                   </Button>
@@ -146,7 +147,7 @@ export const ClassificationSchemesPage: React.FC = () => {
         )}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ClassificationSchemesPage;
+export default ClassificationSchemesPage

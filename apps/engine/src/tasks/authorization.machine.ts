@@ -9,8 +9,7 @@
  * - Handles human verification requirements (captcha, 2FA, consent)
  * - Persists state snapshots for resumability
  */
-import { createMachine, assign } from 'xstate'
-import type { AuthorizationTaskStatus } from '../../../../schema/src/tasks/authorization-task'
+import { assign, setup } from 'xstate'
 
 // Define the context for the machine
 interface AuthorizationContext {
@@ -37,7 +36,12 @@ type AuthorizationEvent =
   | { type: 'RESUME_AFTER_VERIFICATION' }
 
 // Define the state machine
-export const authorizationMachine = createMachine<AuthorizationContext, AuthorizationEvent>({
+export const authorizationMachine = setup({
+  types: {} as {
+    context: AuthorizationContext
+    events: AuthorizationEvent
+  },
+}).createMachine({
   id: 'authorization',
   initial: 'pending',
   context: {
@@ -100,43 +104,32 @@ export const authorizationMachine = createMachine<AuthorizationContext, Authoriz
   },
 }, {
   actions: {
-    setInProgress: assign({
-      // This action is called when transitioning to in_progress
-    }),
-    setVerificationDetails: assign((context, event) => {
-      if (event.type === 'REQUIRES_VERIFICATION') {
-        return {
-          ...context,
-          verificationUrl: event.verificationUrl,
-          verificationType: event.verificationType,
-        }
+    setInProgress: assign(() => ({})),
+    setVerificationDetails: assign(({ event }) => {
+      if (event.type !== 'REQUIRES_VERIFICATION') return {}
+      return {
+        verificationUrl: event.verificationUrl,
+        verificationType: event.verificationType,
       }
-      return context
     }),
     clearVerification: assign({
       verificationUrl: undefined,
       verificationType: undefined,
     }),
-    setCompleted: assign((context, event) => {
-      if (event.type === 'AUTHORIZATION_COMPLETED') {
-        return {
-          ...context,
-          connectionId: event.connectionId,
-        }
+    setCompleted: assign(({ event }) => {
+      if (event.type !== 'AUTHORIZATION_COMPLETED') return {}
+      return {
+        connectionId: event.connectionId,
       }
-      return context
     }),
-    setFailed: assign((context, event) => {
-      if (event.type === 'AUTHORIZATION_FAILED') {
-        return {
-          ...context,
-          error: {
-            code: event.errorCode,
-            message: event.errorMessage,
-          },
-        }
+    setFailed: assign(({ event }) => {
+      if (event.type !== 'AUTHORIZATION_FAILED') return {}
+      return {
+        error: {
+          code: event.errorCode,
+          message: event.errorMessage,
+        },
       }
-      return context
     }),
   },
 })

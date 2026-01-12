@@ -9,8 +9,7 @@
  * - Tracks holdings collected and failed counts
  * - Handles partial collection scenarios
  */
-import { createMachine, assign } from 'xstate'
-import type { CollectionTaskStatus } from '../../../../schema/src/tasks/collection-task'
+import { assign, setup } from 'xstate'
 
 // Define the context for the machine
 interface CollectionContext {
@@ -35,7 +34,12 @@ type CollectionEvent =
   | { type: 'COLLECTION_FAILED'; errorCode: string; errorMessage: string }
 
 // Define the state machine
-export const collectionMachine = createMachine<CollectionContext, CollectionEvent>({
+export const collectionMachine = setup({
+  types: {} as {
+    context: CollectionContext
+    events: CollectionEvent
+  },
+}).createMachine({
   id: 'collection',
   initial: 'pending',
   context: {
@@ -95,50 +99,36 @@ export const collectionMachine = createMachine<CollectionContext, CollectionEven
   },
 }, {
   actions: {
-    setInProgress: assign({
-      // This action is called when transitioning to in_progress
-    }),
-    updateProgress: assign((context, event) => {
-      if (event.type === 'COLLECTION_IN_PROGRESS') {
-        return {
-          ...context,
-          holdingsCollected: event.holdingsCollected ?? context.holdingsCollected,
-          holdingsFailed: event.holdingsFailed ?? context.holdingsFailed,
-        }
+    setInProgress: assign(() => ({})),
+    updateProgress: assign(({ context, event }) => {
+      if (event.type !== 'COLLECTION_IN_PROGRESS') return {}
+      return {
+        holdingsCollected: event.holdingsCollected ?? context.holdingsCollected,
+        holdingsFailed: event.holdingsFailed ?? context.holdingsFailed,
       }
-      return context
     }),
-    setCompleted: assign((context, event) => {
-      if (event.type === 'COLLECTION_COMPLETED') {
-        return {
-          ...context,
-          holdingsCollected: event.holdingsCollected,
-        }
+    setCompleted: assign(({ event }) => {
+      if (event.type !== 'COLLECTION_COMPLETED') return {}
+      return {
+        holdingsCollected: event.holdingsCollected,
       }
-      return context
     }),
-    setPartial: assign((context, event) => {
-      if (event.type === 'COLLECTION_PARTIAL') {
-        return {
-          ...context,
-          holdingsCollected: event.holdingsCollected,
-          holdingsFailed: event.holdingsFailed,
-          partialReason: event.partialReason,
-        }
+    setPartial: assign(({ event }) => {
+      if (event.type !== 'COLLECTION_PARTIAL') return {}
+      return {
+        holdingsCollected: event.holdingsCollected,
+        holdingsFailed: event.holdingsFailed,
+        partialReason: event.partialReason,
       }
-      return context
     }),
-    setFailed: assign((context, event) => {
-      if (event.type === 'COLLECTION_FAILED') {
-        return {
-          ...context,
-          error: {
-            code: event.errorCode,
-            message: event.errorMessage,
-          },
-        }
+    setFailed: assign(({ event }) => {
+      if (event.type !== 'COLLECTION_FAILED') return {}
+      return {
+        error: {
+          code: event.errorCode,
+          message: event.errorMessage,
+        },
       }
-      return context
     }),
   },
 })

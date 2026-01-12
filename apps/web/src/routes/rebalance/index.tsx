@@ -1,11 +1,11 @@
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AllocationChart } from '@/components/allocation-chart';
-import { DriftIndicator } from '@/components/drift-indicator';
-import { AdjustmentSuggestions } from '@/components/adjustment-suggestions';
-import { Button } from '@/components/ui/button';
-import { BarChart3, TrendingDown, TrendingUp } from 'lucide-react';
+import React from 'react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { AllocationChart } from '@/components/allocation-chart'
+import { DriftIndicator } from '@/components/drift-indicator'
+import { AdjustmentSuggestions } from '@/components/adjustment-suggestions'
+import { Button } from '@/components/ui/button'
+import { BarChart3 } from 'lucide-react'
 
 interface RebalancePreview {
   currentAllocation: Record<string, number>;

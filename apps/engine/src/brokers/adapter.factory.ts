@@ -11,6 +11,7 @@
 import { BrokerAdapter } from './adapter.interface'
 import { ExampleBrokerAdapter } from './example.adapter'
 import { FutuBrokerAdapter } from './futu.adapter'
+import type { Page } from 'playwright'
 
 // Define supported broker IDs
 export type SupportedBrokerId = 'example' | 'futu' // Add more as they're implemented
@@ -22,7 +23,7 @@ export type SupportedBrokerId = 'example' | 'futu' // Add more as they're implem
  * Output: Instance of the appropriate BrokerAdapter
  * Side effects: None
  */
-export function createBrokerAdapter(brokerId: string, page: any): BrokerAdapter {
+export function createBrokerAdapter(brokerId: string, page: Page): BrokerAdapter {
   switch (brokerId) {
     case 'example':
       return new ExampleBrokerAdapter(page)
