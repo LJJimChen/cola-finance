@@ -157,6 +157,18 @@ Implicit assumptions are forbidden.
 - Behavior changes MUST be accompanied by documentation updates.
 - Documentation MUST guide future extension, not just current understanding.
 
+### 22. Visual Identity & Theming
+ - Theme: Pure white theme (surface: #ffffff) with a minimalist, professional aesthetic.
+ - Primary Color: Blue-600 (#2563EB) used for all primary actions and active states.
+ - Typography: Using Inter for all display and body text to ensure modern readability.
+ - Corner Radius: Standardized using Tailwind values (0.25rem for small elements, lg: 0.5rem for cards/buttons, xl: 0.75rem for larger containers).
+
+### 23. follow the ui designs if existed in br/ui/designs
+ - If there are ui designs, the system MUST follow them as closely as possible.
+ - Any deviation from the designs MUST be justified in the pull request.
+
+
+
 ### System Architecture Constraints (Project-Specific)
 
 These constraints are treated as non-negotiable boundaries unless explicitly amended:

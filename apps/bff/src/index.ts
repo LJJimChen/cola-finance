@@ -1,9 +1,9 @@
 /**
  * BFF entry point - Cloudflare Worker
- * 
+ *
  * Intent: Main entry point for the Backend-for-Frontend API
  * Provides REST API for the frontend, handles authentication, and coordinates with Engine
- * 
+ *
  * Input: HTTP requests from frontend
  * Output: JSON responses conforming to OpenAPI contract
  * Side effects: Database reads/writes, Engine API calls
@@ -12,6 +12,10 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
 import { errorMiddleware } from './middleware/error'
+import authRoutes from './routes/auth'
+import brokersRoutes from './routes/brokers'
+import tasksRoutes from './routes/tasks'
+import portfolioRoutes from './routes/portfolio'
 
 /**
  * Cloudflare Workers environment bindings
@@ -27,7 +31,7 @@ type Bindings = {
 
 /**
  * Hono app instance with middleware pipeline
- * 
+ *
  * Middleware order:
  * 1. Logger: Request/response logging
  * 2. CORS: Cross-origin resource sharing
@@ -80,9 +84,10 @@ app.get('/health', async (c) => {
   }
 })
 
-// Routes will be added in Phase 3 (User Story implementation)
-// Example: app.route('/auth', authRoutes)
-// Example: app.route('/brokers', brokersRoutes)
-// Example: app.route('/portfolio', portfolioRoutes)
+// Register routes
+app.route('/auth', authRoutes)
+app.route('/brokers', brokersRoutes)
+app.route('/tasks', tasksRoutes)
+app.route('/portfolio', portfolioRoutes)
 
 export default app
