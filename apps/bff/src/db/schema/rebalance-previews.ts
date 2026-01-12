@@ -21,7 +21,7 @@ export const rebalancePreviews = sqliteTable('rebalance_previews', {
     .notNull(),
 }, (table) => ({
   userIdIdx: index('idx_rebalance_previews_user_id').on(table.userId),
-  computedAtIdx: index('idx_rebalance_previews_computed_at_desc').on(table.computedAt).desc(),
+  computedAtIdx: index('idx_rebalance_previews_computed_at_desc').on(table.computedAt),
   userIdSchemeIdIdx: index('idx_rebalance_previews_user_scheme').on(table.userId, table.schemeId),
 }));
   

@@ -222,15 +222,15 @@
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T109 [P] [US3] Create unit test for rebalance calculation in apps/bff/tests/unit/rebalance.service.test.ts (test drift calculation, adjustment suggestions)
-- [ ] T110 [P] [US3] Create integration test for rebalance preview in apps/bff/tests/integration/rebalance-preview.test.ts (test end-to-end rebalance flow with validation)
+- [X] T109 [P] [US3] Create unit test for rebalance calculation in apps/bff/tests/unit/rebalance.service.test.ts (test drift calculation, adjustment suggestions)
+- [X] T110 [P] [US3] Create integration test for rebalance preview in apps/bff/tests/integration/rebalance-preview.test.ts (test end-to-end rebalance flow with validation)
 
 ### Database Schema for User Story 3
 
 - [X] T111 [P] [US3] Create classification_schemes table schema in apps/bff/src/db/schema/classification-schemes.ts
 - [X] T112 [P] [US3] Create target_allocations table schema in apps/bff/src/db/schema/target-allocations.ts
 - [X] T113 [P] [US3] Create rebalance_previews table schema in apps/bff/src/db/schema/rebalance-previews.ts
-- [ ] T114 [US3] Generate migration for US3 tables with `drizzle-kit generate` in apps/bff/
+- [X] T114 [US3] Generate migration for US3 tables with `drizzle-kit generate` in apps/bff/
 - [X] T115 [US3] Update seed script apps/bff/src/db/seeds.ts to include preset "Asset Class" classification scheme
 
 ### BFF Implementation for User Story 3
@@ -258,10 +258,10 @@
 
 ### Integration & Validation for User Story 3
 
-- [ ] T133 [US3] Seed test portfolio with categorized holdings (stocks, bonds, cash)
-- [ ] T134 [US3] Run integration test T110 to verify rebalance calculation accuracy
-- [ ] T135 [US3] Validate edge case: targets don't sum to 100% (system should block submission with clear error)
-- [ ] T136 [US3] Validate edge case: empty portfolio (system should disable rebalance preview and show empty state)
+- [X] T133 [US3] Seed test portfolio with categorized holdings (stocks, bonds, cash)
+- [X] T134 [US3] Run integration test T110 to verify rebalance calculation accuracy
+- [X] T135 [US3] Validate edge case: targets don't sum to 100% (system should block submission with clear error)
+- [X] T136 [US3] Validate edge case: empty portfolio (system should disable rebalance preview and show empty state)
 
 **Checkpoint**: All user stories should now be independently functional. User can set target allocations and view rebalance suggestions.
 
