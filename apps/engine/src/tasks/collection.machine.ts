@@ -39,6 +39,39 @@ export const collectionMachine = setup({
     context: CollectionContext
     events: CollectionEvent
   },
+  actions: {
+    setInProgress: assign(() => ({})),
+    updateProgress: assign(({ context, event }) => {
+      if (event.type !== 'COLLECTION_IN_PROGRESS') return {}
+      return {
+        holdingsCollected: event.holdingsCollected ?? context.holdingsCollected,
+        holdingsFailed: event.holdingsFailed ?? context.holdingsFailed,
+      }
+    }),
+    setCompleted: assign(({ event }) => {
+      if (event.type !== 'COLLECTION_COMPLETED') return {}
+      return {
+        holdingsCollected: event.holdingsCollected,
+      }
+    }),
+    setPartial: assign(({ event }) => {
+      if (event.type !== 'COLLECTION_PARTIAL') return {}
+      return {
+        holdingsCollected: event.holdingsCollected,
+        holdingsFailed: event.holdingsFailed,
+        partialReason: event.partialReason,
+      }
+    }),
+    setFailed: assign(({ event }) => {
+      if (event.type !== 'COLLECTION_FAILED') return {}
+      return {
+        error: {
+          code: event.errorCode,
+          message: event.errorMessage,
+        },
+      }
+    }),
+  },
 }).createMachine({
   id: 'collection',
   initial: 'pending',
@@ -96,40 +129,6 @@ export const collectionMachine = setup({
         status: 'failed',
       },
     },
-  },
-}, {
-  actions: {
-    setInProgress: assign(() => ({})),
-    updateProgress: assign(({ context, event }) => {
-      if (event.type !== 'COLLECTION_IN_PROGRESS') return {}
-      return {
-        holdingsCollected: event.holdingsCollected ?? context.holdingsCollected,
-        holdingsFailed: event.holdingsFailed ?? context.holdingsFailed,
-      }
-    }),
-    setCompleted: assign(({ event }) => {
-      if (event.type !== 'COLLECTION_COMPLETED') return {}
-      return {
-        holdingsCollected: event.holdingsCollected,
-      }
-    }),
-    setPartial: assign(({ event }) => {
-      if (event.type !== 'COLLECTION_PARTIAL') return {}
-      return {
-        holdingsCollected: event.holdingsCollected,
-        holdingsFailed: event.holdingsFailed,
-        partialReason: event.partialReason,
-      }
-    }),
-    setFailed: assign(({ event }) => {
-      if (event.type !== 'COLLECTION_FAILED') return {}
-      return {
-        error: {
-          code: event.errorCode,
-          message: event.errorMessage,
-        },
-      }
-    }),
   },
 })
 

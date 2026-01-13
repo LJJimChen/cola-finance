@@ -14,7 +14,9 @@ import { createActor } from 'xstate'
 import { collectionMachine } from '../tasks/collection.machine'
 import { createBrokerAdapter } from '../brokers/adapter.factory'
 import { chromium, type Page } from 'playwright'
+import { randomUUID } from 'node:crypto'
 import type { Holding } from '@cola-finance/schema'
+import type { CollectedHolding } from '../brokers/adapter.interface'
 
 // Define input for executing a collection task
 interface ExecuteCollectionTaskInput {
@@ -80,7 +82,7 @@ export class CollectionOrchestrator {
         const adapter = createBrokerAdapter(brokerId, page)
 
         // Restore the state machine from the snapshot if it exists
-        let restoredMachine = collectionMachine
+        const restoredMachine = collectionMachine
         if (taskData.stateSnapshot) {
           // In a real implementation, we would restore the machine state from the snapshot
           console.log(`Restoring state for collection task ${taskId}`)
@@ -260,12 +262,39 @@ export class CollectionOrchestrator {
    * Helper method to persist holdings to the database
    * Could be via BFF API call or direct DB write depending on configuration
    */
-  private async persistHoldings(userId: string, connectionId: string, holdings: Holding[]): Promise<void> {
+  private async persistHoldings(
+    userId: string,
+    connectionId: string,
+    holdings: CollectedHolding[]
+  ): Promise<void> {
     // In a real implementation, we would either:
     // 1. Call the BFF API to persist holdings
     // 2. Or write directly to the database if the engine has access
     
     console.log(`Persisting ${holdings.length} holdings for user ${userId} and connection ${connectionId}`)
+
+    const now = new Date().toISOString()
+    const normalizedHoldings: Holding[] = holdings.map((holding) => ({
+      id: randomUUID(),
+      user_id: userId,
+      connection_id: connectionId,
+      symbol: holding.symbol,
+      instrument_type: holding.instrument_type,
+      instrument_name: holding.instrument_name,
+      instrument_name_zh: holding.instrument_name_zh ?? null,
+      quantity: holding.quantity,
+      currency: holding.currency,
+      market_value: holding.market_value,
+      cost_basis: holding.cost_basis ?? null,
+      unrealized_pnl: holding.unrealized_pnl ?? null,
+      daily_return: holding.daily_return ?? null,
+      total_return: holding.total_return ?? null,
+      category: null,
+      last_updated_at: now,
+      is_stale: false,
+      created_at: now,
+      updated_at: now,
+    }))
     
     // Example of calling BFF API:
     /*
@@ -288,8 +317,8 @@ export class CollectionOrchestrator {
     */
     
     // For now, just log the holdings that would be persisted
-    holdings.forEach(holding => {
-      console.log(`Would persist holding: ${holding.symbol} - ${holding.marketValue} ${holding.currency}`)
+    normalizedHoldings.forEach((holding) => {
+      console.log(`Would persist holding: ${holding.symbol} - ${holding.market_value} ${holding.currency}`)
     })
   }
 }

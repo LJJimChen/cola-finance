@@ -41,6 +41,35 @@ export const authorizationMachine = setup({
     context: AuthorizationContext
     events: AuthorizationEvent
   },
+  actions: {
+    setInProgress: assign(() => ({})),
+    setVerificationDetails: assign(({ event }) => {
+      if (event.type !== 'REQUIRES_VERIFICATION') return {}
+      return {
+        verificationUrl: event.verificationUrl,
+        verificationType: event.verificationType,
+      }
+    }),
+    clearVerification: assign(() => ({
+      verificationUrl: undefined,
+      verificationType: undefined,
+    })),
+    setCompleted: assign(({ event }) => {
+      if (event.type !== 'AUTHORIZATION_COMPLETED') return {}
+      return {
+        connectionId: event.connectionId,
+      }
+    }),
+    setFailed: assign(({ event }) => {
+      if (event.type !== 'AUTHORIZATION_FAILED') return {}
+      return {
+        error: {
+          code: event.errorCode,
+          message: event.errorMessage,
+        },
+      }
+    }),
+  },
 }).createMachine({
   id: 'authorization',
   initial: 'pending',
@@ -101,36 +130,6 @@ export const authorizationMachine = setup({
         status: 'failed',
       },
     },
-  },
-}, {
-  actions: {
-    setInProgress: assign(() => ({})),
-    setVerificationDetails: assign(({ event }) => {
-      if (event.type !== 'REQUIRES_VERIFICATION') return {}
-      return {
-        verificationUrl: event.verificationUrl,
-        verificationType: event.verificationType,
-      }
-    }),
-    clearVerification: assign({
-      verificationUrl: undefined,
-      verificationType: undefined,
-    }),
-    setCompleted: assign(({ event }) => {
-      if (event.type !== 'AUTHORIZATION_COMPLETED') return {}
-      return {
-        connectionId: event.connectionId,
-      }
-    }),
-    setFailed: assign(({ event }) => {
-      if (event.type !== 'AUTHORIZATION_FAILED') return {}
-      return {
-        error: {
-          code: event.errorCode,
-          message: event.errorMessage,
-        },
-      }
-    }),
   },
 })
 

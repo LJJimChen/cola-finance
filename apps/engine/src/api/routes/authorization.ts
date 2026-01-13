@@ -10,7 +10,7 @@
  */
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { z } from 'zod'
-import { verifyJWT, DelegationTokenPayload } from '../../lib/jwt'
+import type { DelegationTokenPayload } from '../../middleware/validate-delegation-token'
 import { authorizationOrchestrator } from '../../services/authorization-orchestrator'
 
 // Define route schemas
@@ -43,27 +43,11 @@ export async function authorizationRoutes(fastify: FastifyInstance) {
     { schema: authorizeSchema },
     async (request: FastifyRequest<{ Body: { taskId: string; brokerId: string }; Headers: { authorization: string } }>, reply: FastifyReply) => {
       try {
-        // Extract and verify the delegation token
-        const authHeader = request.headers.authorization
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-          return reply.code(401).send({
-            error_code: 'UNAUTHORIZED',
-            message: 'Missing or invalid token'
-          })
-        }
-
-        const token = authHeader.substring(7) // Remove 'Bearer ' prefix
-        const jwtSecret = process.env.JWT_SECRET
-        if (!jwtSecret) {
-          request.log.error('JWT_SECRET not configured')
-          return reply.code(500).send({
-            error_code: 'SERVER_ERROR',
-            message: 'Server configuration error'
-          })
-        }
-
-        const payload = await verifyJWT<DelegationTokenPayload>(token, jwtSecret)
-        if (!payload) {
+        let payload: DelegationTokenPayload
+        try {
+          payload = await request.jwtVerify<DelegationTokenPayload>()
+        } catch (error) {
+          request.log.error({ error }, 'Token validation failed')
           return reply.code(401).send({
             error_code: 'INVALID_TOKEN',
             message: 'Invalid or expired token'
@@ -110,7 +94,7 @@ export async function authorizationRoutes(fastify: FastifyInstance) {
         // Return the result
         reply.send(result)
       } catch (error) {
-        request.log.error('Authorization error:', error)
+        request.log.error({ error }, 'Authorization error')
         reply.code(500).send({
           error_code: 'AUTHORIZATION_FAILED',
           message: 'Authorization process failed'
@@ -128,27 +112,11 @@ export async function authorizationRoutes(fastify: FastifyInstance) {
     { schema: resumeSchema },
     async (request: FastifyRequest<{ Params: { taskId: string }; Headers: { authorization: string } }>, reply: FastifyReply) => {
       try {
-        // Extract and verify the delegation token
-        const authHeader = request.headers.authorization
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-          return reply.code(401).send({
-            error_code: 'UNAUTHORIZED',
-            message: 'Missing or invalid token'
-          })
-        }
-
-        const token = authHeader.substring(7) // Remove 'Bearer ' prefix
-        const jwtSecret = process.env.JWT_SECRET
-        if (!jwtSecret) {
-          request.log.error('JWT_SECRET not configured')
-          return reply.code(500).send({
-            error_code: 'SERVER_ERROR',
-            message: 'Server configuration error'
-          })
-        }
-
-        const payload = await verifyJWT<DelegationTokenPayload>(token, jwtSecret)
-        if (!payload) {
+        let payload: DelegationTokenPayload
+        try {
+          payload = await request.jwtVerify<DelegationTokenPayload>()
+        } catch (error) {
+          request.log.error({ error }, 'Token validation failed')
           return reply.code(401).send({
             error_code: 'INVALID_TOKEN',
             message: 'Invalid or expired token'
@@ -183,7 +151,7 @@ export async function authorizationRoutes(fastify: FastifyInstance) {
         // Return the result
         reply.send(result)
       } catch (error) {
-        request.log.error('Resume authorization error:', error)
+        request.log.error({ error }, 'Resume authorization error')
         reply.code(500).send({
           error_code: 'RESUME_AUTHORIZATION_FAILED',
           message: 'Resume authorization process failed'

@@ -13,8 +13,8 @@
 import { createActor } from 'xstate'
 import { authorizationMachine } from '../tasks/authorization.machine'
 import { createBrokerAdapter } from '../brokers/adapter.factory'
-import { ulid } from 'ulidx'
 import { chromium, type Page } from 'playwright'
+import { randomUUID } from 'node:crypto'
 
 // Define input for executing an authorization task
 interface ExecuteAuthorizationTaskInput {
@@ -82,7 +82,7 @@ export class AuthorizationOrchestrator {
         const adapter = createBrokerAdapter(brokerId, page)
 
         // Restore the state machine from the snapshot if it exists
-        let restoredMachine = authorizationMachine
+        const restoredMachine = authorizationMachine
         if (taskData.stateSnapshot) {
           // In a real implementation, we would restore the machine state from the snapshot
           // For now, we'll just log that we're restoring
@@ -219,7 +219,7 @@ export class AuthorizationOrchestrator {
         const adapter = createBrokerAdapter(taskData.brokerId, page)
 
         // Restore the state machine from the snapshot
-        let restoredMachine = authorizationMachine
+        const restoredMachine = authorizationMachine
         if (taskData.stateSnapshot) {
           // In a real implementation, we would restore the machine state from the snapshot
           console.log(`Restoring state for task ${taskId}`)
@@ -257,29 +257,53 @@ export class AuthorizationOrchestrator {
             status: 'completed',
             connectionId,
           }
-        } else {
-          // Transition to failed state
+        }
+
+        if (resumeResult.status === 'needs_verification') {
           service.send({
-            type: 'AUTHORIZATION_FAILED',
-            errorCode: resumeResult.error_code || 'RESUME_ERROR',
-            errorMessage: resumeResult.error_message || 'Resume authorization failed',
+            type: 'REQUIRES_VERIFICATION',
+            verificationUrl: resumeResult.verification_url,
+            verificationType: resumeResult.verification_type,
           })
 
           const snapshot = service.getSnapshot()
 
-          // Update the task in the database
           await this.updateTaskInDatabase(taskId, {
-            status: 'failed',
-            errorCode: resumeResult.error_code || 'RESUME_ERROR',
-            errorMessage: resumeResult.error_message || 'Resume authorization failed',
+            status: 'paused',
+            verificationUrl: resumeResult.verification_url,
+            verificationType: resumeResult.verification_type,
             stateSnapshot: JSON.stringify({ value: snapshot.value, context: snapshot.context }),
           })
 
           return {
-            status: 'failed',
-            errorCode: resumeResult.error_code || 'RESUME_ERROR',
-            errorMessage: resumeResult.error_message || 'Resume authorization failed',
+            status: 'paused',
+            verificationUrl: resumeResult.verification_url,
+            verificationType: resumeResult.verification_type,
           }
+        }
+
+        const errorCode = resumeResult.error_code || 'RESUME_ERROR'
+        const errorMessage = resumeResult.error_message || 'Resume authorization failed'
+
+        service.send({
+          type: 'AUTHORIZATION_FAILED',
+          errorCode,
+          errorMessage,
+        })
+
+        const snapshot = service.getSnapshot()
+
+        await this.updateTaskInDatabase(taskId, {
+          status: 'failed',
+          errorCode,
+          errorMessage,
+          stateSnapshot: JSON.stringify({ value: snapshot.value, context: snapshot.context }),
+        })
+
+        return {
+          status: 'failed',
+          errorCode,
+          errorMessage,
         }
       } finally {
         // Close the browser regardless of success or failure
@@ -338,7 +362,7 @@ export class AuthorizationOrchestrator {
     // This is a placeholder implementation
     // In a real implementation, this would insert a record in the database
     console.log(`Creating broker connection for user ${userId} and broker ${brokerId}`)
-    return ulid() // Return a unique ID for the connection
+    return randomUUID()
   }
 }
 
