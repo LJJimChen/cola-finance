@@ -1,9 +1,0 @@
-node_modules/
-dist/
-build/
-.output/
-.wrangler/
-coverage/
-*.config.js
-*.config.ts
-*.min.js

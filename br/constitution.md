@@ -1,24 +1,3 @@
-<!--
-Sync Impact Report
-
-- Version change: N/A (template) → 1.0.0
-- Modified principles: Replaced template placeholders with 21 concrete, enforceable principles
-- Added sections:
-  - Extensibility and Evolution Rules
-  - Quality, Data, Errors, and Documentation
-  - System Architecture Constraints
-  - Non-Goals
-  - Definition of Done
-- Removed sections: None (filled placeholders and removed template comments)
-- Templates requiring updates:
-  - ✅ .specify/templates/plan-template.md
-  - ✅ .specify/templates/tasks-template.md
-  - ⚠️ .specify/templates/spec-template.md (no change required)
-  - ⚠️ .specify/templates/checklist-template.md (no change required)
-- Follow-up TODOs: None
--->
-
-# Asset Management System (资产管理系统) Constitution
 
 ## Core Principles
 
@@ -105,11 +84,6 @@ Sync Impact Report
 - Core business logic MUST be isolated from infrastructure concerns.
 - Tests MUST validate behavior, not implementation details.
 
-### 14. Controlled Dependencies
-
-- Introducing a new dependency requires clear technical justification.
-- Prefer fewer, well-maintained libraries over many small/experimental ones.
-- Dependencies that introduce global side effects are strongly discouraged.
 
 ### 15. Backward Compatibility and Change Discipline
 
@@ -157,34 +131,6 @@ Implicit assumptions are forbidden.
 - Behavior changes MUST be accompanied by documentation updates.
 - Documentation MUST guide future extension, not just current understanding.
 
-### 22. Visual Identity & Theming
- - Theme: Pure white theme (surface: #ffffff) with a minimalist, professional aesthetic.
- - Primary Color: Blue-600 (#2563EB) used for all primary actions and active states.
- - Typography: Using Inter for all display and body text to ensure modern readability.
- - Corner Radius: Standardized using Tailwind values (0.25rem for small elements, lg: 0.5rem for cards/buttons, xl: 0.75rem for larger containers).
-
-### 23. follow the ui designs if existed in br/ui/designs
- - If there are ui designs, the system MUST follow them as closely as possible.
- - Any deviation from the designs MUST be justified in the pull request.
-
-
-
-### System Architecture Constraints (Project-Specific)
-
-These constraints are treated as non-negotiable boundaries unless explicitly amended:
-
-- The **BFF (Serverless)** is the only API boundary exposed to the frontend.
-- The **Engine (stateful service)** owns long-lived state, browser automation, and task execution.
-- The **frontend MUST NOT** directly access Engine internal APIs.
-- The **database** is the only authoritative source for system state and computed results.
-- The system MUST NOT store broker usernames/passwords.
-- Human-in-the-loop flows (e.g., captcha/login) MUST be auditable and explicitly modeled in task state.
-
-### Non-Goals
-
-- Chasing trends or experimental technologies without clear benefit.
-- Premature optimization or speculative scalability.
-- Clever solutions that reduce readability, predictability, or extensibility.
 
 ### Definition of Done
 
