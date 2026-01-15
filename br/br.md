@@ -29,6 +29,8 @@
   7. reblance, 资产再平衡页面
   8. notification,消息通知中心
   9. Settings,主题设置，显示币种
+## UI
+位置 ：br\ui\designs
 ## 22. Visual Identity & Theming
  - Theme: Pure white theme (surface: #ffffff) with a minimalist, professional aesthetic.
  - Primary Color: Blue-600 (#2563EB) used for all primary actions and active states.
