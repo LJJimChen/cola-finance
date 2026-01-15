@@ -1,6 +1,6 @@
-资产管理系统 Frontend+BFF
+📘 资产管理系统 Frontend+BFF
 
-# 这个系统是什么？（High-Level Overview）
+# 这个系统是什么？
 
 一个用于聚合用户在不同资产平台持仓数据、统一计算资产收益、按分类和币种展示资产结构、并辅助用户做资产配置再平衡的智能资产管理系统。要求 mobile first, responsive design。
 ## 基础功能需求
@@ -15,11 +15,17 @@
 - 总资产走势图
 - 收益率走势图
 
-## 其他基础需求
-  1.开始就需要支持中英文切换
+## 重要事项
+- 项目搭建初期就需要支持中英文切换
+- 数据库 schema 设计非常重要，因为这是一个数据驱动的应用系统
+- 数据库中可以按天存储汇率，但是只存储常见货币的汇率，比如美元/人民币，港币/人民币
 
+## 非项目功能,不需要考虑实现
+- 连接broker
+- broker数据采集. 不需要关注broker的数据如何采集聚合的问题，因为当前项目的核心需求是实现数据库设计，bff 的api设计已及前端页面的数据展示. 所以数据部分请通过 mock data 实现.
 
 ## 基础前端页面
+以下是一些基础页面，可以按照实际需求继续补充
   1. Welcome
   2. Login
   3. Sign up
@@ -29,26 +35,15 @@
   7. reblance, 资产再平衡页面
   8. notification,消息通知中心
   9. Settings,主题设置，显示币种
-## UI
-位置 ：br\ui\designs
-## 22. Visual Identity & Theming
- - Theme: Pure white theme (surface: #ffffff) with a minimalist, professional aesthetic.
- - Primary Color: Blue-600 (#2563EB) used for all primary actions and active states.
- - Typography: Using Inter for all display and body text to ensure modern readability.
- - Corner Radius: Standardized using Tailwind values (0.25rem for small elements, lg: 0.5rem for cards/buttons, xl: 0.75rem for larger containers).
-
-## follow the ui designs if existed in br/ui/designs
- - If there are ui designs, the system MUST follow them as closely as possible.
- - Any deviation from the designs MUST be justified in the pull request.
-
-
+UI设计请参考 br\ui\designs
 # 系统架构
- - Web App
+- Web App- PWA
 - BFF -Serverless
       
 
 ## 核心设计原则
 - BFF 是唯一对前端暴露的 API 边界
 - 数据库是状态与结果的唯一权威来源
+
 
 
