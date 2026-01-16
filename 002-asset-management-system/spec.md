@@ -144,6 +144,12 @@ As a user, I want to switch between Chinese and English interfaces so that I can
 - **FR-018**: System MUST implement the specified UI pages: Welcome, Login, Sign Up, Dashboard, Portfolio, Analysis, Rebalance, Notification Center, and Settings
 - **FR-019**: System MUST provide Settings page for theme selection and currency display preferences
 - **FR-020**: System MUST provide mobile-first responsive design that adapts to different screen sizes
+- **FR-021**: System MUST calculate and store daily portfolio returns to enable cumulative return statistics (calculated as (today's value - yesterday's value) / yesterday's value)
+- **FR-022**: System MUST calculate cumulative returns using the product formula: (1 + r₁) × (1 + r₂) × ... × (1 + rn) - 1 where ri represents daily returns
+- **FR-023**: System MUST calculate and store portfolio returns multiple times per day (e.g., hourly) to provide up-to-date performance metrics
+- **FR-024**: System MUST continue calculating returns based on the last known values on weekends and holidays when markets are closed
+- **FR-025**: System MUST use UTC for all internal calculations and store all timestamps in UTC
+- **FR-026**: System MUST convert timestamps to the user's selected time zone or account default time zone for presentation
 
 ### Key Entities *(include if feature involves data)*
 
@@ -152,6 +158,7 @@ As a user, I want to switch between Chinese and English interfaces so that I can
 - **Portfolio**: Represents a collection of assets and categories for a specific user
 - **ExchangeRate**: Represents currency conversion rates with attributes like from_currency, to_currency, and rate_value
 - **User**: Represents system users with attributes like language preference, theme settings, and currency display preferences
+- **PortfolioHistory**: Represents daily portfolio snapshots with attributes like date, total_value, and daily_return_rate (added to support cumulative return calculations)
 
 ## Clarifications
 
@@ -162,6 +169,14 @@ As a user, I want to switch between Chinese and English interfaces so that I can
 - Q: Should the rebalancing feature only provide recommendations without executing actual trades? → A: Yes, rebalancing only shows users how to perform rebalancing, without executing trades
 - Q: How should the system handle empty states (e.g., when a user has no assets yet)? → A: Display a simple message indicating no data is available
 - Q: For how long should the system store historical exchange rates? → A: Keep forever
+
+### Session 2026-01-16
+
+- Q: How should daily returns be calculated and stored to enable cumulative return statistics? → A: Store daily portfolio returns (calculated as (today's value - yesterday's value) / yesterday's value)
+- Q: How should cumulative returns be calculated and displayed in the system? → A: Calculate cumulative returns using the product formula: (1 + r₁) × (1 + r₂) × ... × (1 + rn) - 1
+- Q: How often should daily returns be calculated and stored? → A: Multiple times per day (e.g., hourly)
+- Q: How should the system handle return calculations on weekends and holidays when markets are closed? → A: Continue calculating returns based on the last known values
+- Q: How should the system handle time zones for return calculations and reporting? → A: Use UTC for all internal calculations and store timestamps in UTC, with conversion to user-selected or account default time zone for presentation
 
 ## Success Criteria *(mandatory)*
 
@@ -177,3 +192,8 @@ As a user, I want to switch between Chinese and English interfaces so that I can
 - **SC-008**: System achieves 99.5% uptime for the dashboard and portfolio viewing features
 - **SC-009**: Users can create custom categories and assign assets to them with 95% success rate
 - **SC-010**: Historical data charts load and display correctly for time ranges from 1 day to 10 years
+- **SC-011**: Daily portfolio returns are calculated and stored accurately with 99.9% reliability
+- **SC-012**: Cumulative returns are calculated using the product formula with 99.9% mathematical accuracy
+- **SC-013**: Portfolio returns are updated at least hourly during market hours with 99.5% system availability
+- **SC-014**: System maintains continuous return calculations with consistent values on non-trading days (weekends and holidays)
+- **SC-015**: All internal timestamp operations use UTC with 100% consistency, and user-facing displays correctly convert to local time zones
