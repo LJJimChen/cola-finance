@@ -83,21 +83,21 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T025 [P] [US1] Contract test for /dashboard endpoint in apps/bff/tests/contract/dashboard.test.ts
-- [ ] T026 [P] [US1] Integration test for dashboard data retrieval in apps/bff/tests/integration/dashboard.test.ts
+- [X] T025 [P] [US1] Contract test for /dashboard endpoint in apps/bff/tests/contract/dashboard.test.ts (Note: Tests created but require additional mocking setup to pass)
+- [X] T026 [P] [US1] Integration test for dashboard data retrieval in apps/bff/tests/integration/dashboard.test.ts
 
 ### Implementation for User Story 1
 
-- [ ] T027 [P] [US1] Implement dashboard data aggregation service in apps/bff/src/services/dashboard-service.ts
-- [ ] T028 [US1] Implement /dashboard GET endpoint in apps/bff/src/routes/dashboard.ts
-- [ ] T029 [P] [US1] Create DashboardPage component in apps/web/src/pages/DashboardPage.tsx
-- [ ] T030 [P] [US1] Create TotalAssetsCard component in apps/web/src/components/dashboard/TotalAssetsCard.tsx
-- [ ] T031 [P] [US1] Create DailyGainLossCard component in apps/web/src/components/dashboard/DailyGainLossCard.tsx
-- [ ] T032 [P] [US1] Create AnnualReturnCard component in apps/web/src/components/dashboard/AnnualReturnCard.tsx
-- [ ] T033 [P] [US1] Create AssetAllocationChart component in apps/web/src/components/dashboard/AssetAllocationChart.tsx
-- [ ] T034 [US1] Implement currency conversion logic for dashboard values in apps/bff/src/services/currency-service.ts
-- [ ] T035 [US1] Connect dashboard API to frontend using TanStack Query in apps/web/src/hooks/useDashboard.ts
-- [ ] T036 [US1] Add responsive design for dashboard components per mobile-first approach
+- [X] T027 [P] [US1] Implement dashboard data aggregation service in apps/bff/src/services/dashboard-service.ts
+- [X] T028 [US1] Implement /dashboard GET endpoint in apps/bff/src/routes/dashboard.ts
+- [X] T029 [P] [US1] Create DashboardPage component in apps/web/src/pages/DashboardPage.tsx
+- [X] T030 [P] [US1] Create TotalAssetsCard component in apps/web/src/components/dashboard/TotalAssetsCard.tsx
+- [X] T031 [P] [US1] Create DailyGainLossCard component in apps/web/src/components/dashboard/DailyGainLossCard.tsx
+- [X] T032 [P] [US1] Create AnnualReturnCard component in apps/web/src/components/dashboard/AnnualReturnCard.tsx
+- [X] T033 [P] [US1] Create AssetAllocationChart component in apps/web/src/components/dashboard/AssetAllocationChart.tsx
+- [X] T034 [US1] Implement currency conversion logic for dashboard values in apps/bff/src/services/currency-service.ts
+- [X] T035 [US1] Connect dashboard API to frontend using TanStack Query in apps/web/src/hooks/useDashboard.ts
+- [X] T036 [US1] Add responsive design for dashboard components per mobile-first approach
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
@@ -111,20 +111,20 @@
 
 ### Tests for User Story 2 (OPTIONAL - only if tests requested) ⚠️
 
-- [ ] T037 [P] [US2] Contract test for /portfolio endpoint in apps/bff/tests/contract/portfolio.test.ts
-- [ ] T038 [P] [US2] Integration test for portfolio data retrieval in apps/bff/tests/integration/portfolio.test.ts
+- [X] T037 [P] [US2] Contract test for /portfolio endpoint in apps/bff/tests/contract/portfolio.test.ts
+- [X] T038 [P] [US2] Integration test for portfolio data retrieval in apps/bff/tests/integration/portfolio.test.ts
 
 ### Implementation for User Story 2
 
-- [ ] T039 [P] [US2] Implement portfolio data aggregation service in apps/bff/src/services/portfolio-service.ts
-- [ ] T040 [US2] Implement /portfolio GET endpoint in apps/bff/src/routes/portfolio.ts
-- [ ] T041 [P] [US2] Create PortfolioPage component in apps/web/src/pages/PortfolioPage.tsx
-- [ ] T042 [P] [US2] Create CategoryCard component in apps/web/src/components/portfolio/CategoryCard.tsx
-- [ ] T043 [P] [US2] Create AssetList component in apps/web/src/components/portfolio/AssetList.tsx
-- [ ] T044 [P] [US2] Create AssetItem component in apps/web/src/components/portfolio/AssetItem.tsx
-- [ ] T045 [US2] Implement category allocation calculation logic in apps/bff/src/services/allocation-service.ts
-- [ ] T046 [US2] Connect portfolio API to frontend using TanStack Query in apps/web/src/hooks/usePortfolio.ts
-- [ ] T047 [US2] Add currency conversion for portfolio values in apps/bff/src/services/currency-service.ts
+- [X] T039 [P] [US2] Implement portfolio data aggregation service in apps/bff/src/services/portfolio-service.ts
+- [X] T040 [US2] Implement /portfolio GET endpoint in apps/bff/src/routes/portfolio.ts
+- [X] T041 [P] [US2] Create PortfolioPage component in apps/web/src/pages/PortfolioPage.tsx
+- [X] T042 [P] [US2] Create CategoryCard component in apps/web/src/components/portfolio/CategoryCard.tsx
+- [X] T043 [P] [US2] Create AssetList component in apps/web/src/components/portfolio/AssetList.tsx
+- [X] T044 [P] [US2] Create AssetItem component in apps/web/src/components/portfolio/AssetItem.tsx
+- [X] T045 [US2] Implement category allocation calculation logic in apps/bff/src/services/allocation-service.ts
+- [X] T046 [US2] Connect portfolio API to frontend using TanStack Query in apps/web/src/hooks/usePortfolio.ts
+- [X] T047 [US2] Add currency conversion for portfolio values in apps/bff/src/services/currency-service.ts
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 
@@ -144,8 +144,8 @@
 ### Implementation for User Story 7
 
 - [ ] T050 [P] [US7] Implement language preference update in /users/profile PUT endpoint in apps/bff/src/routes/users.ts
-- [ ] T051 [P] [US7] Create Chinese translation files in apps/web/src/locales/zh.json
-- [ ] T052 [P] [US7] Create English translation files in apps/web/src/locales/en.json
+- [ ] T051 [P] [US7] Create Chinese translation files in apps/web/src/locales/zh.json, no need to add content for now
+- [ ] T052 [P] [US7] Create English translation files in apps/web/src/locales/en.json, no need to add content for now 
 - [ ] T053 [P] [US7] Create LanguageSwitcher component in apps/web/src/components/LanguageSwitcher.tsx
 - [ ] T054 [US7] Integrate i18next with React components in apps/web/src/i18n/index.ts
 - [ ] T055 [US7] Translate dashboard components to both languages in apps/web/src/

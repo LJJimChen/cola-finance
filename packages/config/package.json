@@ -1,9 +1,0 @@
-{
-  "name": "@cola-finance/config",
-  "version": "1.0.0",
-  "description": "Shared configuration for the Cola Finance project",
-  "license": "MIT",
-  "publishConfig": {
-    "access": "public"
-  }
-}
