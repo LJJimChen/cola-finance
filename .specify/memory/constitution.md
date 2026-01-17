@@ -126,9 +126,8 @@ Implicit assumptions are forbidden.
 ## Technology Stack Requirements
 
 ### 22. Monorepo with Turborepo and pnpm
-- All packages MUST be managed within a single Turborepo workspace.
-- pnpm MUST be used as the package manager for all dependencies.
-- Package dependencies MUST be declared explicitly in individual package.json files.
+- monorepo guidelines in guidline/monorepo-guidline.md
+- monorepo template follow the guidelines in guidline/monorepo-pnpm-template.md
 
 ### 23. Official Scaffolding Tools
 - Projects MUST be created using official scaffolding tools (e.g.pnpm create hono,pnpm create vite, @hono/cli, etc.) when available.

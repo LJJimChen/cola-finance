@@ -9,15 +9,15 @@
 
 ### User Story 1 - Dashboard Overview (Priority: P1)
 
-As an investor, I want to see my total assets, daily gains/losses, annual returns, and asset allocation charts on a single dashboard so that I can quickly assess my portfolio's performance.
+As an investor, I want to see my total assets, daily profits, annual returns, and asset allocation charts on a single dashboard so that I can quickly assess my portfolio's performance.
 
 **Why this priority**: This is the most critical view that provides users with an immediate understanding of their financial position and is the entry point for deeper analysis.
 
-**Independent Test**: Can be fully tested by displaying mock portfolio data and verifying that all key metrics (total assets, daily gains, annual returns) and charts are displayed correctly, delivering immediate value to users.
+**Independent Test**: Can be fully tested by displaying mock portfolio data and verifying that all key metrics (total assets, daily profits, annual returns) and charts are displayed correctly, delivering immediate value to users.
 
 **Acceptance Scenarios**:
 
-1. **Given** user has logged in and has portfolio data, **When** user navigates to the dashboard, **Then** the dashboard displays total assets, daily gains/losses, annual returns, and asset allocation charts.
+1. **Given** user has logged in and has portfolio data, **When** user navigates to the dashboard, **Then** the dashboard displays total assets, daily profits, annual returns, and asset allocation charts.
 2. **Given** user has portfolio data in multiple currencies, **When** user selects target currency in settings, **Then** dashboard values are converted and displayed in the selected currency.
 
 ---
@@ -28,11 +28,11 @@ As an investor, I want to view my assets organized by categories (e.g., US Equit
 
 **Why this priority**: Essential for users to understand their portfolio structure and make informed decisions about rebalancing.
 
-**Independent Test**: Can be fully tested by displaying mock portfolio data grouped by categories, showing asset percentages, gains, and yields, delivering value by organizing complex data into understandable views.
+**Independent Test**: Can be fully tested by displaying mock portfolio data grouped by categories, showing asset percentages, profits, and yields, delivering value by organizing complex data into understandable views.
 
 **Acceptance Scenarios**:
 
-1. **Given** user has portfolio data, **When** user navigates to the portfolio page, **Then** assets are displayed grouped by categories with percentages, gains, and yields.
+1. **Given** user has portfolio data, **When** user navigates to the portfolio page, **Then** assets are displayed grouped by categories with percentages, profits, and yields.
 2. **Given** user has assets in multiple currencies, **When** user selects target currency, **Then** all values are converted to the selected currency.
 
 ---
@@ -58,12 +58,12 @@ As an investor with assets in multiple currencies, I want to convert all my hold
 
 **Why this priority**: Important for users with international investments to understand their total wealth in their preferred currency.
 
-**Independent Test**: Can be fully tested by converting mock assets in different currencies to a target currency using stored exchange rates, delivering value by providing unified wealth visibility.
+**Independent Test**: Can be fully tested by converting mock assets in different currencies to a target currency using stored exchange rates with backend calculations based on user's preferred currency, delivering value by providing unified wealth visibility.
 
 **Acceptance Scenarios**:
 
-1. **Given** user has assets in multiple currencies, **When** user selects target currency, **Then** all asset values are converted to the target currency using current exchange rates.
-2. **Given** exchange rates are available in the system, **When** user requests conversion, **Then** accurate conversions are performed using the latest rates.
+1. **Given** user has assets in multiple currencies, **When** user selects target currency, **Then** all asset values are converted to the target currency using current exchange rates with backend calculations.
+2. **Given** exchange rates are available in the system, **When** user requests conversion, **Then** accurate conversions are performed using the latest rates with backend calculations based on user's preferred currency.
 
 ---
 
@@ -103,12 +103,12 @@ As a user, I want to switch between Chinese and English interfaces so that I can
 
 **Why this priority**: Critical for accessibility and user experience as specified in the requirements.
 
-**Independent Test**: Can be fully tested by switching between languages and verifying that all interface elements are properly translated, delivering value by making the system accessible to a wider audience.
+**Independent Test**: Can be fully tested by switching between languages and verifying that all interface elements are properly translated with i18n strings added incrementally during UI development, delivering value by making the system accessible to a wider audience.
 
 **Acceptance Scenarios**:
 
 1. **Given** system supports multiple languages, **When** user selects language preference, **Then** entire interface is displayed in the selected language.
-2. **Given** user has selected a language, **When** user navigates through the application, **Then** all new screens appear in the selected language.
+2. **Given** user has selected a language, **When** user navigates through the application, **Then** all new screens appear in the selected language with translations added as needed during development.
 
 ---
 
@@ -119,22 +119,25 @@ As a user, I want to switch between Chinese and English interfaces so that I can
 - What happens when a user tries to rebalance with insufficient cash?
 - How does the system handle extremely large datasets for performance?
 - What happens when the system receives inconsistent data from different brokers?
+- How does the system handle assets with zero or negative daily profits?
+- What happens when the backend cannot calculate currency conversions based on user's preferred currency?
+- What happens when a UI element needs translation but the corresponding i18n string hasn't been added yet?
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
 - **FR-001**: System MUST aggregate user asset data from multiple broker platforms (e.g., East Money Securities, TianTian Fund, XueQiu Fund, Interactive Brokers, Charles Schwab) using a standardized data structure
-- **FR-002**: System MUST calculate individual asset gains and losses for each holding using cost basis instead of purchase price
-- **FR-003**: System MUST convert assets in different currencies to a target currency using stored exchange rates
+- **FR-002**: System MUST calculate individual asset profits for each holding using cost basis instead of purchase price
+- **FR-003**: System MUST convert assets in different currencies to a target currency using stored exchange rates, with conversions calculated in the backend based on the user's preferred currency when requested
 - **FR-004**: Users MUST be able to categorize assets (e.g., US Equities, Chinese Equities, Asia-Pacific Equities, Commodities, Dividend Income, Bonds)
-- **FR-005**: System MUST calculate and display asset percentages, gains, and yields by category
+- **FR-005**: System MUST calculate and display asset percentages, profits, and yields by category
 - **FR-006**: Users MUST be able to set target allocation percentages for categories and view deviation from targets
 - **FR-007**: System MUST provide rebalancing recommendations based on category-level allocations
 - **FR-008**: System MUST provide predefined asset categories for users to choose from
 - **FR-009**: Users MUST be able to create custom asset categories
 - **FR-010**: System MUST display historical trends of total assets and returns
-- **FR-011**: System MUST support Chinese and English language switching
+- **FR-011**: System MUST support Chinese and English language switching with i18n strings added incrementally to JSON files as needed during UI development
 - **FR-012**: System MUST store daily exchange rates for major currencies (USD/CNY, HKD/CNY)
 - **FR-013**: System MUST provide responsive design that works on mobile devices
 - **FR-014**: System MUST implement a PWA (Progressive Web App) architecture
@@ -144,10 +147,10 @@ As a user, I want to switch between Chinese and English interfaces so that I can
 - **FR-018**: System MUST implement the specified UI pages: Welcome, Login, Sign Up, Dashboard, Portfolio, Analysis, Rebalance, Notification Center, and Settings
 - **FR-019**: System MUST provide Settings page for theme selection and currency display preferences
 - **FR-020**: System MUST provide mobile-first responsive design that adapts to different screen sizes
-- **FR-021**: System MUST calculate and store daily portfolio returns to enable cumulative return statistics (calculated as (today's value - yesterday's value) / yesterday's value)
-- **FR-022**: System MUST calculate cumulative returns using the product formula: (1 + r₁) × (1 + r₂) × ... × (1 + rn) - 1 where ri represents daily returns
-- **FR-023**: System MUST calculate and store portfolio returns multiple times per day (e.g., hourly) to provide up-to-date performance metrics
-- **FR-024**: System MUST continue calculating returns based on the last known values on weekends and holidays when markets are closed
+- **FR-021**: System MUST calculate and store daily portfolio profits to enable cumulative return statistics (calculated as (today's value - yesterday's value))
+- **FR-022**: System MUST calculate cumulative returns using the product formula: (1 + r₁) × (1 + r₂) × ... × (1 + rn) - 1 where ri represents daily profit ratios (daily profit / previous day's total value)
+- **FR-023**: System MUST calculate and store portfolio profits multiple times per day (e.g., hourly) to provide up-to-date performance metrics
+- **FR-024**: System MUST continue calculating profits based on the last known values on weekends and holidays when markets are closed
 - **FR-025**: System MUST use UTC for all internal calculations and store all timestamps in UTC
 - **FR-026**: System MUST convert timestamps to the user's selected time zone or account default time zone for presentation
 - **FR-027**: System MUST store pre-calculated currency-converted values (total assets, daily profit, current total profit) in daily portfolio snapshots for performance optimization
@@ -159,15 +162,18 @@ As a user, I want to switch between Chinese and English interfaces so that I can
 - **FR-033**: System MUST treat Asset entity as the Asset Position with cost basis and daily profit attributes
 - **FR-034**: System MUST differentiate between daily profit for individual assets and daily profit for overall portfolio
 - **FR-035**: System MUST obtain cost basis from broker data representing the average cost of acquiring the asset position
+- **FR-036**: System MUST store dailyProfit in the PortfolioHistory entity instead of daily_return_rate or dailyReturn
+- **FR-037**: System MUST store all PortfolioHistory values in RMB (CNY) as the base currency
+- **FR-038**: System MUST pre-calculate all possible currency conversions in the backend for display in other currencies
 
 ### Key Entities *(include if feature involves data)*
 
 - **Asset**: Represents an individual holding (also referred to as Asset Position) with attributes like symbol, name, quantity, cost_basis (provided by broker data, representing average cost of acquiring the position), daily_profit (for individual asset), current price, currency, and broker source
 - **Category**: Represents a grouping of assets with attributes like name, target allocation percentage, and current allocation percentage
 - **Portfolio**: Represents a collection of assets and categories for a specific user
-- **ExchangeRate**: Represents currency conversion rates with attributes like from_currency, to_currency, and rate_value
-- **User**: Represents system users with attributes like language preference, theme settings, and currency display preferences
-- **PortfolioHistory**: Represents daily portfolio snapshots with attributes like date, total_value, and daily_return_rate (added to support cumulative return calculations). Pre-calculated currency-converted values (total assets, daily profit, current total profit) are stored for performance optimization. Includes separate fields for currency-converted total assets, daily profit (for overall portfolio, included from broker data), and current total profit with 4 decimal places precision.
+- **ExchangeRate**: Represents currency conversion rates with attributes like from_currency, to_currency, and rate_value. Used by the backend to calculate conversions based on user's preferred currency when requested.
+- **User**: Represents system users with attributes like language preference, theme settings, and currency display preferences. Language translations use incremental i18n approach with strings added to JSON files as needed during UI development.
+- **PortfolioHistory**: Represents daily portfolio snapshots with attributes like date, total_value (in RMB/CNY), and dailyProfit (added to support cumulative return calculations). Pre-calculated currency-converted values (total assets, daily profit, current total profit) are stored for performance optimization. Includes separate fields for currency-converted total assets, daily profit (for overall portfolio, included from broker data), and current total profit with 4 decimal places precision. All values are stored in RMB (CNY) as the base currency. The backend pre-calculates all possible currency conversions for display in other currencies.
 
 ## Clarifications
 
@@ -181,11 +187,11 @@ As a user, I want to switch between Chinese and English interfaces so that I can
 
 ### Session 2026-01-16
 
-- Q: How should daily returns be calculated and stored to enable cumulative return statistics? → A: Store daily portfolio returns (calculated as (today's value - yesterday's value) / yesterday's value)
+- Q: How should daily profits be calculated and stored to enable cumulative return statistics? → A: Store daily portfolio profits (calculated as (today's value - yesterday's value)), with daily profit ratios calculated as (daily profit / previous day's total value) for cumulative return calculations
 - Q: How should cumulative returns be calculated and displayed in the system? → A: Calculate cumulative returns using the product formula: (1 + r₁) × (1 + r₂) × ... × (1 + rn) - 1
-- Q: How often should daily returns be calculated and stored? → A: Multiple times per day (e.g., hourly)
-- Q: How should the system handle return calculations on weekends and holidays when markets are closed? → A: Continue calculating returns based on the last known values
-- Q: How should the system handle time zones for return calculations and reporting? → A: Use UTC for all internal calculations and store timestamps in UTC, with conversion to user-selected or account default time zone for presentation
+- Q: How often should daily profits be calculated and stored? → A: Multiple times per day (e.g., hourly)
+- Q: How should the system handle profit calculations on weekends and holidays when markets are closed? → A: Continue calculating profits based on the last known values
+- Q: How should the system handle time zones for profit calculations and reporting? → A: Use UTC for all internal calculations and store timestamps in UTC, with conversion to user-selected or account default time zone for presentation
 
 ### Session 2026-01-17
 
@@ -198,12 +204,19 @@ As a user, I want to switch between Chinese and English interfaces so that I can
 - Q: What does "Asset Position" refer to in the context? → A: Asset Position refers to the current state of the Asset entity
 - Q: What's the difference between daily profit in the Asset entity and in the PortfolioHistory entity? → A: Daily profit in Asset entity is for individual asset; daily profit in PortfolioHistory is for overall portfolio
 - Q: How is the cost basis in the Asset entity determined? → A: Cost basis is provided by the broker data and represents the average cost of acquiring the asset position
+- Q: What should the PortfolioHistory entity store instead of daily_return_rate? → A: Change PortfolioHistory to store dailyReturn instead of daily_return_rate
+- Q: What currency should the PortfolioHistory entity be priced in? → A: Specify that PortfolioHistory is priced in RMB (CNY) as the base currency
+- Q: How should currency conversion work when the frontend needs to display in other currencies? → A: Have the backend pre-calculate all possible currency conversions
+- Q: Should PortfolioHistory use dailyReturn or dailyProfit? → A: Use daily Profit, remove daily return and daily return rate
+- Q: How should cumulative returns be calculated with daily profits? → A: Clarify that cumulative returns are still calculated using the product formula but based on daily profit ratios
+- Q: How should currency conversion be calculated when the frontend needs to display in other currencies? → A: Backend pre-calculation - The backend calculates conversions using user's preferred currency when requested
+- Q: How should i18n strings be added to JSON files for multi-language support? → A: Incremental addition - Add i18n strings to JSON files as needed during UI development
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: Users can view their total assets, daily gains/losses, and annual returns on the dashboard within 3 seconds of page load
+- **SC-001**: Users can view their total assets, daily profits, and annual returns on the dashboard within 3 seconds of page load
 - **SC-002**: System supports at least 10,000 assets per user while maintaining responsive UI performance
 - **SC-003**: Currency conversion accuracy is maintained to 4 decimal places for all supported currency pairs
 - **SC-004**: 95% of users can successfully navigate to their portfolio and view asset allocation within 2 minutes of first login
