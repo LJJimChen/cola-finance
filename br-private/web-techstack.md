@@ -2,7 +2,8 @@
 
 ## Monorepo
 - turbo pnpm monorepo
-- 仅共享纯逻辑与类型定义，不共享基础设施或运行时实现
+- monorepo guidelines in guidline/monorepo-guidline.md
+- monorepo template follow the guidelines in guidline/monorepo-pnpm-template.md
 - internal package use Just-in-Time package https://turborepo.dev/docs/core-concepts/internal-packages#just-in-time-packages
 
 ## Web (Frontend)
