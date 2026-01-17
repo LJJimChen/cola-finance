@@ -130,11 +130,21 @@ Implicit assumptions are forbidden.
 - pnpm MUST be used as the package manager for all dependencies.
 - Package dependencies MUST be declared explicitly in individual package.json files.
 
+### 23. Official Scaffolding Tools
+- Projects MUST be created using official scaffolding tools (e.g.pnpm create hono,pnpm create vite, @hono/cli, etc.) when available.
+- Custom scaffolding is prohibited unless officially supported tools are inadequate.
+- Generated code MUST comply with all constitutional principles.
+
 ### 26. Build and Deployment Pipeline
 - Turborepo MUST orchestrate all builds, tests, and deployments.
 - Build caching MUST be leveraged to optimize CI/CD performance.
 - Deployment pipelines MUST be defined in code and version-controlled.
 - Automated testing MUST pass before any deployment to production.
+
+- Always use Context7 MCP when I need library/API documentation, code generation, setup or configuration steps without me having to explicitly ask.
+- Always use /skill ui-ux-pro-max when implementing frontend components or pages.
+- never read files under ./br-private
+- always use the latest version of the technologies specified in this document.
 
 ## Governance
 - This Constitution supersedes all other development practices in this repository.
