@@ -1,5 +1,5 @@
 ﻿## Must follow
-- 用中文输出
+- 必须主要用中文输出
 - Always use Context7 MCP when I need library/API documentation, code generation, setup or configuration steps without me having to explicitly ask.
 - Always use /skill ui-ux-pro-max when implementing frontend components or pages.
 - never read files under ./br-private
