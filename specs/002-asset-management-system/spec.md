@@ -125,7 +125,7 @@ As a user, I want to switch between Chinese and English interfaces so that I can
 ### Functional Requirements
 
 - **FR-001**: System MUST aggregate user asset data from multiple broker platforms (e.g., East Money Securities, TianTian Fund, XueQiu Fund, Interactive Brokers, Charles Schwab) using a standardized data structure
-- **FR-002**: System MUST calculate individual asset gains and losses for each holding
+- **FR-002**: System MUST calculate individual asset gains and losses for each holding using cost basis instead of purchase price
 - **FR-003**: System MUST convert assets in different currencies to a target currency using stored exchange rates
 - **FR-004**: Users MUST be able to categorize assets (e.g., US Equities, Chinese Equities, Asia-Pacific Equities, Commodities, Dividend Income, Bonds)
 - **FR-005**: System MUST calculate and display asset percentages, gains, and yields by category
@@ -150,22 +150,31 @@ As a user, I want to switch between Chinese and English interfaces so that I can
 - **FR-024**: System MUST continue calculating returns based on the last known values on weekends and holidays when markets are closed
 - **FR-025**: System MUST use UTC for all internal calculations and store all timestamps in UTC
 - **FR-026**: System MUST convert timestamps to the user's selected time zone or account default time zone for presentation
+- **FR-027**: System MUST store pre-calculated currency-converted values (total assets, daily profit, current total profit) in daily portfolio snapshots for performance optimization
+- **FR-028**: System MUST update daily portfolio snapshots multiple times per day to reflect current asset values
+- **FR-029**: System MUST include separate fields for currency-converted total assets, daily profit, and current total profit in portfolio history records
+- **FR-030**: System MUST store currency-converted values with 4 decimal places precision
+- **FR-031**: System MUST include daily profit from broker data rather than calculating it
+- **FR-032**: System MUST store cost basis and daily profit in the Asset entity instead of purchase price
+- **FR-033**: System MUST treat Asset entity as the Asset Position with cost basis and daily profit attributes
+- **FR-034**: System MUST differentiate between daily profit for individual assets and daily profit for overall portfolio
+- **FR-035**: System MUST obtain cost basis from broker data representing the average cost of acquiring the asset position
 
 ### Key Entities *(include if feature involves data)*
 
-- **Asset**: Represents an individual holding with attributes like symbol, name, quantity, purchase price, current price, currency, and broker source
+- **Asset**: Represents an individual holding (also referred to as Asset Position) with attributes like symbol, name, quantity, cost_basis (provided by broker data, representing average cost of acquiring the position), daily_profit (for individual asset), current price, currency, and broker source
 - **Category**: Represents a grouping of assets with attributes like name, target allocation percentage, and current allocation percentage
 - **Portfolio**: Represents a collection of assets and categories for a specific user
 - **ExchangeRate**: Represents currency conversion rates with attributes like from_currency, to_currency, and rate_value
 - **User**: Represents system users with attributes like language preference, theme settings, and currency display preferences
-- **PortfolioHistory**: Represents daily portfolio snapshots with attributes like date, total_value, and daily_return_rate (added to support cumulative return calculations)
+- **PortfolioHistory**: Represents daily portfolio snapshots with attributes like date, total_value, and daily_return_rate (added to support cumulative return calculations). Pre-calculated currency-converted values (total assets, daily profit, current total profit) are stored for performance optimization. Includes separate fields for currency-converted total assets, daily profit (for overall portfolio, included from broker data), and current total profit with 4 decimal places precision.
 
 ## Clarifications
 
 ### Session 2026-01-15
 
 - Q: How should the system handle failures when external services (like exchange rate providers) are unavailable? → A: Gracefully degrade functionality, showing cached or static data where possible
-- Q: For the Asset entity, which additional attributes should be included beyond the basic ones mentioned? → A: Only include the basic attributes already mentioned (symbol, name, quantity, purchase price, current price, currency, broker source)
+- Q: For the Asset entity, which additional attributes should be included beyond the basic ones mentioned? → A: Only include the basic attributes already mentioned (symbol, name, quantity, cost_basis, daily_profit, current price, currency, broker source), replacing purchase price with cost basis and daily profit
 - Q: Should the rebalancing feature only provide recommendations without executing actual trades? → A: Yes, rebalancing only shows users how to perform rebalancing, without executing trades
 - Q: How should the system handle empty states (e.g., when a user has no assets yet)? → A: Display a simple message indicating no data is available
 - Q: For how long should the system store historical exchange rates? → A: Keep forever
@@ -177,6 +186,18 @@ As a user, I want to switch between Chinese and English interfaces so that I can
 - Q: How often should daily returns be calculated and stored? → A: Multiple times per day (e.g., hourly)
 - Q: How should the system handle return calculations on weekends and holidays when markets are closed? → A: Continue calculating returns based on the last known values
 - Q: How should the system handle time zones for return calculations and reporting? → A: Use UTC for all internal calculations and store timestamps in UTC, with conversion to user-selected or account default time zone for presentation
+
+### Session 2026-01-17
+
+- Q: Should the daily asset snapshots store pre-calculated currency-converted values or calculate them on-the-fly? → A: Store pre-calculated values in the database for performance optimization
+- Q: How frequently are the daily asset snapshots updated? → A: Daily snapshots are updated multiple times per day
+- Q: How should the currency-converted values (total assets, daily profit, current total profit) be stored? → A: Store these three specific pre-calculated values separately in the PortfolioHistory entity
+- Q: What precision should be used for currency-converted values (total assets, daily profit, current total profit)? → A: 4 decimal places precision
+- Q: How should daily profit be calculated for the currency-converted values? → A: Daily profit is included in broker data rather than calculated
+- Q: What attributes should the Asset entity include instead of purchase price? → A: Store cost basis and daily profit instead of purchase price in the Asset entity
+- Q: What does "Asset Position" refer to in the context? → A: Asset Position refers to the current state of the Asset entity
+- Q: What's the difference between daily profit in the Asset entity and in the PortfolioHistory entity? → A: Daily profit in Asset entity is for individual asset; daily profit in PortfolioHistory is for overall portfolio
+- Q: How is the cost basis in the Asset entity determined? → A: Cost basis is provided by the broker data and represents the average cost of acquiring the asset position
 
 ## Success Criteria *(mandatory)*
 
