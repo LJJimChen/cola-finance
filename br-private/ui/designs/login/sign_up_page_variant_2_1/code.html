@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html class="" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Minimalist Login Page</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {primary: "#2563EB", "primary-dark": "#1d4ed8", "background-light": "#f5f7f8", "background-dark": "#0f1923", "card-dark": "#162b1f", "input-bg": "#0c1a11", "border-dark": "#2a4a35"}, fontFamily: {display: "Inter"}, borderRadius: {DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px"}, boxShadow: {glow: "0 0 20px rgba(37, 99, 235, 0.15)", "glow-sm": "0 0 10px rgba(37, 99, 235, 0.1)"}}}};</script>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen font-display text-slate-900 dark:text-white overflow-x-hidden selection:bg-primary selection:text-white">
+<div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+<div class="absolute -top-[20%] -left-[10%] w-[60vw] h-[60vw] bg-primary/5 rounded-full blur-[120px]"></div>
+<div class="absolute top-[60%] -right-[10%] w-[50vw] h-[50vw] bg-primary/5 rounded-full blur-[100px]"></div>
+</div>
+<div class="relative z-10 flex flex-col items-center justify-center min-h-[100dvh] px-6 w-full max-w-sm mx-auto">
+<div class="w-full text-center mb-10 animate-[fadeIn_0.6s_ease-out]">
+<div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-5 ring-1 ring-primary/20">
+<span class="material-symbols-outlined" style="font-size: 24px;">lock</span>
+</div>
+<h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white mb-2">Welcome Back</h1>
+<p class="text-slate-500 dark:text-slate-400 text-sm">Securely login to your asset vault</p>
+</div>
+<form class="w-full flex flex-col gap-4 animate-[fadeIn_0.8s_ease-out]">
+<div class="space-y-4">
+<div>
+<label class="sr-only">Username, Phone or Email</label>
+<input autocomplete="username" class="block w-full px-4 py-3.5 bg-white dark:bg-input-bg border border-slate-200 dark:border-border-dark rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all text-sm" placeholder="Username, Phone or Email" type="text"/>
+</div>
+<div class="relative">
+<label class="sr-only">Password</label>
+<input autocomplete="current-password" class="block w-full px-4 py-3.5 bg-white dark:bg-input-bg border border-slate-200 dark:border-border-dark rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all text-sm" placeholder="Password" type="password"/>
+<button class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors cursor-pointer" type="button">
+<span class="material-symbols-outlined" style="font-size: 20px;">visibility</span>
+</button>
+</div>
+</div>
+<div class="flex justify-end pt-1">
+<a class="text-xs font-medium text-slate-500 hover:text-primary transition-colors" href="#">Forgot Password?</a>
+</div>
+<button class="w-full mt-4 bg-[#2563EB] hover:bg-[#1d4ed8] text-white font-semibold text-sm py-3.5 rounded-xl shadow-none hover:shadow-md transition-all duration-200" type="submit">
+                Log In
+            </button>
+</form>
+<div class="w-full mt-8 animate-[fadeIn_1.0s_ease-out]">
+<div class="relative flex py-2 items-center justify-center">
+<span class="text-[10px] text-slate-400 uppercase tracking-widest font-medium px-2">Or continue with</span>
+</div>
+<div class="flex justify-center gap-4 mt-4">
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-card-dark border border-slate-200 dark:border-border-dark hover:border-slate-300 dark:hover:border-primary/50 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-all duration-300 group shadow-sm">
+<svg class="h-4 w-4 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .533 5.333.533 12S5.867 24 12.48 24c3.44 0 6.147-1.133 7.96-3.04 1.84-1.92 2.347-4.933 2.347-7.24 0-.52-.067-1.107-.16-1.8H12.48z"></path>
+</svg>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-card-dark border border-slate-200 dark:border-border-dark hover:border-slate-300 dark:hover:border-primary/50 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-all duration-300 group shadow-sm">
+<svg class="h-4 w-4 fill-current" viewBox="0 0 384 512" xmlns="http://www.w3.org/2000/svg">
+<path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"></path>
+</svg>
+</button>
+</div>
+</div>
+<div class="absolute bottom-6 w-full flex flex-col items-center gap-4 animate-[fadeIn_1.2s_ease-out]">
+<p class="text-[13px] text-slate-500">
+                Don't have an account? 
+                <a class="text-primary hover:text-primary-dark font-medium hover:underline transition-colors" href="#">Sign up</a>
+</p>
+<div class="flex items-center gap-1.5 opacity-40 hover:opacity-80 transition-opacity select-none" title="All data is encrypted locally">
+<span class="material-symbols-outlined text-primary" style="font-size: 14px;">encrypted</span>
+<span class="text-[10px] text-slate-400 font-medium tracking-wider uppercase">Local Encryption Active</span>
+</div>
+</div>
+</div>
+<style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+
+</body></html>
