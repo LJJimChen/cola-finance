@@ -1,0 +1,965 @@
+openapi: 3.0.3
+info:
+  title: Asset Management System API
+  description: API for the asset management system that aggregates user holdings, calculates performance, and visualizes allocation
+  version: 1.0.0
+servers:
+  - url: https://bff.example.com/api
+    description: Production BFF server
+  - url: https://dev-bff.example.com/api
+    description: Development BFF server
+
+paths:
+  /auth/login:
+    post:
+      summary: User login
+      description: Authenticate user and return session token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  format: password
+                  example: securePassword123
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        '401':
+          description: Invalid credentials
+        '400':
+          description: Invalid request format
+
+  /auth/logout:
+    post:
+      summary: User logout
+      description: End user session
+      responses:
+        '200':
+          description: Successfully logged out
+
+  /users/profile:
+    get:
+      summary: Get user profile
+      description: Retrieve current user's profile information
+      responses:
+        '200':
+          description: User profile data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: "user-123"
+                  email:
+                    type: string
+                    format: email
+                    example: user@example.com
+                  language_preference:
+                    type: string
+                    enum: [zh, en]
+                    example: "en"
+                  theme_settings:
+                    type: string
+                    enum: [light, dark, auto]
+                    example: "light"
+                  display_currency:
+                    type: string
+                    example: "USD"
+        '401':
+          description: Unauthorized
+    put:
+      summary: Update user profile
+      description: Update current user's profile information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                language_preference:
+                  type: string
+                  enum: [zh, en]
+                theme_settings:
+                  type: string
+                  enum: [light, dark, auto]
+                display_currency:
+                  type: string
+                  example: "EUR"
+      responses:
+        '200':
+          description: Profile updated successfully
+        '401':
+          description: Unauthorized
+        '400':
+          description: Invalid request format
+
+  /portfolios:
+    get:
+      summary: Get user portfolios
+      description: Retrieve all portfolios for the current user
+      responses:
+        '200':
+          description: List of user portfolios
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Portfolio'
+        '401':
+          description: Unauthorized
+    post:
+      summary: Create a new portfolio
+      description: Create a new portfolio for the current user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePortfolioRequest'
+      responses:
+        '201':
+          description: Portfolio created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Portfolio'
+        '401':
+          description: Unauthorized
+        '400':
+          description: Invalid request format
+
+  /portfolios/{portfolioId}:
+    get:
+      summary: Get portfolio details
+      description: Retrieve details for a specific portfolio
+      parameters:
+        - name: portfolioId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Portfolio details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortfolioWithAssets'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Portfolio not found
+    put:
+      summary: Update portfolio
+      description: Update details for a specific portfolio
+      parameters:
+        - name: portfolioId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePortfolioRequest'
+      responses:
+        '200':
+          description: Portfolio updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Portfolio'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Portfolio not found
+        '400':
+          description: Invalid request format
+    delete:
+      summary: Delete portfolio
+      description: Delete a specific portfolio
+      parameters:
+        - name: portfolioId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Portfolio deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Portfolio not found
+
+  /portfolios/{portfolioId}/assets:
+    get:
+      summary: Get assets in portfolio
+      description: Retrieve all assets in a specific portfolio
+      parameters:
+        - name: portfolioId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of assets in the portfolio
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Asset'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Portfolio not found
+    post:
+      summary: Add asset to portfolio
+      description: Add a new asset to a specific portfolio
+      parameters:
+        - name: portfolioId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAssetRequest'
+      responses:
+        '201':
+          description: Asset added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Asset'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Portfolio not found
+        '400':
+          description: Invalid request format
+
+  /portfolios/{portfolioId}/categories:
+    get:
+      summary: Get categories in portfolio
+      description: Retrieve all categories in a specific portfolio
+      parameters:
+        - name: portfolioId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of categories in the portfolio
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Portfolio not found
+    post:
+      summary: Create category in portfolio
+      description: Create a new category in a specific portfolio
+      parameters:
+        - name: portfolioId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryRequest'
+      responses:
+        '201':
+          description: Category created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Portfolio not found
+        '400':
+          description: Invalid request format
+
+  /categories/{categoryId}:
+    put:
+      summary: Update category
+      description: Update details for a specific category
+      parameters:
+        - name: categoryId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCategoryRequest'
+      responses:
+        '200':
+          description: Category updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Category not found
+        '400':
+          description: Invalid request format
+    delete:
+      summary: Delete category
+      description: Delete a specific category
+      parameters:
+        - name: categoryId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Category deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Category not found
+
+  /portfolios/{portfolioId}/dashboard:
+    get:
+      summary: Get portfolio dashboard data
+      description: Retrieve aggregated data for portfolio dashboard
+      parameters:
+        - name: portfolioId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: displayCurrency
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "USD"
+      responses:
+        '200':
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardData'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Portfolio not found
+
+  /portfolios/{portfolioId}/allocation:
+    get:
+      summary: Get portfolio allocation
+      description: Retrieve allocation data by category and currency
+      parameters:
+        - name: portfolioId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: displayCurrency
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "USD"
+      responses:
+        '200':
+          description: Allocation data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllocationData'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Portfolio not found
+
+  /portfolios/{portfolioId}/rebalance:
+    get:
+      summary: Get rebalancing recommendations
+      description: Retrieve category-level rebalancing recommendations
+      parameters:
+        - name: portfolioId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Rebalancing recommendations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RebalanceRecommendations'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Portfolio not found
+
+  /historical-performance/{portfolioId}:
+    get:
+      summary: Get historical performance
+      description: Retrieve historical performance data for a portfolio
+      parameters:
+        - name: portfolioId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+            example: "2023-01-01"
+        - name: endDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+            example: "2023-12-31"
+        - name: displayCurrency
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "USD"
+      responses:
+        '200':
+          description: Historical performance data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistoricalPerformance'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Portfolio not found
+
+  /exchange-rates:
+    get:
+      summary: Get exchange rates
+      description: Retrieve available exchange rates for conversion
+      parameters:
+        - name: baseCurrency
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "CNY"
+        - name: date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+            example: "2023-10-01"
+      responses:
+        '200':
+          description: Available exchange rates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExchangeRate'
+        '400':
+          description: Invalid date format
+
+components:
+  schemas:
+    Portfolio:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "portfolio-123"
+        userId:
+          type: string
+          example: "user-123"
+        name:
+          type: string
+          example: "My Investment Portfolio"
+        description:
+          type: string
+          example: "Main investment portfolio"
+        totalValueCny:
+          type: number
+          format: decimal
+          example: 125000.50
+        dailyProfitCny:
+          type: number
+          format: decimal
+          example: 1250.75
+        currentTotalProfitCny:
+          type: number
+          format: decimal
+          example: 25000.25
+        createdAt:
+          type: string
+          format: date-time
+          example: "2023-01-01T00:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2023-10-01T12:00:00Z"
+
+    PortfolioWithAssets:
+      allOf:
+        - $ref: '#/components/schemas/Portfolio'
+        - type: object
+          properties:
+            assets:
+              type: array
+              items:
+                $ref: '#/components/schemas/Asset'
+            categories:
+              type: array
+              items:
+                $ref: '#/components/schemas/Category'
+
+    Asset:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "asset-456"
+        userId:
+          type: string
+          example: "user-123"
+        portfolioId:
+          type: string
+          example: "portfolio-123"
+        symbol:
+          type: string
+          example: "AAPL"
+        name:
+          type: string
+          example: "Apple Inc."
+        quantity:
+          type: number
+          format: decimal
+          example: 10.5
+        costBasis:
+          type: number
+          format: decimal
+          example: 150.25
+        dailyProfit:
+          type: number
+          format: decimal
+          example: 25.50
+        currentPrice:
+          type: number
+          format: decimal
+          example: 175.75
+        currency:
+          type: string
+          example: "USD"
+        brokerSource:
+          type: string
+          example: "BrokerA"
+        categoryId:
+          type: string
+          example: "category-789"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2023-01-01T00:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2023-10-01T12:00:00Z"
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "category-789"
+        userId:
+          type: string
+          example: "user-123"
+        name:
+          type: string
+          example: "US Equities"
+        targetAllocation:
+          type: number
+          format: decimal
+          example: 60.00
+        currentAllocation:
+          type: number
+          format: decimal
+          example: 62.50
+        createdAt:
+          type: string
+          format: date-time
+          example: "2023-01-01T00:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2023-10-01T12:00:00Z"
+
+    CreatePortfolioRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: "New Portfolio"
+        description:
+          type: string
+          example: "A new investment portfolio"
+
+    UpdatePortfolioRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Updated Portfolio Name"
+        description:
+          type: string
+          example: "Updated description"
+
+    CreateAssetRequest:
+      type: object
+      required:
+        - symbol
+        - name
+        - quantity
+        - costBasis
+        - currentPrice
+        - currency
+        - brokerSource
+      properties:
+        symbol:
+          type: string
+          example: "TSLA"
+        name:
+          type: string
+          example: "Tesla Inc."
+        quantity:
+          type: number
+          format: decimal
+          example: 5.0
+        costBasis:
+          type: number
+          format: decimal
+          example: 250.00
+        dailyProfit:
+          type: number
+          format: decimal
+          example: -15.25
+        currentPrice:
+          type: number
+          format: decimal
+          example: 245.50
+        currency:
+          type: string
+          example: "USD"
+        brokerSource:
+          type: string
+          example: "BrokerB"
+        categoryId:
+          type: string
+          example: "category-789"
+
+    CreateCategoryRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: "Technology Stocks"
+        targetAllocation:
+          type: number
+          format: decimal
+          example: 30.00
+
+    UpdateCategoryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Tech Sector"
+        targetAllocation:
+          type: number
+          format: decimal
+          example: 35.00
+
+    DashboardData:
+      type: object
+      properties:
+        totalValue:
+          type: number
+          format: decimal
+          example: 125000.50
+        dailyProfit:
+          type: number
+          format: decimal
+          example: 1250.75
+        annualReturn:
+          type: number
+          format: decimal
+          example: 12.5
+        currency:
+          type: string
+          example: "USD"
+        lastUpdated:
+          type: string
+          format: date-time
+          example: "2023-10-01T16:00:00Z"
+        allocationByCategory:
+          type: array
+          items:
+            type: object
+            properties:
+              categoryName:
+                type: string
+                example: "US Equities"
+              percentage:
+                type: number
+                format: decimal
+                example: 62.5
+              value:
+                type: number
+                format: decimal
+                example: 78125.31
+        topPerformingAssets:
+          type: array
+          items:
+            $ref: '#/components/schemas/Asset'
+
+    AllocationData:
+      type: object
+      properties:
+        totalValue:
+          type: number
+          format: decimal
+          example: 125000.50
+        currency:
+          type: string
+          example: "USD"
+        categories:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                example: "category-789"
+              name:
+                type: string
+                example: "US Equities"
+              targetAllocation:
+                type: number
+                format: decimal
+                example: 60.00
+              currentAllocation:
+                type: number
+                format: decimal
+                example: 62.50
+              value:
+                type: number
+                format: decimal
+                example: 78125.31
+              profitAmount:
+                type: number
+                format: decimal
+                example: 5200.25
+              yield:
+                type: number
+                format: decimal
+                example: 4.25
+              assets:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: "asset-456"
+                    symbol:
+                      type: string
+                      example: "AAPL"
+                    name:
+                      type: string
+                      example: "Apple Inc."
+                    quantity:
+                      type: number
+                      format: decimal
+                      example: 10.5
+                    value:
+                      type: number
+                      format: decimal
+                      example: 1845.38
+                    profitAmount:
+                      type: number
+                      format: decimal
+                      example: 267.88
+                    yield:
+                      type: number
+                      format: decimal
+                      example: 2.35
+
+    RebalanceRecommendations:
+      type: object
+      properties:
+        portfolioId:
+          type: string
+          example: "portfolio-123"
+        recommendations:
+          type: array
+          items:
+            type: object
+            properties:
+              categoryId:
+                type: string
+                example: "category-789"
+              categoryName:
+                type: string
+                example: "US Equities"
+              currentAllocation:
+                type: number
+                format: decimal
+                example: 62.50
+              targetAllocation:
+                type: number
+                format: decimal
+                example: 60.00
+              deviation:
+                type: number
+                format: decimal
+                example: 2.50
+              recommendation:
+                type: string
+                example: "Reduce exposure by selling $3,125.13 worth of assets"
+              suggestedActions:
+                type: array
+                items:
+                  type: string
+                  example: "Sell $1,500 of AAPL", "Sell $1,625.13 of MSFT"
+
+    HistoricalPerformance:
+      type: object
+      properties:
+        portfolioId:
+          type: string
+          example: "portfolio-123"
+        startDate:
+          type: string
+          format: date
+          example: "2023-01-01"
+        endDate:
+          type: string
+          format: date
+          example: "2023-12-31"
+        currency:
+          type: string
+          example: "USD"
+        snapshots:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+                example: "2023-06-15"
+              totalValue:
+                type: number
+                format: decimal
+                example: 118500.25
+              dailyProfit:
+                type: number
+                format: decimal
+                example: 850.50
+              cumulativeReturn:
+                type: number
+                format: decimal
+                example: 8.25
+        totalReturn:
+          type: number
+          format: decimal
+          example: 15.75
+        volatility:
+          type: number
+          format: decimal
+          example: 12.3
+
+    ExchangeRate:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "rate-usd-cny-20231001"
+        sourceCurrency:
+          type: string
+          example: "USD"
+        targetCurrency:
+          type: string
+          example: "CNY"
+        exchangeRate:
+          type: number
+          format: decimal
+          example: 7.2500
+        date:
+          type: string
+          format: date
+          example: "2023-10-01"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2023-10-01T00:00:00Z"

@@ -6,7 +6,8 @@
 
 ## Active Technologies
 - TypeScript 5.x, JavaScript ES2022 (002-asset-management-system)
-- Cloudflare D1 (SQL database) with Drizzle ORM (002-asset-management-system)
+- TypeScript 5.x, React 18.x, JavaScript ES2022 (003-asset-management-system)
+- Cloudflare D1 SQL database with Drizzle ORM (003-asset-management-system)
 
 ## Recent Changes
 - 002-asset-management-system: Added TypeScript 5.x, JavaScript ES2022
