@@ -35,10 +35,10 @@ Each user story will be implemented as a complete, independently testable increm
 - [X] T014 Set up database migration scripts in BFF
 - [X] T015 Create shared types directory in both web and BFF apps
 - [X] T016 Implement API client generation from OpenAPI spec using ky
-- [ ] T017 Set up internationalization (i18n) infrastructure for ZH/EN support
-- [ ] T018 Implement currency conversion service in BFF
-- [ ] T019 Create base UI components in web app (Layout, Header, Navigation)
-- [ ] T020 Set up PWA configuration in web app
+- [X] T017 Set up internationalization (i18n) infrastructure for ZH/EN support
+- [X] T018 Implement currency conversion service in BFF
+- [X] T019 Create base UI components in web app (Layout, Header, Navigation)
+- [X] T020 Set up PWA configuration in web app
 
 ## Phase 3: User Story 1 - Dashboard Overview (Priority: P1)
 
@@ -46,16 +46,16 @@ Each user story will be implemented as a complete, independently testable increm
 
 **Independent Test Criteria**: User can log in and view dashboard showing totals, daily profit, annual return, charts, and allocation
 
-- [ ] T021 [US1] Create PortfolioService in BFF to calculate portfolio metrics
-- [ ] T022 [US1] Implement GET /portfolios/{portfolioId}/dashboard endpoint in BFF
-- [ ] T023 [US1] Create PortfolioHistoryService in BFF for historical data
-- [ ] T024 [US1] Implement ExchangeRateService in BFF for currency conversion
-- [ ] T025 [US1] Create DashboardPage component in web app
-- [ ] T026 [US1] Implement dashboard data fetching hook using TanStack Query
-- [ ] T027 [US1] Create chart components for portfolio performance visualization
-- [ ] T028 [US1] Implement currency conversion display in dashboard
-- [ ] T029 [US1] Add loading and error states to dashboard UI
-- [ ] T030 [US1] Create mock data for dashboard testing
+- [X] T021 [US1] Create PortfolioService in BFF to calculate portfolio metrics
+- [X] T022 [US1] Implement GET /portfolios/{portfolioId}/dashboard endpoint in BFF
+- [X] T023 [US1] Create PortfolioHistoryService in BFF for historical data
+- [X] T024 [US1] Implement ExchangeRateService in BFF for currency conversion
+- [X] T025 [US1] Create DashboardPage component in web app
+- [X] T026 [US1] Implement dashboard data fetching hook using TanStack Query
+- [X] T027 [US1] Create chart components for portfolio performance visualization
+- [X] T028 [US1] Implement currency conversion display in dashboard
+- [X] T029 [US1] Add loading and error states to dashboard UI
+- [X] T030 [US1] Create mock data for dashboard testing
 
 ## Phase 4: User Story 2 - Portfolio Management (Priority: P1)
 

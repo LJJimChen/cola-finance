@@ -1,0 +1,22 @@
+{
+  "name": "cola-finance-monorepo",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "clean": "rm -rf node_modules && turbo run clean"
+  },
+  "devDependencies": {
+    "turbo": "latest",
+    "@types/node": "latest",
+    "typescript": "latest",
+    "eslint": "latest",
+    "prettier": "latest"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "pnpm@latest"
+}
