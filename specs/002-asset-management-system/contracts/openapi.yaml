@@ -1,0 +1,928 @@
+openapi: 3.0.3
+info:
+  title: Asset Management System API
+  description: API for the asset management system that aggregates user asset data from multiple broker platforms, calculates gains, converts currencies, manages categories, and provides rebalancing recommendations.
+  version: 1.0.0
+servers:
+  - url: https://bff.cola-finance.com/api
+    description: Production server
+  - url: https://dev-bff.cola-finance.com/api
+    description: Development server
+
+paths:
+  /auth/login:
+    post:
+      summary: User login
+      description: Authenticate user and return session token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+              required:
+                - email
+                - password
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Invalid credentials
+
+  /auth/logout:
+    post:
+      summary: User logout
+      description: Invalidate user session
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successfully logged out
+
+  /users/profile:
+    get:
+      summary: Get user profile
+      description: Retrieve current user's profile information
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    put:
+      summary: Update user profile
+      description: Update current user's profile information
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
+      responses:
+        '200':
+          description: User profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /assets:
+    get:
+      summary: Get user assets
+      description: Retrieve all assets for the authenticated user
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          description: Filter assets by category ID
+          required: false
+          schema:
+            type: string
+        - name: broker
+          in: query
+          description: Filter assets by broker source
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of user's assets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Asset'
+    post:
+      summary: Add a new asset
+      description: Create a new asset for the authenticated user
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetCreateRequest'
+      responses:
+        '201':
+          description: Asset created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Asset'
+        '400':
+          description: Invalid input data
+
+  /assets/{assetId}:
+    get:
+      summary: Get specific asset
+      description: Retrieve a specific asset by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Asset retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Asset'
+        '404':
+          description: Asset not found
+    put:
+      summary: Update an asset
+      description: Update an existing asset
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetUpdateRequest'
+      responses:
+        '200':
+          description: Asset updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Asset'
+        '404':
+          description: Asset not found
+    delete:
+      summary: Delete an asset
+      description: Remove an asset from the user's portfolio
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Asset deleted successfully
+        '404':
+          description: Asset not found
+
+  /categories:
+    get:
+      summary: Get user categories
+      description: Retrieve all categories for the authenticated user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of user's categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+    post:
+      summary: Create a new category
+      description: Create a new custom category for the authenticated user
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryCreateRequest'
+      responses:
+        '201':
+          description: Category created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '400':
+          description: Invalid input data
+
+  /categories/{categoryId}:
+    get:
+      summary: Get specific category
+      description: Retrieve a specific category by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: categoryId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Category retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '404':
+          description: Category not found
+    put:
+      summary: Update a category
+      description: Update an existing category
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: categoryId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryUpdateRequest'
+      responses:
+        '200':
+          description: Category updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '404':
+          description: Category not found
+    delete:
+      summary: Delete a category
+      description: Remove a category (custom categories only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: categoryId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Category deleted successfully
+        '400':
+          description: Cannot delete predefined category
+        '404':
+          description: Category not found
+
+  /dashboard:
+    get:
+      summary: Get dashboard data
+      description: Retrieve aggregated data for the user's dashboard
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: currency
+          in: query
+          description: Target currency for display (default: user's preference)
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dashboard data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardData'
+
+  /portfolio:
+    get:
+      summary: Get portfolio data
+      description: Retrieve portfolio data organized by categories
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: currency
+          in: query
+          description: Target currency for display (default: user's preference)
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Portfolio data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortfolioData'
+
+  /rebalance:
+    get:
+      summary: Get rebalancing recommendations
+      description: Calculate and retrieve rebalancing recommendations based on target allocations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: currency
+          in: query
+          description: Target currency for display (default: user's preference)
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Rebalancing recommendations retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RebalanceRecommendations'
+
+  /exchange-rates:
+    get:
+      summary: Get exchange rates
+      description: Retrieve currency exchange rates
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: from
+          in: query
+          description: Source currency (default: USD)
+          required: false
+          schema:
+            type: string
+        - name: to
+          in: query
+          description: Target currency (default: CNY)
+          required: false
+          schema:
+            type: string
+        - name: date
+          in: query
+          description: Date for historical rates (default: today)
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Exchange rates retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExchangeRate'
+
+  /history/portfolio:
+    get:
+      summary: Get portfolio history
+      description: Retrieve historical portfolio data for charting
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          description: Start date for history range
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          description: End date for history range
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: currency
+          in: query
+          description: Target currency for display (default: user's preference)
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Portfolio history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PortfolioHistory'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the user
+        email:
+          type: string
+          format: email
+          description: User's email address
+        createdAt:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        languagePreference:
+          type: string
+          enum: [zh, en]
+          description: UI language preference
+        themeSetting:
+          type: string
+          enum: [light, dark]
+          description: Theme preference
+        displayCurrency:
+          type: string
+          description: Preferred currency for display (e.g., USD, CNY)
+        timezone:
+          type: string
+          description: User's timezone for display purposes
+      required:
+        - id
+        - email
+        - createdAt
+        - updatedAt
+        - languagePreference
+        - themeSetting
+        - displayCurrency
+        - timezone
+
+    UserUpdateRequest:
+      type: object
+      properties:
+        languagePreference:
+          type: string
+          enum: [zh, en]
+        themeSetting:
+          type: string
+          enum: [light, dark]
+        displayCurrency:
+          type: string
+        timezone:
+          type: string
+      additionalProperties: false
+
+    Asset:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the asset
+        userId:
+          type: string
+          description: Owner of the asset
+        symbol:
+          type: string
+          description: Ticker symbol (e.g., AAPL, 000001)
+        name:
+          type: string
+          description: Full name of the asset
+        quantity:
+          type: number
+          description: Number of shares/units held
+        purchasePrice:
+          type: number
+          description: Price at which the asset was purchased (per unit)
+        currentPrice:
+          type: number
+          description: Current market price (per unit)
+        currency:
+          type: string
+          description: Currency of the asset (e.g., USD, CNY, EUR)
+          pattern: ^[A-Z]{3}$
+        brokerSource:
+          type: string
+          description: Source broker (e.g., eastmoney, tiantian, xueqiu)
+        categoryId:
+          type: string
+          description: Optional category assignment
+        createdAt:
+          type: string
+          format: date-time
+          description: Record creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      required:
+        - id
+        - userId
+        - symbol
+        - name
+        - quantity
+        - purchasePrice
+        - currentPrice
+        - currency
+        - brokerSource
+        - createdAt
+        - updatedAt
+
+    AssetCreateRequest:
+      type: object
+      properties:
+        symbol:
+          type: string
+          description: Ticker symbol (e.g., AAPL, 000001)
+        name:
+          type: string
+          description: Full name of the asset
+        quantity:
+          type: number
+          minimum: 0
+          description: Number of shares/units held
+        purchasePrice:
+          type: number
+          minimum: 0
+          description: Price at which the asset was purchased (per unit)
+        currentPrice:
+          type: number
+          minimum: 0
+          description: Current market price (per unit)
+        currency:
+          type: string
+          description: Currency of the asset (e.g., USD, CNY, EUR)
+          pattern: ^[A-Z]{3}$
+        brokerSource:
+          type: string
+          description: Source broker (e.g., eastmoney, tiantian, xueqiu)
+        categoryId:
+          type: string
+          description: Optional category assignment
+      required:
+        - symbol
+        - name
+        - quantity
+        - purchasePrice
+        - currentPrice
+        - currency
+        - brokerSource
+
+    AssetUpdateRequest:
+      type: object
+      properties:
+        quantity:
+          type: number
+          minimum: 0
+          description: Number of shares/units held
+        purchasePrice:
+          type: number
+          minimum: 0
+          description: Price at which the asset was purchased (per unit)
+        currentPrice:
+          type: number
+          minimum: 0
+          description: Current market price (per unit)
+        categoryId:
+          type: string
+          description: Optional category assignment
+      additionalProperties: false
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the category
+        userId:
+          type: string
+          description: Owner of the category
+        name:
+          type: string
+          description: Category name (e.g., US Equities, Bonds)
+        isCustom:
+          type: boolean
+          description: True if user-created, false if predefined
+        targetAllocation:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Target percentage allocation (0-100)
+        createdAt:
+          type: string
+          format: date-time
+          description: Record creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      required:
+        - id
+        - userId
+        - name
+        - isCustom
+        - targetAllocation
+        - createdAt
+        - updatedAt
+
+    CategoryCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Category name (e.g., US Equities, Bonds)
+        targetAllocation:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Target percentage allocation (0-100)
+      required:
+        - name
+        - targetAllocation
+      additionalProperties: false
+
+    CategoryUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Category name (e.g., US Equities, Bonds)
+        targetAllocation:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Target percentage allocation (0-100)
+      additionalProperties: false
+
+    DashboardData:
+      type: object
+      properties:
+        totalAssets:
+          type: number
+          description: Total value of all assets in the target currency
+        dailyGainLoss:
+          type: number
+          description: Daily gain or loss in the target currency
+        annualReturn:
+          type: number
+          description: Annual return percentage
+        assetAllocation:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetAllocation'
+        recentTransactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transaction'
+      required:
+        - totalAssets
+        - dailyGainLoss
+        - annualReturn
+        - assetAllocation
+
+    AssetAllocation:
+      type: object
+      properties:
+        categoryId:
+          type: string
+          description: ID of the category
+        categoryName:
+          type: string
+          description: Name of the category
+        percentage:
+          type: number
+          description: Percentage of total portfolio
+        value:
+          type: number
+          description: Value in target currency
+      required:
+        - categoryId
+        - categoryName
+        - percentage
+        - value
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the transaction
+        assetId:
+          type: string
+          description: ID of the associated asset
+        type:
+          type: string
+          enum: [buy, sell]
+          description: Type of transaction
+        quantity:
+          type: number
+          description: Number of shares/units
+        price:
+          type: number
+          description: Price per share/unit
+        total:
+          type: number
+          description: Total value of transaction
+        date:
+          type: string
+          format: date-time
+          description: Transaction date
+      required:
+        - id
+        - assetId
+        - type
+        - quantity
+        - price
+        - total
+        - date
+
+    PortfolioData:
+      type: object
+      properties:
+        totalValue:
+          type: number
+          description: Total value of the portfolio in target currency
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/PortfolioCategory'
+      required:
+        - totalValue
+        - categories
+
+    PortfolioCategory:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Category ID
+        name:
+          type: string
+          description: Category name
+        targetAllocation:
+          type: number
+          description: Target allocation percentage
+        currentValue:
+          type: number
+          description: Current value in target currency
+        currentPercentage:
+          type: number
+          description: Current percentage of portfolio
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/Asset'
+      required:
+        - id
+        - name
+        - targetAllocation
+        - currentValue
+        - currentPercentage
+        - assets
+
+    RebalanceRecommendations:
+      type: object
+      properties:
+        recommendations:
+          type: array
+          items:
+            $ref: '#/components/schemas/RebalanceItem'
+        summary:
+          $ref: '#/components/schemas/RebalanceSummary'
+      required:
+        - recommendations
+        - summary
+
+    RebalanceItem:
+      type: object
+      properties:
+        categoryId:
+          type: string
+          description: ID of the category
+        categoryName:
+          type: string
+          description: Name of the category
+        currentAllocation:
+          type: number
+          description: Current allocation percentage
+        targetAllocation:
+          type: number
+          description: Target allocation percentage
+        deviation:
+          type: number
+          description: Deviation from target (positive means over-allocated)
+        recommendation:
+          type: string
+          description: Textual recommendation for rebalancing
+      required:
+        - categoryId
+        - categoryName
+        - currentAllocation
+        - targetAllocation
+        - deviation
+        - recommendation
+
+    RebalanceSummary:
+      type: object
+      properties:
+        totalDeviation:
+          type: number
+          description: Sum of absolute deviations from targets
+        status:
+          type: string
+          enum: [balanced, slightly_unbalanced, moderately_unbalanced, highly_unbalanced]
+          description: Overall portfolio balance status
+      required:
+        - totalDeviation
+        - status
+
+    ExchangeRate:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the exchange rate
+        fromCurrency:
+          type: string
+          description: Source currency code (e.g., USD)
+          pattern: ^[A-Z]{3}$
+        toCurrency:
+          type: string
+          description: Target currency code (e.g., CNY)
+          pattern: ^[A-Z]{3}$
+        rateValue:
+          type: number
+          description: Conversion rate (from * rateValue = to)
+        date:
+          type: string
+          format: date
+          description: Date of the exchange rate
+        createdAt:
+          type: string
+          format: date-time
+          description: Record creation timestamp
+      required:
+        - id
+        - fromCurrency
+        - toCurrency
+        - rateValue
+        - date
+        - createdAt
+
+    PortfolioHistory:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the history record
+        date:
+          type: string
+          format: date
+          description: Date of the snapshot
+        totalValue:
+          type: number
+          description: Total portfolio value in target currency
+          minimum: 0
+        dailyReturnRate:
+          type: number
+          description: Daily return rate ((today's value - yesterday's value) / yesterday's value)
+        createdAt:
+          type: string
+          format: date-time
+          description: Record creation timestamp
+      required:
+        - id
+        - date
+        - totalValue
+        - dailyReturnRate
+        - createdAt
