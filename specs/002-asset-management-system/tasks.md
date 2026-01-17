@@ -35,15 +35,15 @@
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create pnpm monorepo structure with Turborepo configuration
-- [ ] T002 Initialize shared configuration packages in packages/config/
-- [ ] T003 [P] Initialize web application in apps/web with Vite+React+TypeScript
-- [ ] T004 [P] Initialize BFF application in apps/bff with Cloudflare Workers and Hono
-- [ ] T005 [P] Setup shared types package in packages/types
-- [ ] T006 [P] Setup shared schemas package in packages/schemas
-- [ ] T007 Configure ESLint, Prettier, and TypeScript across all packages
-- [ ] T008 Setup Vitest testing framework across all packages
-- [ ] T009 Configure VSCode debugging settings per plan.md
+- [X] T001 Create pnpm monorepo structure with Turborepo configuration
+- [X] T002 Initialize shared configuration packages in packages/config/
+- [X] T003 [P] Initialize web application in apps/web with Vite+React+TypeScript
+- [X] T004 [P] Initialize BFF application in apps/bff with Cloudflare Workers and Hono
+- [X] T005 [P] Setup shared types package in packages/types
+- [X] T006 [P] Setup shared schemas package in packages/schemas
+- [X] T007 Configure ESLint, Prettier, and TypeScript across all packages
+- [X] T008 Setup Vitest testing framework across all packages
+- [X] T009 Configure VSCode debugging settings per plan.md
 
 ---
 
@@ -53,21 +53,21 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T010 Setup Cloudflare D1 database configuration in BFF
-- [ ] T011 [P] Implement Drizzle ORM schema for User entity in apps/bff/src/db/schema.ts
-- [ ] T012 [P] Implement Drizzle ORM schema for Asset entity in apps/bff/src/db/schema.ts
-- [ ] T013 [P] Implement Drizzle ORM schema for Category entity in apps/bff/src/db/schema.ts
-- [ ] T014 [P] Implement Drizzle ORM schema for ExchangeRate entity in apps/bff/src/db/schema.ts
-- [ ] T015 [P] Implement Drizzle ORM schema for PortfolioHistory entity in apps/bff/src/db/schema.ts
-- [ ] T016 Setup database migration framework with Drizzle Kit in apps/bff
-- [ ] T017 [P] Implement authentication framework with Better Auth in apps/bff/src/auth/
-- [ ] T018 [P] Setup API routing structure with Hono in apps/bff/src/routes/
-- [ ] T019 Create base API middleware for authentication and validation in apps/bff/src/middleware/
-- [ ] T020 Configure environment variables and configuration management in apps/bff
-- [ ] T021 [P] Generate API client types from OpenAPI spec in packages/types/src/api.d.ts
-- [ ] T022 Setup shared UI components package in packages/ui with shadcn/ui
-- [ ] T023 Implement currency conversion utilities in apps/bff/src/utils/currency.ts
-- [ ] T024 Setup internationalization framework in apps/web/src/i18n/
+- [X] T010 Setup Cloudflare D1 database configuration in BFF
+- [X] T011 [P] Implement Drizzle ORM schema for User entity in apps/bff/src/db/schema.ts
+- [X] T012 [P] Implement Drizzle ORM schema for Asset entity in apps/bff/src/db/schema.ts
+- [X] T013 [P] Implement Drizzle ORM schema for Category entity in apps/bff/src/db/schema.ts
+- [X] T014 [P] Implement Drizzle ORM schema for ExchangeRate entity in apps/bff/src/db/schema.ts
+- [X] T015 [P] Implement Drizzle ORM schema for PortfolioHistory entity in apps/bff/src/db/schema.ts
+- [X] T016 Setup database migration framework with Drizzle Kit in apps/bff
+- [X] T017 [P] Implement authentication framework with Better Auth in apps/bff/src/auth/
+- [X] T018 [P] Setup API routing structure with Hono in apps/bff/src/routes/
+- [X] T019 Create base API middleware for authentication and validation in apps/bff/src/middleware/
+- [X] T020 Configure environment variables and configuration management in apps/bff
+- [X] T021 [P] Generate API client types from OpenAPI spec in packages/types/src/api.d.ts
+- [X] T022 Setup shared UI components package in packages/ui with shadcn/ui
+- [X] T023 Implement currency conversion utilities in apps/bff/src/utils/currency.ts
+- [X] T024 Setup internationalization framework in apps/web/src/i18n/
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 

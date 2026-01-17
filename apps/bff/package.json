@@ -1,0 +1,33 @@
+{
+  "name": "@cola-finance/bff",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "vitest",
+    "type-check": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "wrangler d1 migrations apply asset-management-db",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "hono": "^4.0.0",
+    "@hono/zod-validator": "^0.2.0",
+    "better-auth": "^0.2.0",
+    "drizzle-orm": "^0.30.0",
+    "@cloudflare/workers-types": "^4.20240208.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "wrangler": "^3.25.0",
+    "drizzle-kit": "^0.20.14",
+    "vitest": "^0.34.0",
+    "typescript": "^5.0.2",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.45.0",
+    "prettier": "^3.0.0"
+  }
+}
