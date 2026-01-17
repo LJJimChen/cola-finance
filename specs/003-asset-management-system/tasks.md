@@ -63,17 +63,17 @@ Each user story will be implemented as a complete, independently testable increm
 
 **Independent Test Criteria**: User can navigate to Portfolio page and view categorized assets with %/profit/yield and holdings list
 
-- [ ] T031 [US2] Create AssetService in BFF for asset management
-- [ ] T032 [US2] Create CategoryService in BFF for category management
-- [ ] T033 [US2] Implement GET /portfolios/{portfolioId}/allocation endpoint in BFF
-- [ ] T034 [US2] Implement GET /portfolios/{portfolioId}/assets endpoint in BFF
-- [ ] T035 [US2] Implement GET /portfolios/{portfolioId}/categories endpoint in BFF
-- [ ] T036 [US2] Create POST /portfolios/{portfolioId}/categories endpoint in BFF
-- [ ] T037 [US2] Create PortfolioPage component in web app
-- [ ] T038 [US2] Implement asset list component with category grouping
-- [ ] T039 [US2] Create allocation visualization components (pie charts, bars)
-- [ ] T040 [US2] Implement asset detail view with profit/yield calculations
-- [ ] T041 [US2] Add category management UI (create, edit, assign assets)
+- [X] T031 [US2] Create AssetService in BFF for asset management
+- [X] T032 [US2] Create CategoryService in BFF for category management
+- [X] T033 [US2] Implement GET /portfolios/{portfolioId}/allocation endpoint in BFF
+- [X] T034 [US2] Implement GET /portfolios/{portfolioId}/assets endpoint in BFF
+- [X] T035 [US2] Implement GET /portfolios/{portfolioId}/categories endpoint in BFF
+- [X] T036 [US2] Create POST /portfolios/{portfolioId}/categories endpoint in BFF
+- [X] T037 [US2] Create PortfolioPage component in web app
+- [X] T038 [US2] Implement asset list component with category grouping
+- [X] T039 [US2] Create allocation visualization components (pie charts, bars)
+- [X] T040 [US2] Implement asset detail view with profit/yield calculations
+- [X] T041 [US2] Add category management UI (create, edit, assign assets)
 
 ## Phase 5: User Story 3 - Asset Rebalancing (Priority: P2)
 
