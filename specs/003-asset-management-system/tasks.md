@@ -81,15 +81,15 @@ Each user story will be implemented as a complete, independently testable increm
 
 **Independent Test Criteria**: User can set target allocations and view deviations/recommendations
 
-- [ ] T042 [US3] Create RebalancingService in BFF for calculating recommendations
-- [ ] T043 [US3] Implement GET /portfolios/{portfolioId}/rebalance endpoint in BFF
-- [ ] T044 [US3] Implement PUT /categories/{categoryId} endpoint in BFF for target allocation updates
-- [ ] T045 [US3] Create rebalancing algorithm in BFF for generating recommendations
-- [ ] T046 [US3] Create RebalancePage component in web app
-- [ ] T047 [US3] Implement target allocation input UI
-- [ ] T048 [US3] Create deviation visualization components
-- [ ] T049 [US3] Implement recommendation display with suggested actions
-- [ ] T050 [US3] Add rebalancing simulation functionality
+- [X] T042 [US3] Create RebalancingService in BFF for calculating recommendations
+- [X] T043 [US3] Implement GET /portfolios/{portfolioId}/rebalance endpoint in BFF
+- [X] T044 [US3] Implement PUT /categories/{categoryId} endpoint in BFF for target allocation updates
+- [X] T045 [US3] Create rebalancing algorithm in BFF for generating recommendations
+- [X] T046 [US3] Create RebalancePage component in web app
+- [X] T047 [US3] Implement target allocation input UI
+- [X] T048 [US3] Create deviation visualization components
+- [X] T049 [US3] Implement recommendation display with suggested actions
+- [X] T050 [US3] Add rebalancing simulation functionality
 
 ## Phase 6: User Story 4 - Multi-language Support (Priority: P1)
 
@@ -97,30 +97,30 @@ Each user story will be implemented as a complete, independently testable increm
 
 **Independent Test Criteria**: User can switch languages and UI updates within 1 second without reload
 
-- [ ] T051 [US4] Set up i18n infrastructure with language detection
-- [ ] T052 [US4] Create language context and provider in web app
-- [ ] T053 [US4] Implement language switching functionality
-- [ ] T054 [US4] Create ZH/EN translation files
-- [ ] T055 [US4] Translate all UI components to both languages
-- [ ] T056 [US4] Implement number and currency formatting for different locales
-- [ ] T057 [US4] Add language preference saving to user profile
-- [ ] T058 [US4] Create language switcher component in header
-- [ ] T059 [US4] Optimize language switching performance to meet 1-second requirement
+- [X] T051 [US4] Set up i18n infrastructure with language detection
+- [X] T052 [US4] Create language context and provider in web app
+- [X] T053 [US4] Implement language switching functionality
+- [X] T054 [US4] Create ZH/EN translation files
+- [X] T055 [US4] Translate all UI components to both languages
+- [X] T056 [US4] Implement number and currency formatting for different locales
+- [X] T057 [US4] Add language preference saving to user profile
+- [X] T058 [US4] Create language switcher component in header
+- [X] T059 [US4] Optimize language switching performance to meet 1-second requirement
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
 **Goal**: Complete the implementation with polish, testing, and performance optimizations
 
-- [ ] T060 Implement comprehensive error handling and error boundary components
-- [ ] T061 Add loading skeletons and performance optimizations
-- [ ] T062 Create comprehensive test suite (unit, integration, e2e)
-- [ ] T063 Implement responsive design for mobile-first experience
-- [ ] T064 Add accessibility features and ARIA attributes
-- [ ] T065 Optimize bundle sizes and implement code splitting
-- [ ] T066 Create documentation for the API and frontend components
-- [ ] T067 Set up monitoring and logging infrastructure
-- [ ] T068 Perform security audit and penetration testing
-- [ ] T069 Conduct performance testing to meet success criteria
+- [X] T060 Implement comprehensive error handling and error boundary components
+- [X] T061 Add loading skeletons and performance optimizations
+- [X] T062 Create comprehensive test suite (unit, integration, e2e)
+- [X] T063 Implement responsive design for mobile-first experience
+- [X] T064 Add accessibility features and ARIA attributes
+- [X] T065 Optimize bundle sizes and implement code splitting
+- [X] T066 Create documentation for the API and frontend components
+- [X] T067 Set up monitoring and logging infrastructure
+- [X] T068 Perform security audit and penetration testing
+- [X] T069 Conduct performance testing to meet success criteria
 
 ## Dependencies
 
