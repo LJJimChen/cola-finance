@@ -44,6 +44,9 @@ UI设计请参考 br\ui\designs
 ## 核心设计原则
 - BFF 是唯一对前端暴露的 API 边界
 - 数据库是状态与结果的唯一权威来源
+We intentionally persist all portfolio facts in CNY only.
+Supported display currencies (CNY, USD, HKD) are computed on-demand in the BFF layer,
+as display currency is a presentation concern rather than a financial fact.
 
 
 

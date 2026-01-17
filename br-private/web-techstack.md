@@ -1,12 +1,12 @@
 # 📘 资产管理系统WEB and BFF Technology Stack
 
 ## Monorepo
-- turbo pnpm monorepo，用于统一管理 Web、BFF及共享的 schema / types
+- turbo pnpm monorepo
 - 仅共享纯逻辑与类型定义，不共享基础设施或运行时实现
 - internal package use Just-in-Time package https://turborepo.dev/docs/core-concepts/internal-packages#just-in-time-packages
 
 ## Web (Frontend)
-- Vite+React + TypeScript
+- Vite + React + TypeScript
 - TanStack Router（File-based Routing）与 TanStack Query 作为核心应用框架
 - Tailwind CSS + shadcn/ui 提供基础 UI 组件
 - ky 作为 HTTP 客户端，基于 OpenAPI 生成类型安全的 API 调用
