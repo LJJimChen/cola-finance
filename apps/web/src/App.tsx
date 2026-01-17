@@ -1,6 +1,6 @@
-import React from 'react';
 import { RouterProvider, createRouter } from '@tanstack/react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { ReactElement } from 'react';
 import { routeTree } from './routeTree.gen';
 
 // Create a client
@@ -16,7 +16,7 @@ declare module '@tanstack/react-router' {
   }
 }
 
-export function App() {
+export function App(): ReactElement {
   return (
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />

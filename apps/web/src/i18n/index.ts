@@ -28,7 +28,7 @@ i18n
     },
     // Disable key validation in development for easier testing
     // Remove this in production if you want strict key checking
-    debug: process.env.NODE_ENV === 'development',
+    debug: import.meta.env.DEV,
   });
 
 export default i18n;

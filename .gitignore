@@ -144,7 +144,7 @@ output/
 
 # Turborepo
 .node/
-turbo/
+.turbo
 
 # Cloudflare Workers
 __STATIC_CONTENT_MANIFEST
@@ -154,4 +154,5 @@ workers-types/
 .pre-commit-config.yaml
 
 # pnpm
-node_modules/.pnpm/
+node_modules
+.wrangler

@@ -11,7 +11,7 @@ import {
   AssetCreateRequest,
   AssetUpdateRequest,
   CategoryCreateRequest,
-  CategoryUpdateRequest
+  CategoryUpdateRequest,
 } from '@cola-finance/types';
 
 // API Response Types

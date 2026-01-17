@@ -25,7 +25,7 @@ export function convertCurrency(
   amount: number,
   fromCurrency: string,
   toCurrency: string,
-  exchangeRates: ExchangeRate[]
+  exchangeRates: ExchangeRate[],
 ): number {
   // If currencies are the same, return the original amount
   if (fromCurrency.toUpperCase() === toCurrency.toUpperCase()) {
@@ -36,7 +36,7 @@ export function convertCurrency(
   const directRate = exchangeRates.find(
     rate =>
       rate.fromCurrency.toUpperCase() === fromCurrency.toUpperCase() &&
-      rate.toCurrency.toUpperCase() === toCurrency.toUpperCase()
+      rate.toCurrency.toUpperCase() === toCurrency.toUpperCase(),
   );
 
   if (directRate) {
@@ -47,7 +47,7 @@ export function convertCurrency(
   const inverseRate = exchangeRates.find(
     rate =>
       rate.fromCurrency.toUpperCase() === toCurrency.toUpperCase() &&
-      rate.toCurrency.toUpperCase() === fromCurrency.toUpperCase()
+      rate.toCurrency.toUpperCase() === fromCurrency.toUpperCase(),
   );
 
   if (inverseRate) {
@@ -62,14 +62,14 @@ export function convertCurrency(
   const toCommonRate = exchangeRates.find(
     rate =>
       rate.fromCurrency.toUpperCase() === fromCurrency.toUpperCase() &&
-      rate.toCurrency.toUpperCase() === commonBase
+      rate.toCurrency.toUpperCase() === commonBase,
   );
 
   // Find rate from common currency to toCurrency
   const fromCommonRate = exchangeRates.find(
     rate =>
       rate.fromCurrency.toUpperCase() === commonBase &&
-      rate.toCurrency.toUpperCase() === toCurrency.toUpperCase()
+      rate.toCurrency.toUpperCase() === toCurrency.toUpperCase(),
   );
 
   if (toCommonRate && fromCommonRate) {
@@ -79,7 +79,7 @@ export function convertCurrency(
 
   // If no conversion path is found, throw an error
   throw new Error(
-    `No exchange rate found for conversion from ${fromCurrency} to ${toCurrency}`
+    `No exchange rate found for conversion from ${fromCurrency} to ${toCurrency}`,
   );
 }
 
@@ -93,7 +93,7 @@ export function convertCurrency(
 export function calculateTotalValueInCurrency(
   assets: Array<{ quantity: number; currentPrice: number; currency: string }>,
   targetCurrency: string,
-  exchangeRates: ExchangeRate[]
+  exchangeRates: ExchangeRate[],
 ): number {
   let totalValue = 0;
 
@@ -103,7 +103,7 @@ export function calculateTotalValueInCurrency(
       assetValue,
       asset.currency,
       targetCurrency,
-      exchangeRates
+      exchangeRates,
     );
     totalValue += convertedValue;
   }
@@ -121,7 +121,7 @@ export function calculateTotalValueInCurrency(
 export function getExchangeRate(
   fromCurrency: string,
   toCurrency: string,
-  exchangeRates: ExchangeRate[]
+  exchangeRates: ExchangeRate[],
 ): number | null {
   // If currencies are the same, return 1
   if (fromCurrency.toUpperCase() === toCurrency.toUpperCase()) {
@@ -132,7 +132,7 @@ export function getExchangeRate(
   const directRate = exchangeRates.find(
     rate =>
       rate.fromCurrency.toUpperCase() === fromCurrency.toUpperCase() &&
-      rate.toCurrency.toUpperCase() === toCurrency.toUpperCase()
+      rate.toCurrency.toUpperCase() === toCurrency.toUpperCase(),
   );
 
   if (directRate) {
@@ -143,7 +143,7 @@ export function getExchangeRate(
   const inverseRate = exchangeRates.find(
     rate =>
       rate.fromCurrency.toUpperCase() === toCurrency.toUpperCase() &&
-      rate.toCurrency.toUpperCase() === fromCurrency.toUpperCase()
+      rate.toCurrency.toUpperCase() === fromCurrency.toUpperCase(),
   );
 
   if (inverseRate) {
@@ -163,7 +163,7 @@ export function getExchangeRate(
 export function formatCurrency(
   value: number,
   currency: string,
-  locale: string = 'en-US'
+  locale: string = 'en-US',
 ): string {
   return new Intl.NumberFormat(locale, {
     style: 'currency',

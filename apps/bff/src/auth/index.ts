@@ -1,12 +1,13 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { createDbBindings } from '../db';
-import { users } from '../db/schema';
 
 // This will be initialized later with the actual database instance
-let dbInstance: any = null;
+type AuthInstance = ReturnType<typeof betterAuth>;
 
-export const initializeAuth = (env: { DB: D1Database }) => {
+let dbInstance: ReturnType<typeof createDbBindings> | null = null;
+
+export const initializeAuth = (env: { DB: D1Database }): AuthInstance => {
   dbInstance = createDbBindings(env);
   
   return betterAuth({
@@ -19,15 +20,12 @@ export const initializeAuth = (env: { DB: D1Database }) => {
     socialProviders: {
       // Add social providers as needed
     },
-    advanced: {
-      generateId: () => crypto.randomUUID(),
-    },
   });
 };
 
 // Export the auth instance to be used in middleware
-export let authInstance: ReturnType<typeof betterAuth> | null = null;
+export let authInstance: AuthInstance | null = null;
 
-export const setAuthInstance = (instance: ReturnType<typeof betterAuth>) => {
+export const setAuthInstance = (instance: AuthInstance): void => {
   authInstance = instance;
 };
