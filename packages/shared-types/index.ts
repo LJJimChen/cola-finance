@@ -1,4 +1,5 @@
-// Common types for the asset management system
+export type IsoDateString = string;
+export type IsoDateTimeString = string;
 
 export interface User {
   id: string;
@@ -6,8 +7,9 @@ export interface User {
   languagePreference: 'zh' | 'en';
   themeSettings: 'light' | 'dark' | 'auto';
   displayCurrency: string;
-  createdAt: Date;
-  updatedAt: Date;
+  timeZone: string;
+  createdAt: IsoDateTimeString;
+  updatedAt: IsoDateTimeString;
 }
 
 export interface Portfolio {
@@ -18,8 +20,8 @@ export interface Portfolio {
   totalValueCny: number;
   dailyProfitCny: number;
   currentTotalProfitCny: number;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: IsoDateTimeString;
+  updatedAt: IsoDateTimeString;
 }
 
 export interface PortfolioWithAssets extends Portfolio {
@@ -40,24 +42,25 @@ export interface Asset {
   currentPrice: number;
   currency: string;
   brokerSource: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: IsoDateTimeString;
+  updatedAt: IsoDateTimeString;
 }
 
 export interface Category {
   id: string;
   userId: string;
+  portfolioId: string;
   name: string;
   targetAllocation: number; // Percentage: 0.00 to 100.00
   currentAllocation: number; // Calculated percentage
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: IsoDateTimeString;
+  updatedAt: IsoDateTimeString;
 }
 
 export interface PortfolioHistory {
   id: string;
   portfolioId: string;
-  timestamp: Date;
+  timestamp: IsoDateTimeString;
   totalValueCny: number;
   dailyProfitCny: number;
   currentTotalProfitCny: number;
@@ -68,8 +71,8 @@ export interface ExchangeRate {
   sourceCurrency: string; // Source currency code (e.g., USD)
   targetCurrency: string; // Target currency code (always CNY)
   exchangeRate: number; // Rate from source to target currency
-  date: Date; // Date of the exchange rate
-  createdAt: Date;
+  date: IsoDateString; // Date of the exchange rate
+  createdAt: IsoDateTimeString;
 }
 
 export interface CreatePortfolioRequest {
@@ -109,7 +112,7 @@ export interface DashboardData {
   dailyProfit: number;
   annualReturn: number;
   currency: string;
-  lastUpdated: Date;
+  lastUpdated: IsoDateTimeString;
   allocationByCategory: Array<{
     categoryName: string;
     percentage: number;
@@ -156,11 +159,11 @@ export interface RebalanceRecommendations {
 
 export interface HistoricalPerformance {
   portfolioId: string;
-  startDate: Date;
-  endDate: Date;
+  startDate: IsoDateString;
+  endDate: IsoDateString;
   currency: string;
   snapshots: Array<{
-    date: Date;
+    date: IsoDateString;
     totalValue: number;
     dailyProfit: number;
     cumulativeReturn: number;

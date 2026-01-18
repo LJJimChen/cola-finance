@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React from 'react';
+import { Link, useLocation } from '@tanstack/react-router';
 import { useI18n } from '../lib/i18n';
 
 interface LayoutProps {
@@ -7,128 +7,49 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const { t, language, changeLanguage, supportedLanguages } = useI18n();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { t } = useI18n();
+  const location = useLocation();
+  const currentPath = location.pathname;
+
+  const getNavClass = (path: string) => {
+    const isActive = currentPath === path;
+    return `flex flex-col items-center gap-1 ${isActive ? 'text-primary' : 'text-gray-400 hover:text-primary'} transition-colors cursor-pointer group`;
+  };
 
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="bg-primary text-primary-foreground p-4">
-        <div className="container mx-auto">
-          <div className="flex justify-between items-center">
-            <Link to="/" className="text-xl font-bold">
-              Cola Finance
-            </Link>
-
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-4">
-              {/* Navigation Links */}
-              <div className="flex space-x-4">
-                <Link to="/dashboard" className="hover:underline">
-                  {t('common.dashboard')}
-                </Link>
-                <Link to="/portfolio" className="hover:underline">
-                  {t('common.portfolio')}
-                </Link>
-                <Link to="/rebalance" className="hover:underline">
-                  {t('common.rebalance')}
-                </Link>
-                <Link to="/settings" className="hover:underline">
-                  {t('common.settings')}
-                </Link>
-              </div>
-
-              {/* Language Switcher */}
-              <div className="flex items-center space-x-2">
-                <label htmlFor="language-switcher" className="text-sm">
-                  {t('settings.language')}:
-                </label>
-                <select
-                  id="language-switcher"
-                  value={language}
-                  onChange={(e) => changeLanguage(e.target.value as 'en' | 'zh')}
-                  className="bg-primary text-primary-foreground border border-primary-foreground rounded p-1"
-                >
-                  {supportedLanguages.map((lang) => (
-                    <option key={lang} value={lang}>
-                      {lang.toUpperCase()}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <button className="hover:underline">
-                {t('common.logout')}
-              </button>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <div className="md:hidden flex items-center">
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="text-primary-foreground focus:outline-none"
-              >
-                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  {mobileMenuOpen ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  )}
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          {/* Mobile Navigation */}
-          {mobileMenuOpen && (
-            <div className="md:hidden mt-4 space-y-4">
-              <div className="flex flex-col space-y-2">
-                <Link to="/dashboard" className="hover:underline py-1" onClick={() => setMobileMenuOpen(false)}>
-                  {t('common.dashboard')}
-                </Link>
-                <Link to="/portfolio" className="hover:underline py-1" onClick={() => setMobileMenuOpen(false)}>
-                  {t('common.portfolio')}
-                </Link>
-                <Link to="/rebalance" className="hover:underline py-1" onClick={() => setMobileMenuOpen(false)}>
-                  {t('common.rebalance')}
-                </Link>
-                <Link to="/settings" className="hover:underline py-1" onClick={() => setMobileMenuOpen(false)}>
-                  {t('common.settings')}
-                </Link>
-              </div>
-
-              <div className="flex items-center space-x-2 pt-2 border-t border-primary-foreground/30">
-                <label htmlFor="language-switcher-mobile" className="text-sm">
-                  {t('settings.language')}:
-                </label>
-                <select
-                  id="language-switcher-mobile"
-                  value={language}
-                  onChange={(e) => changeLanguage(e.target.value as 'en' | 'zh')}
-                  className="bg-primary text-primary-foreground border border-primary-foreground rounded p-1 flex-grow"
-                >
-                  {supportedLanguages.map((lang) => (
-                    <option key={lang} value={lang}>
-                      {lang.toUpperCase()}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <button className="hover:underline w-full text-left py-1">
-                {t('common.logout')}
-              </button>
-            </div>
-          )}
-        </div>
-      </nav>
-      <main className="container mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <div className="relative flex h-full min-h-screen w-full flex-col overflow-x-hidden max-w-md mx-auto shadow-2xl bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white">
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col px-4 pb-24 pt-2">
         {children}
       </main>
-      <footer className="bg-muted py-4 mt-8">
-        <div className="container mx-auto text-center px-4">
-          © {new Date().getFullYear()} Cola Finance. {t('common.allRightsReserved')}.
-        </div>
-      </footer>
+
+      {/* Bottom Navigation */}
+      <nav className="fixed bottom-0 w-full max-w-md bg-surface-light/90 dark:bg-background-dark/95 backdrop-blur-lg border-t border-gray-200 dark:border-white/5 pb-6 pt-3 px-6 flex justify-between items-center z-50">
+        <Link to="/dashboard" className={getNavClass('/dashboard')}>
+          <span className={`material-symbols-outlined group-hover:scale-110 transition-transform ${currentPath === '/dashboard' ? 'filled' : ''}`}>dashboard</span>
+          <span className="text-[10px] font-medium">{t('common.dashboard')}</span>
+        </Link>
+        <Link to="/portfolio" className={getNavClass('/portfolio')}>
+          <span className={`material-symbols-outlined group-hover:scale-110 transition-transform ${currentPath === '/portfolio' ? 'filled' : ''}`}>pie_chart</span>
+          <span className="text-[10px] font-medium">{t('common.portfolio')}</span>
+        </Link>
+        <Link to="/analysis" className={getNavClass('/analysis')}>
+          <span className={`material-symbols-outlined group-hover:scale-110 transition-transform ${currentPath === '/analysis' ? 'filled' : ''}`}>show_chart</span>
+          <span className="text-[10px] font-medium">{t('common.analysis')}</span>
+        </Link>
+        <Link to="/rebalance" className={getNavClass('/rebalance')}>
+          <span className={`material-symbols-outlined group-hover:scale-110 transition-transform ${currentPath === '/rebalance' ? 'filled' : ''}`}>scale</span>
+          <span className="text-[10px] font-medium">{t('common.rebalance')}</span>
+        </Link>
+        <Link to="/notifications" className={getNavClass('/notifications')}>
+          <span className={`material-symbols-outlined group-hover:scale-110 transition-transform ${currentPath === '/notifications' ? 'filled' : ''}`}>notifications</span>
+          <span className="text-[10px] font-medium">{t('common.notifications')}</span>
+        </Link>
+        <Link to="/settings" className={getNavClass('/settings')}>
+          <span className={`material-symbols-outlined group-hover:scale-110 transition-transform ${currentPath === '/settings' ? 'filled' : ''}`}>settings</span>
+          <span className="text-[10px] font-medium">{t('common.settings')}</span>
+        </Link>
+      </nav>
     </div>
   );
 };

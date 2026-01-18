@@ -16,9 +16,10 @@ import type {
   HistoricalPerformance
 } from '@repo/shared-types';
 
-const API_BASE_URL = typeof window !== 'undefined' 
-  ? process.env.VITE_API_BASE_URL || '/api'
-  : process.env.API_BASE_URL || 'http://localhost:8787/api';
+const API_BASE_URL =
+  typeof window !== 'undefined'
+    ? (import.meta.env?.VITE_API_BASE_URL ?? '/api')
+    : (process.env.API_BASE_URL ?? 'http://localhost:8787/api');
 
 export interface ApiClientOptions {
   baseUrl?: string;
@@ -27,6 +28,7 @@ export interface ApiClientOptions {
 
 class ApiClient {
   private client;
+  private authToken: string | null = null;
 
   constructor(options: ApiClientOptions = {}) {
     const baseUrl = options.baseUrl || API_BASE_URL;
@@ -38,6 +40,13 @@ class ApiClient {
         ...options.headers,
       },
       hooks: {
+        beforeRequest: [
+          (request) => {
+            if (this.authToken) {
+              request.headers.set('Authorization', `Bearer ${this.authToken}`);
+            }
+          },
+        ],
         beforeError: [
           (error) => {
             console.error('API Error:', error);
@@ -46,15 +55,40 @@ class ApiClient {
         ]
       }
     });
+
+    if (typeof window !== 'undefined') {
+      const saved = window.localStorage.getItem('cola.finance.authToken');
+      if (saved) {
+        this.authToken = saved;
+      }
+    }
   }
 
   // Authentication endpoints
   async login(email: string, password: string): Promise<{ success: boolean; token: string }> {
-    return this.client.post('auth/login', { json: { email, password } }).json();
+    const result = await this.client.post('auth/login', { json: { email, password } }).json<{ success: boolean; token: string }>();
+    this.setAuthToken(result.token);
+    return result;
+  }
+
+  async signup(email: string, password: string): Promise<{ success: boolean; userId: string }> {
+    return this.client.post('auth/signup', { json: { email, password } }).json();
   }
 
   async logout(): Promise<void> {
     await this.client.post('auth/logout');
+    this.setAuthToken(null);
+  }
+
+  setAuthToken(token: string | null): void {
+    this.authToken = token;
+    if (typeof window !== 'undefined') {
+      if (token) {
+        window.localStorage.setItem('cola.finance.authToken', token);
+      } else {
+        window.localStorage.removeItem('cola.finance.authToken');
+      }
+    }
   }
 
   // User endpoints

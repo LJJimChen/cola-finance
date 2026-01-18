@@ -1,70 +1,129 @@
 import { Hono } from 'hono';
-import { describe, it, expect, beforeEach } from 'vitest';
-import { app } from '../routes/dashboard';
+import { describe, expect, it } from 'vitest';
+import { apiRoutes } from '../../routes';
+import type { AppDb } from '../../db';
+import { createTestDb } from '../../db/testing';
+import { assets, categories, exchangeRates, portfolios, sessions, users } from '../../db/schema';
+import { toMoney4, toRate8 } from '../../lib/money';
+import { toAppError } from '../../lib/errors';
 
-// Create a test app instance
-const testApp = new Hono().route('/', app);
+describe('Dashboard API', () => {
+  it('returns dashboard data for authorized user', async () => {
+    const { db } = await createTestDb();
+    const now = new Date().toISOString();
+    const today = now.slice(0, 10);
+    const userId = 'user-1';
+    const token = 'token-1';
+    const portfolioId = 'portfolio-1';
+    const categoryId = 'category-1';
 
-describe('Dashboard API Integration', () => {
-  let request: any;
+    await db.insert(users).values({
+      id: userId,
+      email: 'u@example.com',
+      passwordHash: 'x',
+      languagePreference: 'zh',
+      themeSettings: 'auto',
+      displayCurrency: 'CNY',
+      timeZone: 'UTC',
+      createdAt: now,
+      updatedAt: now,
+    });
 
-  beforeEach(() => {
-    // Setup test request object
-    request = testApp.request;
-  });
+    await db.insert(sessions).values({
+      id: 'session-1',
+      userId,
+      token,
+      createdAt: now,
+      expiresAt: '2099-01-01T00:00:00.000Z',
+    });
 
-  it('should return dashboard data for valid portfolio', async () => {
-    // Mock the portfolio service to return test data
-    // In a real integration test, we would mock the actual service implementation
-    const mockDashboardData = {
-      totalValue: 125000.50,
-      dailyProfit: 1250.75,
-      annualReturn: 12.5,
+    await db.insert(portfolios).values({
+      id: portfolioId,
+      userId,
+      name: 'P',
+      description: null,
+      totalValueCny4: 0,
+      dailyProfitCny4: 0,
+      currentTotalProfitCny4: 0,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await db.insert(categories).values({
+      id: categoryId,
+      userId,
+      portfolioId,
+      name: 'US equities',
+      targetAllocationBps: 10000,
+      currentAllocationBps: 0,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await db.insert(exchangeRates).values({
+      id: 'fx-usd',
+      sourceCurrency: 'USD',
+      targetCurrency: 'CNY',
+      rate8: toRate8(7.2),
+      date: today,
+      createdAt: now,
+    });
+
+    await db.insert(assets).values({
+      id: 'asset-1',
+      userId,
+      portfolioId,
+      categoryId,
+      symbol: 'AAPL',
+      name: 'Apple',
+      quantity: 10,
+      costBasis4: toMoney4(170),
+      currentPrice4: toMoney4(190),
+      dailyProfit4: toMoney4(12),
       currency: 'USD',
-      lastUpdated: new Date(),
-      allocationByCategory: [
-        {
-          categoryName: 'US Equities',
-          percentage: 62.5,
-          value: 78125.31,
-        },
-      ],
-      topPerformingAssets: [],
-    };
-
-    // Since we can't easily mock the service in this context, 
-    // we'll just verify that the route exists and returns the right structure
-    // This is a simplified integration test that verifies the route exists
-    const response = await request('/portfolio-123/dashboard', {
-      method: 'GET',
-      headers: {
-        'X-User-ID': 'user-123',
-      },
+      brokerSource: 'mock',
+      createdAt: now,
+      updatedAt: now,
     });
 
-    // Note: This test will fail in isolation without proper mocking
-    // In a real implementation, we would mock the portfolioService
-    expect(response.status).toBeLessThan(500); // Should not return server error
+    const app = new Hono<{ Variables: { db: AppDb } }>();
+    app.use('*', async (c, next) => {
+      c.set('db', db);
+      await next();
+    });
+    app.route('/api', apiRoutes);
+    app.onError((err, c) => {
+      const e = toAppError(err);
+      return c.json({ error: { code: e.code, message: e.message } }, e.status);
+    });
+
+    const res = await app.request(`/api/portfolios/${portfolioId}/dashboard?displayCurrency=USD`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.currency).toBe('USD');
+    expect(typeof body.totalValue).toBe('number');
+    expect(Array.isArray(body.topPerformingAssets)).toBe(true);
   });
 
-  it('should return 401 for unauthorized access', async () => {
-    const response = await request('/portfolio-123/dashboard', {
-      method: 'GET',
-      // No X-User-ID header
+  it('rejects missing authorization', async () => {
+    const { db } = await createTestDb();
+    const app = new Hono<{ Variables: { db: AppDb } }>();
+    app.use('*', async (c, next) => {
+      c.set('db', db);
+      await next();
+    });
+    app.route('/api', apiRoutes);
+    app.onError((err, c) => {
+      const e = toAppError(err);
+      return c.json({ error: { code: e.code, message: e.message } }, e.status);
     });
 
-    expect(response.status).toBe(401);
-  });
-
-  it('should accept displayCurrency query parameter', async () => {
-    const response = await request('/portfolio-123/dashboard?displayCurrency=EUR', {
-      method: 'GET',
-      headers: {
-        'X-User-ID': 'user-123',
-      },
-    });
-
-    // Should not return server error when currency parameter is provided
-    expect(response.status).toBeLessThan(500);
+    const res = await app.request('/api/portfolios/x/dashboard');
+    expect(res.status).toBe(401);
+    const body = await res.json();
+    expect(body.error.code).toBe('UNAUTHORIZED');
   });
 });

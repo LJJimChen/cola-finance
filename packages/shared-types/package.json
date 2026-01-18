@@ -1,10 +1,17 @@
 {
   "name": "@repo/shared-types",
   "version": "0.0.1",
-  "main": "index.ts",
-  "types": "index.ts",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc -p tsconfig.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "ky": "^1.14.2"
   },
   "devDependencies": {
     "typescript": "latest"

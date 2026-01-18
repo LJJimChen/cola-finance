@@ -1,7 +1,7 @@
 import React from 'react';
-import { createRootRoute, createRoute, createRouter } from '@tanstack/react-router';
+import { createRootRoute, createRoute, createRouter, Outlet } from '@tanstack/react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import ErrorBoundary from './components/ErrorBoundary';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 // Create a query client
 const queryClient = new QueryClient({
@@ -13,10 +13,16 @@ const queryClient = new QueryClient({
 });
 
 // Define lazy-loaded components
-const DashboardPageLazy = React.lazy(() => import('./pages/DashboardPage'));
-const PortfolioPageLazy = React.lazy(() => import('./pages/PortfolioPage'));
-const RebalancePageLazy = React.lazy(() => import('./pages/RebalancePage'));
-const SettingsPageLazy = React.lazy(() => import('./pages/SettingsPage'));
+const DashboardPageLazy = React.lazy(() => import('../pages/DashboardPage'));
+const PortfolioPageLazy = React.lazy(() => import('../pages/PortfolioPage'));
+const RebalancePageLazy = React.lazy(() => import('../pages/RebalancePage'));
+const AnalysisPageLazy = React.lazy(() => import('../pages/AnalysisPage'));
+const NotificationsPageLazy = React.lazy(() => import('../pages/NotificationsPage'));
+const WelcomePageLazy = React.lazy(() => import('../pages/WelcomePage'));
+const LoginPageLazy = React.lazy(() => import('../pages/LoginPage'));
+const SignUpPageLazy = React.lazy(() => import('../pages/SignUpPage'));
+// Placeholder for SettingsPage which will be implemented later
+const SettingsPageLazy = React.lazy(() => import('../pages/SettingsPage'));
 
 // Loading component for lazy-loaded routes
 const LoadingComponent = () => (
@@ -31,23 +37,53 @@ const rootRoute = createRootRoute({
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
         <React.Suspense fallback={<LoadingComponent />}>
-          {rootRoute.children}
+          <Outlet />
         </React.Suspense>
       </ErrorBoundary>
     </QueryClientProvider>
   ),
 });
 
+const analysisRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/analysis',
+  component: AnalysisPageLazy,
+});
+
+const notificationsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/notifications',
+  component: NotificationsPageLazy,
+});
+
+const welcomeRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/welcome',
+  component: WelcomePageLazy,
+});
+
+function IndexComponent() {
+    const navigate = React.useCallback(() => {
+         // Check if user is logged in (mock check for now)
+         const token = window.localStorage.getItem('cola.finance.authToken');
+         if (token) {
+             router.navigate({ to: '/dashboard' });
+         } else {
+             router.navigate({ to: '/welcome' });
+         }
+    }, []);
+    
+    React.useEffect(() => {
+        navigate();
+    }, [navigate]);
+
+    return <LoadingComponent />;
+}
+
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  component: () => {
-    React.useEffect(() => {
-      // Redirect to dashboard on initial load
-      window.location.href = '/dashboard';
-    }, []);
-    return null;
-  },
+  component: IndexComponent,
 });
 
 const dashboardRoute = createRoute({
@@ -74,13 +110,30 @@ const settingsRoute = createRoute({
   component: SettingsPageLazy,
 });
 
+const loginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/login',
+  component: LoginPageLazy,
+});
+
+const signupRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/signup',
+  component: SignUpPageLazy,
+});
+
 // Add routes to the router
 const routeTree = rootRoute.addChildren([
   indexRoute,
   dashboardRoute,
   portfolioRoute,
   rebalanceRoute,
+  analysisRoute,
+  notificationsRoute,
   settingsRoute,
+  loginRoute,
+  signupRoute,
+  welcomeRoute,
 ]);
 
 // Create the router
