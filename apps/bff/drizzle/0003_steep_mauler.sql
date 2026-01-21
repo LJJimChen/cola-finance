@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `categories_portfolio_id_name_unique` ON `categories` (`portfolio_id`,`name`);

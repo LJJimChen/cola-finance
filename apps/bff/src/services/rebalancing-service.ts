@@ -1,6 +1,6 @@
 import { db } from '../db';
-import { assets, categories, portfolios } from '../db/schema';
-import { eq, and, desc, sum } from 'drizzle-orm';
+import { categories, assets, portfolios } from '../db/schema';
+import { eq, and, desc, asc, inArray } from 'drizzle-orm';
 import type { 
   RebalanceRecommendations, 
   CreateCategoryRequest, 
@@ -137,27 +137,32 @@ export class RebalancingServiceImpl implements RebalancingService {
   }
 
   async updateCategoryTargetAllocation(userId: string, categoryId: string, targetAllocation: number): Promise<Category> {
-    // Verify user owns the category
-    const categoryResult = await db
-      .select()
+    // Verify user owns the category via portfolio
+    const result = await db
+      .select({ category: categories })
       .from(categories)
-      .where(and(eq(categories.id, categoryId), eq(categories.userId, userId)))
+      .innerJoin(portfolios, eq(categories.portfolioId, portfolios.id))
+      .where(and(eq(categories.id, categoryId), eq(portfolios.userId, userId)))
       .limit(1);
 
-    if (categoryResult.length === 0) {
+    if (result.length === 0) {
       throw new Error('Category not found or access denied');
     }
 
     const [updatedCategory] = await db
       .update(categories)
       .set({ 
-        targetAllocation,
+        targetAllocationBps: Math.round(targetAllocation * 100),
         updatedAt: new Date().toISOString()
       })
-      .where(and(eq(categories.id, categoryId), eq(categories.userId, userId)))
+      .where(eq(categories.id, categoryId))
       .returning();
 
-    return updatedCategory as unknown as Category;
+    return {
+      ...updatedCategory,
+      targetAllocation: updatedCategory.targetAllocationBps / 100,
+      currentAllocation: updatedCategory.currentAllocationBps / 100
+    } as unknown as Category;
   }
 }
 

@@ -118,7 +118,7 @@ export class PortfolioMetricsService {
     const cats = await this.#db
       .select()
       .from(categories)
-      .where(and(eq(categories.userId, userId), eq(categories.portfolioId, portfolioId)));
+      .where(eq(categories.portfolioId, portfolioId));
 
     const rows = await this.#db.select().from(assets).where(eq(assets.portfolioId, portfolioId));
 

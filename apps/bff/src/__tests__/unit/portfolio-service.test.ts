@@ -60,6 +60,7 @@ describe('PortfolioMetricsService', () => {
       dailyProfit4: toMoney4(12),
       currency: 'USD',
       brokerSource: 'mock',
+      brokerAccount: 'test-account',
       createdAt: now,
       updatedAt: now,
     });

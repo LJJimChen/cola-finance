@@ -2,6 +2,7 @@ import { db } from '../db';
 import { assets, portfolios } from '../db/schema';
 import { eq, and, asc } from 'drizzle-orm';
 import type { Asset, CreateAssetRequest } from '@repo/shared-types';
+import { toMoney4 } from '../lib/money';
 
 export interface AssetService {
   getAssetsByPortfolio(userId: string, portfolioId: string): Promise<Asset[]>;
@@ -33,6 +34,17 @@ export class AssetServiceImpl implements AssetService {
     return assetsResult as unknown as Asset[];
   }
 
+  async getAssetsByUser(userId: string): Promise<Asset[]> {
+    const assetsResult = await db
+      .select({ asset: assets })
+      .from(assets)
+      .innerJoin(portfolios, eq(assets.portfolioId, portfolios.id))
+      .where(eq(portfolios.userId, userId))
+      .orderBy(asc(assets.name));
+
+    return assetsResult.map(r => r.asset as unknown as Asset);
+  }
+
   async createAsset(userId: string, portfolioId: string, data: CreateAssetRequest): Promise<Asset> {
     // Verify user owns the portfolio
     const portfolioResult = await db
@@ -48,16 +60,16 @@ export class AssetServiceImpl implements AssetService {
     const [newAsset] = await db
       .insert(assets)
       .values({
-        userId,
         portfolioId,
         symbol: data.symbol,
         name: data.name,
         quantity: data.quantity,
-        costBasis: data.costBasis,
-        dailyProfit: data.dailyProfit,
-        currentPrice: data.currentPrice,
+        costBasis4: toMoney4(data.costBasis),
+        dailyProfit4: toMoney4(data.dailyProfit),
+        currentPrice4: toMoney4(data.currentPrice),
         currency: data.currency,
         brokerSource: data.brokerSource,
+        brokerAccount: data.brokerAccount,
         categoryId: data.categoryId,
       })
       .returning();
@@ -66,11 +78,12 @@ export class AssetServiceImpl implements AssetService {
   }
 
   async updateAsset(userId: string, assetId: string, data: Partial<Asset>): Promise<Asset> {
-    // Verify user owns the asset
+    // Verify user owns the asset via portfolio
     const assetResult = await db
-      .select()
+      .select({ asset: assets })
       .from(assets)
-      .where(and(eq(assets.id, assetId), eq(assets.userId, userId)))
+      .innerJoin(portfolios, eq(assets.portfolioId, portfolios.id))
+      .where(and(eq(assets.id, assetId), eq(portfolios.userId, userId)))
       .limit(1);
 
     if (assetResult.length === 0) {
@@ -90,11 +103,12 @@ export class AssetServiceImpl implements AssetService {
   }
 
   async deleteAsset(userId: string, assetId: string): Promise<boolean> {
-    // Verify user owns the asset
+    // Verify user owns the asset via portfolio
     const assetResult = await db
-      .select()
+      .select({ id: assets.id })
       .from(assets)
-      .where(and(eq(assets.id, assetId), eq(assets.userId, userId)))
+      .innerJoin(portfolios, eq(assets.portfolioId, portfolios.id))
+      .where(and(eq(assets.id, assetId), eq(portfolios.userId, userId)))
       .limit(1);
 
     if (assetResult.length === 0) {
@@ -108,12 +122,13 @@ export class AssetServiceImpl implements AssetService {
 
   async getAssetById(userId: string, assetId: string): Promise<Asset | null> {
     const result = await db
-      .select()
+      .select({ asset: assets })
       .from(assets)
-      .where(and(eq(assets.id, assetId), eq(assets.userId, userId)))
+      .innerJoin(portfolios, eq(assets.portfolioId, portfolios.id))
+      .where(and(eq(assets.id, assetId), eq(portfolios.userId, userId)))
       .limit(1);
 
-    return result.length > 0 ? (result[0] as unknown as Asset) : null;
+    return result.length > 0 ? (result[0].asset as unknown as Asset) : null;
   }
 }
 

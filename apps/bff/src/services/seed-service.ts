@@ -78,6 +78,7 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
       dailyProfit: 12,
       currency: 'USD',
       brokerSource: 'mock',
+      brokerAccount: 'mock-account-1',
       categoryName: 'US equities',
     },
     {
@@ -89,6 +90,7 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
       dailyProfit: -15,
       currency: 'USD',
       brokerSource: 'mock',
+      brokerAccount: 'mock-account-1',
       categoryName: 'China equities',
     },
     {
@@ -100,6 +102,7 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
       dailyProfit: 20,
       currency: 'CNY',
       brokerSource: 'mock',
+      brokerAccount: 'mock-account-2',
       categoryName: 'China equities',
     },
     {
@@ -111,6 +114,7 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
       dailyProfit: 3,
       currency: 'USD',
       brokerSource: 'mock',
+      brokerAccount: 'mock-account-1',
       categoryName: 'Bonds',
     },
   ] as const;
@@ -123,7 +127,6 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
 
     await db.insert(assets).values({
       id: crypto.randomUUID(),
-      userId: args.userId,
       portfolioId: defaultPortfolioId,
       categoryId,
       symbol: asset.symbol,
@@ -134,6 +137,7 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
       currentPrice4: toMoney4(asset.currentPrice),
       currency: asset.currency,
       brokerSource: asset.brokerSource,
+      brokerAccount: asset.brokerAccount,
       createdAt: args.now,
       updatedAt: args.now,
     });

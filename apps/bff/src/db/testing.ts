@@ -77,7 +77,6 @@ async function createTables(client: Client): Promise<void> {
 
   await client.execute(`CREATE TABLE categories (
     id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
     portfolio_id TEXT NOT NULL,
     name TEXT NOT NULL,
     target_allocation_bps INTEGER NOT NULL,
@@ -88,7 +87,6 @@ async function createTables(client: Client): Promise<void> {
 
   await client.execute(`CREATE TABLE assets (
     id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
     portfolio_id TEXT NOT NULL,
     category_id TEXT,
     symbol TEXT NOT NULL,
@@ -99,6 +97,7 @@ async function createTables(client: Client): Promise<void> {
     current_price4 INTEGER NOT NULL,
     currency TEXT NOT NULL,
     broker_source TEXT NOT NULL,
+    broker_account TEXT NOT NULL,
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL
   );`);

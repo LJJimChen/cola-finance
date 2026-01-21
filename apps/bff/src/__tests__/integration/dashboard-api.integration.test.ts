@@ -62,7 +62,6 @@ describe('Dashboard API', () => {
 
     await db.insert(categories).values({
       id: categoryId,
-      userId,
       portfolioId,
       name: 'US equities',
       targetAllocationBps: 10000,
@@ -82,7 +81,6 @@ describe('Dashboard API', () => {
 
     await db.insert(assets).values({
       id: 'asset-1',
-      userId,
       portfolioId,
       categoryId,
       symbol: 'AAPL',
@@ -93,6 +91,7 @@ describe('Dashboard API', () => {
       dailyProfit4: toMoney4(12),
       currency: 'USD',
       brokerSource: 'mock',
+      brokerAccount: 'test-account',
       createdAt: now,
       updatedAt: now,
     });

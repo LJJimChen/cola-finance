@@ -1,73 +1,133 @@
 import { db } from '../db';
-import { categories } from '../db/schema';
+import { categories, portfolios } from '../db/schema';
 import { eq, and, asc } from 'drizzle-orm';
 import type { Category, CreateCategoryRequest, UpdateCategoryRequest } from '@repo/shared-types';
 
 export interface CategoryService {
-  getCategoriesByUser(userId: string): Promise<Category[]>;
-  createCategory(userId: string, data: CreateCategoryRequest): Promise<Category>;
+  getCategoriesByPortfolio(userId: string, portfolioId: string): Promise<Category[]>;
+  createCategory(userId: string, portfolioId: string, data: CreateCategoryRequest): Promise<Category>;
   updateCategory(userId: string, categoryId: string, data: UpdateCategoryRequest): Promise<Category>;
   deleteCategory(userId: string, categoryId: string): Promise<boolean>;
   getCategoryById(userId: string, categoryId: string): Promise<Category | null>;
 }
 
+function mapCategory(row: typeof categories.$inferSelect): Category {
+  return {
+    id: row.id,
+    // userId: row.userId, // removed
+    portfolioId: row.portfolioId,
+    name: row.name,
+    targetAllocation: row.targetAllocationBps / 100,
+    currentAllocation: row.currentAllocationBps / 100,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  } as unknown as Category; // Cast because Category type still has userId for now
+}
+
 export class CategoryServiceImpl implements CategoryService {
-  async getCategoriesByUser(userId: string): Promise<Category[]> {
+  async getCategoriesByPortfolio(userId: string, portfolioId: string): Promise<Category[]> {
     const result = await db
-      .select()
+      .select({
+        category: categories
+      })
       .from(categories)
-      .where(eq(categories.userId, userId))
+      .innerJoin(portfolios, eq(categories.portfolioId, portfolios.id))
+      .where(and(eq(portfolios.userId, userId), eq(categories.portfolioId, portfolioId)))
       .orderBy(asc(categories.name));
 
-    return result as unknown as Category[];
-  }
+    return result.map(r => mapCategory(r.category));
+  } 
 
-  async createCategory(userId: string, data: CreateCategoryRequest): Promise<Category> {
+  async createCategory(userId: string, portfolioId: string, data: CreateCategoryRequest): Promise<Category> {
+    // Verify portfolio belongs to user
+    const portfolio = await db.query.portfolios.findFirst({
+        where: and(eq(portfolios.id, portfolioId), eq(portfolios.userId, userId))
+    });
+
+    if (!portfolio) {
+        throw new Error('Portfolio not found or access denied');
+    }
+
+    // Check for duplicate name
+    const existing = await db
+      .select()
+      .from(categories)
+      .where(and(eq(categories.portfolioId, portfolioId), eq(categories.name, data.name)))
+      .limit(1);
+
+    if (existing.length > 0) {
+      throw new Error(`Category with name "${data.name}" already exists in this portfolio`);
+    }
+
     const [newCategory] = await db
       .insert(categories)
       .values({
-        userId,
+        portfolioId,
         name: data.name,
-        targetAllocation: data.targetAllocation ?? 0,
+        targetAllocationBps: Math.round((data.targetAllocation ?? 0) * 100),
+        currentAllocationBps: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       })
       .returning();
 
-    return newCategory as unknown as Category;
+    return mapCategory(newCategory);
   }
 
   async updateCategory(userId: string, categoryId: string, data: UpdateCategoryRequest): Promise<Category> {
-    // Verify user owns the category
-    const categoryResult = await db
-      .select()
+    // Verify user owns the category via portfolio
+    const result = await db
+      .select({ category: categories })
       .from(categories)
-      .where(and(eq(categories.id, categoryId), eq(categories.userId, userId)))
+      .innerJoin(portfolios, eq(categories.portfolioId, portfolios.id))
+      .where(and(eq(categories.id, categoryId), eq(portfolios.userId, userId)))
       .limit(1);
 
-    if (categoryResult.length === 0) {
+    if (result.length === 0) {
       throw new Error('Category not found or access denied');
+    }
+
+    const currentCategory = result[0].category;
+
+    // Check for duplicate name if name is changing
+    if (data.name && data.name !== currentCategory.name) {
+      const existing = await db
+        .select()
+        .from(categories)
+        .where(and(
+          eq(categories.portfolioId, currentCategory.portfolioId), 
+          eq(categories.name, data.name)
+        ))
+        .limit(1);
+
+      if (existing.length > 0) {
+        throw new Error(`Category with name "${data.name}" already exists in this portfolio`);
+      }
     }
 
     const [updatedCategory] = await db
       .update(categories)
       .set({
-        ...data,
+        ...(data.name ? { name: data.name } : {}),
+        ...(data.targetAllocation !== undefined ? { targetAllocationBps: Math.round(data.targetAllocation * 100) } : {}),
         updatedAt: new Date().toISOString(),
       })
-      .where(and(eq(categories.id, categoryId), eq(categories.userId, userId)))
+      .where(eq(categories.id, categoryId))
       .returning();
 
-    return updatedCategory as unknown as Category;
+    return mapCategory(updatedCategory);
   }
 
   async deleteCategory(userId: string, categoryId: string): Promise<boolean> {
-    // Verify user owns the category
-    const categoryResult = await db
-      .select()
+    // Verify user owns the category via portfolio
+    const result = await db
+      .select({ category: categories })
       .from(categories)
-      .where(and(eq(categories.id, categoryId), eq(categories.userId, userId)))
+      .innerJoin(portfolios, eq(categories.portfolioId, portfolios.id))
+      .where(and(eq(categories.id, categoryId), eq(portfolios.userId, userId)))
       .limit(1);
 
-    if (categoryResult.length === 0) {
+    if (result.length === 0) {
       throw new Error('Category not found or access denied');
     }
 
@@ -78,12 +138,13 @@ export class CategoryServiceImpl implements CategoryService {
 
   async getCategoryById(userId: string, categoryId: string): Promise<Category | null> {
     const result = await db
-      .select()
+      .select({ category: categories })
       .from(categories)
-      .where(and(eq(categories.id, categoryId), eq(categories.userId, userId)))
+      .innerJoin(portfolios, eq(categories.portfolioId, portfolios.id))
+      .where(and(eq(categories.id, categoryId), eq(portfolios.userId, userId)))
       .limit(1);
 
-    return result.length > 0 ? (result[0] as unknown as Category) : null;
+    return result.length > 0 ? mapCategory(result[0].category) : null;
   }
 }
 

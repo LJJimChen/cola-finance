@@ -24,7 +24,7 @@ app.post('/:portfolioId/categories', zValidator('json', createCategorySchema), a
 
     // In a real implementation, we might want to associate the category with the portfolio
     // For now, we'll just create the category for the user
-    const newCategory = await categoryService.createCategory(userId, {
+    const newCategory = await categoryService.createCategory(userId, portfolioId, {
       name,
       targetAllocation,
     });

@@ -106,6 +106,7 @@ describe('Rebalance API', () => {
       dailyProfit4: toMoney4(0),
       currency: 'USD',
       brokerSource: 'mock',
+      brokerAccount: 'test-account',
       createdAt: now,
       updatedAt: now,
     });

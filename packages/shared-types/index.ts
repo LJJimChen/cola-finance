@@ -31,7 +31,6 @@ export interface PortfolioWithAssets extends Portfolio {
 
 export interface Asset {
   id: string;
-  userId: string;
   portfolioId: string;
   categoryId?: string;
   symbol: string;
@@ -42,13 +41,14 @@ export interface Asset {
   currentPrice: number;
   currency: string;
   brokerSource: string;
+  brokerAccount: string;
   createdAt: IsoDateTimeString;
   updatedAt: IsoDateTimeString;
 }
 
 export interface Category {
   id: string;
-  userId: string;
+  // userId: string; // Removed as it belongs to portfolio
   portfolioId: string;
   name: string;
   targetAllocation: number; // Percentage: 0.00 to 100.00
@@ -94,6 +94,7 @@ export interface CreateAssetRequest {
   currentPrice: number;
   currency: string;
   brokerSource: string;
+  brokerAccount: string;
   categoryId?: string;
 }
 

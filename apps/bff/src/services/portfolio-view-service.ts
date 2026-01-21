@@ -15,7 +15,7 @@ import { PortfolioMetricsService } from './portfolio-metrics-service';
 function assetRowToApi(row: typeof assets.$inferSelect): Asset {
   return {
     id: row.id,
-    userId: row.userId,
+    // userId: row.userId,
     portfolioId: row.portfolioId,
     categoryId: row.categoryId ?? undefined,
     symbol: row.symbol,
@@ -26,6 +26,7 @@ function assetRowToApi(row: typeof assets.$inferSelect): Asset {
     currentPrice: fromMoney4(row.currentPrice4),
     currency: row.currency,
     brokerSource: row.brokerSource,
+    brokerAccount: row.brokerAccount,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -65,7 +66,7 @@ export class PortfolioViewService {
     const cats = await this.#db
       .select()
       .from(categories)
-      .where(and(eq(categories.userId, userId), eq(categories.portfolioId, portfolioId)))
+      .where(eq(categories.portfolioId, portfolioId))
       .orderBy(asc(categories.name));
 
     const assetRows = await this.#db.select().from(assets).where(eq(assets.portfolioId, portfolioId));
@@ -109,7 +110,7 @@ export class PortfolioViewService {
     const cats = await this.#db
       .select()
       .from(categories)
-      .where(and(eq(categories.userId, userId), eq(categories.portfolioId, portfolioId)))
+      .where(eq(categories.portfolioId, portfolioId))
       .orderBy(asc(categories.name));
 
     const assetRows = await this.#db.select().from(assets).where(eq(assets.portfolioId, portfolioId));
@@ -152,7 +153,7 @@ export class PortfolioViewService {
     const cats = await this.#db
       .select()
       .from(categories)
-      .where(and(eq(categories.userId, userId), eq(categories.portfolioId, portfolioId)))
+      .where(eq(categories.portfolioId, portfolioId))
       .orderBy(asc(categories.name));
 
     const assetRows = await this.#db.select().from(assets).where(eq(assets.portfolioId, portfolioId));

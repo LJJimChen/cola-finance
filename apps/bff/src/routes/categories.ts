@@ -17,7 +17,7 @@ app.get('/:portfolioId/categories', async (c) => {
 
     // For now, we'll return all categories for the user
     // In a real implementation, we might want to filter based on portfolio
-    const categories = await categoryService.getCategoriesByUser(userId);
+    const categories = await categoryService.getCategoriesByPortfolio(userId, portfolioId);
 
     return c.json(categories);
   } catch (error: any) {

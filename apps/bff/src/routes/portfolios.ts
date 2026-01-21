@@ -32,12 +32,13 @@ const updateCategorySchema = z.object({
 const createAssetSchema = z.object({
   symbol: z.string().min(1),
   name: z.string().min(1),
-  quantity: z.number().finite(),
-  costBasis: z.number().finite(),
-  dailyProfit: z.number().finite(),
-  currentPrice: z.number().finite(),
-  currency: z.string().min(3).max(8),
+  quantity: z.number().positive(),
+  costBasis: z.number().nonnegative(),
+  dailyProfit: z.number(),
+  currentPrice: z.number().positive(),
+  currency: z.string().length(3),
   brokerSource: z.string().min(1),
+  brokerAccount: z.string().min(1),
   categoryId: z.string().optional(),
 });
 
@@ -58,20 +59,20 @@ function portfolioRowToApi(row: typeof portfolios.$inferSelect): Portfolio {
 function categoryRowToApi(row: typeof categories.$inferSelect): Category {
   return {
     id: row.id,
-    userId: row.userId,
+    // userId: row.userId,
     portfolioId: row.portfolioId,
     name: row.name,
     targetAllocation: row.targetAllocationBps / 100,
     currentAllocation: row.currentAllocationBps / 100,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
-  };
+  } as unknown as Category;
 }
 
 function assetRowToApi(row: typeof assets.$inferSelect): Asset {
   return {
     id: row.id,
-    userId: row.userId,
+    // userId: row.userId,
     portfolioId: row.portfolioId,
     categoryId: row.categoryId ?? undefined,
     symbol: row.symbol,
@@ -82,9 +83,10 @@ function assetRowToApi(row: typeof assets.$inferSelect): Asset {
     currentPrice: fromMoney4(row.currentPrice4),
     currency: row.currency,
     brokerSource: row.brokerSource,
+    brokerAccount: row.brokerAccount,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
-  };
+  } as unknown as Asset;
 }
 
 export const portfolioRoutes = new Hono<{
@@ -230,11 +232,24 @@ portfolioRoutes.delete('/:portfolioId', async (c) => {
 portfolioRoutes.get('/:portfolioId/assets', async (c) => {
   const { userId } = c.get('auth');
   const portfolioId = c.req.param('portfolioId');
+  
+  // Verify portfolio ownership first
+  const owned = await c
+    .get('db')
+    .select({ id: portfolios.id })
+    .from(portfolios)
+    .where(and(eq(portfolios.id, portfolioId), eq(portfolios.userId, userId)))
+    .limit(1);
+
+  if (owned.length === 0) {
+    return c.json({ error: { code: 'NOT_FOUND', message: 'Portfolio not found' } }, 404);
+  }
+
   const rows = await c
     .get('db')
     .select()
     .from(assets)
-    .where(and(eq(assets.userId, userId), eq(assets.portfolioId, portfolioId)))
+    .where(eq(assets.portfolioId, portfolioId))
     .orderBy(asc(assets.name));
   return c.json(rows.map(assetRowToApi));
 });
@@ -260,7 +275,6 @@ portfolioRoutes.post('/:portfolioId/assets', zValidator('json', createAssetSchem
     .insert(assets)
     .values({
       id: crypto.randomUUID(),
-      userId,
       portfolioId,
       categoryId: input.categoryId,
       symbol: input.symbol,
@@ -271,6 +285,7 @@ portfolioRoutes.post('/:portfolioId/assets', zValidator('json', createAssetSchem
       currentPrice4: toMoney4(input.currentPrice),
       currency: input.currency,
       brokerSource: input.brokerSource,
+      brokerAccount: input.brokerAccount,
       createdAt: now,
       updatedAt: now,
     })
@@ -282,11 +297,24 @@ portfolioRoutes.post('/:portfolioId/assets', zValidator('json', createAssetSchem
 portfolioRoutes.get('/:portfolioId/categories', async (c) => {
   const { userId } = c.get('auth');
   const portfolioId = c.req.param('portfolioId');
+  
+  // Verify portfolio ownership first
+  const owned = await c
+    .get('db')
+    .select({ id: portfolios.id })
+    .from(portfolios)
+    .where(and(eq(portfolios.id, portfolioId), eq(portfolios.userId, userId)))
+    .limit(1);
+
+  if (owned.length === 0) {
+    return c.json({ error: { code: 'NOT_FOUND', message: 'Portfolio not found' } }, 404);
+  }
+
   const rows = await c
     .get('db')
     .select()
     .from(categories)
-    .where(and(eq(categories.userId, userId), eq(categories.portfolioId, portfolioId)))
+    .where(eq(categories.portfolioId, portfolioId))
     .orderBy(asc(categories.name));
   return c.json(rows.map(categoryRowToApi));
 });
@@ -297,12 +325,21 @@ portfolioRoutes.post('/:portfolioId/categories', zValidator('json', createCatego
   const input = c.req.valid('json');
   const now = nowIsoUtc();
 
+  const owned = await c
+    .get('db')
+    .select({ id: portfolios.id })
+    .from(portfolios)
+    .where(and(eq(portfolios.id, portfolioId), eq(portfolios.userId, userId)))
+    .limit(1);
+  if (owned.length === 0) {
+    return c.json({ error: { code: 'NOT_FOUND', message: 'Portfolio not found' } }, 404);
+  }
+
   const [row] = await c
     .get('db')
     .insert(categories)
     .values({
       id: crypto.randomUUID(),
-      userId,
       portfolioId,
       name: input.name,
       targetAllocationBps: Math.round((input.targetAllocation ?? 0) * 100),
@@ -356,6 +393,18 @@ categoryRoutes.put('/:categoryId', zValidator('json', updateCategorySchema), asy
   const input = c.req.valid('json');
   const now = nowIsoUtc();
 
+  const owned = await c
+    .get('db')
+    .select({ id: categories.id })
+    .from(categories)
+    .innerJoin(portfolios, eq(categories.portfolioId, portfolios.id))
+    .where(and(eq(categories.id, categoryId), eq(portfolios.userId, userId)))
+    .limit(1);
+
+  if (owned.length === 0) {
+    return c.json({ error: { code: 'NOT_FOUND', message: 'Category not found' } }, 404);
+  }
+
   const updated = await c
     .get('db')
     .update(categories)
@@ -364,7 +413,7 @@ categoryRoutes.put('/:categoryId', zValidator('json', updateCategorySchema), asy
       ...(typeof input.targetAllocation === 'number' ? { targetAllocationBps: Math.round(input.targetAllocation * 100) } : {}),
       updatedAt: now,
     })
-    .where(and(eq(categories.id, categoryId), eq(categories.userId, userId)))
+    .where(eq(categories.id, categoryId))
     .returning();
 
   if (updated.length === 0) {
@@ -382,7 +431,8 @@ categoryRoutes.delete('/:categoryId', async (c) => {
     .get('db')
     .select({ id: categories.id })
     .from(categories)
-    .where(and(eq(categories.id, categoryId), eq(categories.userId, userId)))
+    .innerJoin(portfolios, eq(categories.portfolioId, portfolios.id))
+    .where(and(eq(categories.id, categoryId), eq(portfolios.userId, userId)))
     .limit(1);
   if (owned.length === 0) {
     return c.json({ error: { code: 'NOT_FOUND', message: 'Category not found' } }, 404);

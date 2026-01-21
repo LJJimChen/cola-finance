@@ -15,6 +15,20 @@
       "when": 1768982519811,
       "tag": "0001_old_nocturne",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1768990677216,
+      "tag": "0002_solid_meggan",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1768991512833,
+      "tag": "0003_steep_mauler",
+      "breakpoints": true
     }
   ]
 }
