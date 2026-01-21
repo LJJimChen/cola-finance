@@ -9,7 +9,7 @@ const PortfolioPage: React.FC = () => {
   
   // Mock portfolio ID - in a real app, this would come from routing
   const portfolioId = 'portfolio-123';
-  const [displayCurrency, setDisplayCurrency] = useState('USD');
+  const [displayCurrency] = useState('USD');
   const [isEditingTargets, setIsEditingTargets] = useState(false);
 
   const { data: allocationData, isLoading, error } = useAllocationData({
@@ -171,7 +171,6 @@ const PortfolioPage: React.FC = () => {
             allocationData?.categories.map((category, index) => {
               const deviation = category.currentAllocation - category.targetAllocation;
               const isOverweight = deviation > 0.5;
-              const isUnderweight = deviation < -0.5;
               const deviationText = Math.abs(deviation) < 0.5 ? 'On Target' : `${isOverweight ? 'Overweight' : 'Underweight'} (${deviation > 0 ? '+' : ''}${deviation.toFixed(0)}%)`;
               const deviationColorClass = Math.abs(deviation) < 0.5 ? 'text-primary' : (isOverweight ? 'text-amber-500' : 'text-rose-500');
 

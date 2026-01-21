@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import Layout from '../components/Layout';
-import { useI18n } from '../lib/i18n';
 
 const NotificationsPage: React.FC = () => {
-  const { t } = useI18n();
   const [filter, setFilter] = useState('All');
 
   const filters = ['All', 'Alerts', 'Invites', 'System'];

@@ -1,5 +1,4 @@
 import React from 'react';
-import { useI18n } from '../../lib/i18n';
 
 interface AllocationChartProps {
   data: Array<{
@@ -11,9 +10,6 @@ interface AllocationChartProps {
 }
 
 const AllocationChart: React.FC<AllocationChartProps> = ({ data, title }) => {
-  const { t } = useI18n();
-  const total = data.reduce((sum, item) => sum + item.value, 0);
-
   // Design colors
   const colors = [
     'text-primary',
@@ -37,7 +33,6 @@ const AllocationChart: React.FC<AllocationChartProps> = ({ data, title }) => {
   // Circumference = 2 * PI * r
   // r = 15.91549430918954 (for circumference of 100)
   const r = 15.91549430918954;
-  const circumference = 100;
   
   let accumulatedPercentage = 0;
 

@@ -14,7 +14,7 @@ import type {
   AllocationData,
   RebalanceRecommendations,
   HistoricalPerformance
-} from '@repo/shared-types';
+} from './index';
 
 const API_BASE_URL =
   typeof window !== 'undefined'
@@ -41,7 +41,7 @@ class ApiClient {
       },
       hooks: {
         beforeRequest: [
-          (request) => {
+          (request: Request) => {
             if (this.authToken) {
               request.headers.set('Authorization', `Bearer ${this.authToken}`);
             }

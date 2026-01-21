@@ -21,7 +21,7 @@ const LoginPage: React.FC = () => {
       const { success } = await client.login(email, password);
       if (success) {
         // Redirect to dashboard
-        window.location.href = '/dashboard';
+        navigate({ to: '/dashboard' });
       } else {
         setError('Login failed');
       }

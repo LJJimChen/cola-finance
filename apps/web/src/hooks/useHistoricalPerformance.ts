@@ -20,8 +20,8 @@ export const useHistoricalPerformance = ({
   return useQuery<HistoricalPerformance, Error>({
     queryKey: ['historical-performance', portfolioId, startDate.toISOString(), endDate.toISOString(), displayCurrency],
     queryFn: () => apiClient.getHistoricalPerformance(portfolioId, startDate, endDate, displayCurrency),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 24 * 60 * 60 * 1000, // 24 hours
+    gcTime: 48 * 60 * 60 * 1000, // 48 hours
     retry: 1,
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,

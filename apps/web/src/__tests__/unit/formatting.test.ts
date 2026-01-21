@@ -1,4 +1,5 @@
-import { formatCurrency, formatNumber, formatPercentage, formatDate } from '../utils/formatting';
+import { describe, it, expect } from 'vitest';
+import { formatCurrency, formatNumber, formatPercentage, formatDate } from '../../utils/formatting';
 
 describe('Formatting Utilities', () => {
   describe('formatCurrency', () => {

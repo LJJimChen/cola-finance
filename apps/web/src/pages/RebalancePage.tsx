@@ -42,8 +42,8 @@ const RebalancePage: React.FC = () => {
   const isDriftHigh = driftScore > 5;
 
   // Filter recommendations
-  const actionRequired = rebalanceData?.recommendations.filter(r => Math.abs(r.deviation) > 1) ?? [];
-  const optimized = rebalanceData?.recommendations.filter(r => Math.abs(r.deviation) <= 1) ?? [];
+  const actionRequired = rebalanceData?.recommendations.filter((r) => Math.abs(r.deviation) > 1) ?? [];
+  const optimized = rebalanceData?.recommendations.filter((r) => Math.abs(r.deviation) <= 1) ?? [];
 
   return (
     <Layout>

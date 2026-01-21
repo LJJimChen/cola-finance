@@ -1,10 +1,12 @@
 // Logging levels
-export enum LogLevel {
-  DEBUG = 'DEBUG',
-  INFO = 'INFO',
-  WARN = 'WARN',
-  ERROR = 'ERROR',
-}
+export const LogLevel = {
+  DEBUG: 'DEBUG',
+  INFO: 'INFO',
+  WARN: 'WARN',
+  ERROR: 'ERROR',
+} as const;
+
+export type LogLevel = typeof LogLevel[keyof typeof LogLevel];
 
 // Log entry interface
 export interface LogEntry {
