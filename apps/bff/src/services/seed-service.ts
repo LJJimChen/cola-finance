@@ -10,54 +10,29 @@ type SeedArgs = {
 };
 
 export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
-  const defaultPortfolioId = crypto.randomUUID();
-
-  await db.insert(portfolios).values({
-    id: defaultPortfolioId,
-    userId: args.userId,
-    name: 'My Portfolio',
-    description: 'Seeded demo portfolio',
-    totalValueCny4: 0,
-    dailyProfitCny4: 0,
-    currentTotalProfitCny4: 0,
-    createdAt: args.now,
-    updatedAt: args.now,
-  });
-
-  const defaultCategories = [
-    { name: 'US equities', targetAllocationBps: 25_00 },
-    { name: 'China equities', targetAllocationBps: 20_00 },
-    { name: 'Asia-Pacific equities', targetAllocationBps: 15_00 },
-    { name: 'Commodities', targetAllocationBps: 10_00 },
-    { name: 'Dividend income', targetAllocationBps: 10_00 },
-    { name: 'Bonds', targetAllocationBps: 20_00 },
-  ] as const;
-
-  const categoryIdsByName = new Map<string, string>();
-  for (const c of defaultCategories) {
-    const id = crypto.randomUUID();
-    categoryIdsByName.set(c.name, id);
-    await db.insert(categories).values({
-      id,
-      userId: args.userId,
-      portfolioId: defaultPortfolioId,
-      name: c.name,
-      targetAllocationBps: c.targetAllocationBps,
-      currentAllocationBps: 0,
-      createdAt: args.now,
-      updatedAt: args.now,
-    });
-  }
-
+  // 1. Seed Exchange Rates (Global for user context, though rates are technically shared data, 
+  // here we just seed some initial ones if we are treating this as a fresh env or user-specific view)
+  // Note: In a real system, exchange rates might be a shared table populated by a cron job. 
+  // Here we insert them assuming the table might be empty or we just want to ensure these exist.
+  // Since IDs are random, we might duplicate if we are not careful, but for "seedNewUser" we assume a fresh start or we just add them.
+  // Actually, for a multi-user system, exchange rates should probably be seeded once globally. 
+  // However, based on existing code, it inserts them. Let's keep it but maybe we should check if they exist? 
+  // For simplicity in this "demo" context, we'll just insert them.
+  
   const today = args.now.slice(0, 10);
   const fxSeed = [
     { source: 'USD', target: 'CNY', rate: 7.2000 },
     { source: 'HKD', target: 'CNY', rate: 0.9200 },
     { source: 'JPY', target: 'CNY', rate: 0.0500 },
+    { source: 'EUR', target: 'CNY', rate: 7.8000 },
+    { source: 'GBP', target: 'CNY', rate: 9.1000 },
     { source: 'CNY', target: 'CNY', rate: 1.0 },
   ] as const;
 
   for (const fx of fxSeed) {
+    // We generate a random ID, so this will always insert new rows. 
+    // In a real app, this table shouldn't be user-scoped or seeded per user.
+    // But following existing pattern for now.
     await db.insert(exchangeRates).values({
       id: crypto.randomUUID(),
       sourceCurrency: fx.source,
@@ -68,81 +43,132 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
     });
   }
 
-  const demoAssets = [
+  // 2. Define Portfolios Data
+  const portfoliosData = [
     {
-      symbol: 'AAPL',
-      name: 'Apple Inc.',
-      quantity: 10,
-      costBasis: 170,
-      currentPrice: 190,
-      dailyProfit: 12,
-      currency: 'USD',
-      brokerSource: 'mock',
-      brokerAccount: 'mock-account-1',
-      categoryName: 'US equities',
+      name: 'Main Portfolio',
+      description: 'Core long-term investments',
+      categories: [
+        { name: 'US Equities', target: 40_00 },
+        { name: 'China Equities', target: 30_00 },
+        { name: 'Bonds', target: 30_00 },
+      ],
+      assets: [
+        { 
+          symbol: 'AAPL', name: 'Apple Inc.', quantity: 15, cost: 175, price: 185, 
+          currency: 'USD', cat: 'US Equities', brokerSource: 'IBKR', brokerAccount: 'U1234567' 
+        },
+        { 
+          symbol: 'MSFT', name: 'Microsoft', quantity: 10, cost: 320, price: 410, 
+          currency: 'USD', cat: 'US Equities', brokerSource: 'IBKR', brokerAccount: 'U1234567' 
+        },
+        { 
+          symbol: 'BABA', name: 'Alibaba', quantity: 50, cost: 85, price: 72, 
+          currency: 'USD', cat: 'China Equities', brokerSource: 'Futu', brokerAccount: 'F888888' 
+        },
+        { 
+          symbol: '0700.HK', name: 'Tencent', quantity: 200, cost: 320, price: 290, 
+          currency: 'HKD', cat: 'China Equities', brokerSource: 'Futu', brokerAccount: 'F888888' 
+        },
+        { 
+          symbol: 'TLT', name: '20+ Year Treasury Bond ETF', quantity: 40, cost: 98, price: 92, 
+          currency: 'USD', cat: 'Bonds', brokerSource: 'IBKR', brokerAccount: 'U1234567' 
+        },
+      ]
     },
     {
-      symbol: 'BABA',
-      name: 'Alibaba',
-      quantity: 30,
-      costBasis: 80,
-      currentPrice: 76,
-      dailyProfit: -15,
-      currency: 'USD',
-      brokerSource: 'mock',
-      brokerAccount: 'mock-account-1',
-      categoryName: 'China equities',
-    },
-    {
-      symbol: '600519.SS',
-      name: '贵州茅台',
-      quantity: 2,
-      costBasis: 1680,
-      currentPrice: 1710,
-      dailyProfit: 20,
-      currency: 'CNY',
-      brokerSource: 'mock',
-      brokerAccount: 'mock-account-2',
-      categoryName: 'China equities',
-    },
-    {
-      symbol: 'TLT',
-      name: 'iShares 20+ Year Treasury Bond ETF',
-      quantity: 5,
-      costBasis: 92,
-      currentPrice: 95,
-      dailyProfit: 3,
-      currency: 'USD',
-      brokerSource: 'mock',
-      brokerAccount: 'mock-account-1',
-      categoryName: 'Bonds',
-    },
-  ] as const;
-
-  for (const asset of demoAssets) {
-    const categoryId = categoryIdsByName.get(asset.categoryName);
-    if (!categoryId) {
-      throw new AppError({ status: 500, code: 'INTERNAL_ERROR', message: 'Seed category missing' });
+      name: 'Growth Bets',
+      description: 'High risk high reward speculative assets',
+      categories: [
+        { name: 'Tech Growth', target: 60_00 },
+        { name: 'Crypto Proxies', target: 40_00 },
+      ],
+      assets: [
+        { 
+          symbol: 'NVDA', name: 'NVIDIA', quantity: 5, cost: 450, price: 720, 
+          currency: 'USD', cat: 'Tech Growth', brokerSource: 'Robinhood', brokerAccount: 'R555555' 
+        },
+        { 
+          symbol: 'PLTR', name: 'Palantir', quantity: 100, cost: 15, price: 22, 
+          currency: 'USD', cat: 'Tech Growth', brokerSource: 'Robinhood', brokerAccount: 'R555555' 
+        },
+        { 
+          symbol: 'COIN', name: 'Coinbase', quantity: 30, cost: 120, price: 180, 
+          currency: 'USD', cat: 'Crypto Proxies', brokerSource: 'Robinhood', brokerAccount: 'R555555' 
+        },
+      ]
     }
+  ];
 
-    await db.insert(assets).values({
-      id: crypto.randomUUID(),
-      portfolioId: defaultPortfolioId,
-      categoryId,
-      symbol: asset.symbol,
-      name: asset.name,
-      quantity: asset.quantity,
-      costBasis4: toMoney4(asset.costBasis),
-      dailyProfit4: toMoney4(asset.dailyProfit),
-      currentPrice4: toMoney4(asset.currentPrice),
-      currency: asset.currency,
-      brokerSource: asset.brokerSource,
-      brokerAccount: asset.brokerAccount,
+  // 3. Loop and Insert Portfolios, Categories, and Assets
+  const metrics = new PortfolioMetricsService(db);
+
+  for (const pData of portfoliosData) {
+    const portfolioId = crypto.randomUUID();
+
+    // Create Portfolio
+    await db.insert(portfolios).values({
+      id: portfolioId,
+      userId: args.userId,
+      name: pData.name,
+      description: pData.description,
+      totalValueCny4: 0,
+      dailyProfitCny4: 0,
+      currentTotalProfitCny4: 0,
       createdAt: args.now,
       updatedAt: args.now,
     });
-  }
 
-  const metrics = new PortfolioMetricsService(db);
-  await metrics.recomputeAndPersist(args.userId, defaultPortfolioId, { asOfUtc: args.now });
+    // Create Categories and map name -> id
+    const categoryIdsByName = new Map<string, string>();
+    for (const c of pData.categories) {
+      const catId = crypto.randomUUID();
+      categoryIdsByName.set(c.name, catId);
+      await db.insert(categories).values({
+        id: catId,
+        portfolioId: portfolioId, // Correctly linked to portfolio
+        name: c.name,
+        targetAllocationBps: c.target,
+        currentAllocationBps: 0,
+        createdAt: args.now,
+        updatedAt: args.now,
+      });
+    }
+
+    // Create Assets
+    for (const asset of pData.assets) {
+      const categoryId = categoryIdsByName.get(asset.cat);
+      if (!categoryId) {
+        throw new AppError({ status: 500, code: 'INTERNAL_ERROR', message: `Seed category missing: ${asset.cat}` });
+      }
+
+      // Calculate simple daily profit approximation for seed data
+      // (Current - Cost) / Days? Or just arbitrary? 
+      // The original code had explicit dailyProfit. 
+      // Let's approximate daily change as (Current Price * 0.01 * random direction) or just static logic.
+      // For simplicity, let's assume daily profit is just (Price - Cost) * 0.05 (totally fake)
+      // Or better, let's just make it up based on the asset for variety.
+      const dailyProfit = (asset.price - asset.cost) * 0.1; // 10% of total gain is daily change? A bit high but visible.
+
+      await db.insert(assets).values({
+        id: crypto.randomUUID(),
+        portfolioId: portfolioId,
+        categoryId,
+        symbol: asset.symbol,
+        name: asset.name,
+        quantity: asset.quantity,
+        costBasis4: toMoney4(asset.cost),
+        dailyProfit4: toMoney4(dailyProfit),
+        currentPrice4: toMoney4(asset.price),
+        currency: asset.currency,
+        brokerSource: asset.brokerSource,
+        brokerAccount: asset.brokerAccount,
+        createdAt: args.now,
+        updatedAt: args.now,
+      });
+    }
+
+    // Compute Metrics for this portfolio
+    await metrics.recomputeAndPersist(args.userId, portfolioId, { asOfUtc: args.now });
+  }
 }

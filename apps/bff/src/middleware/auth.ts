@@ -42,7 +42,14 @@ export function requireAuth(): MiddlewareHandler<{
     
     if (!session) {
       console.log('Auth failed. Headers:', Object.fromEntries(c.req.raw.headers.entries()));
-      throw new AppError({ status: 401, code: 'UNAUTHORIZED', message: 'Unauthorized' });
+      // Clear the session cookie to help the client recover from stale sessions
+      // Note: HttpOnly cookies can only be cleared by the server.
+      // We clear both the standard and secure prefixes to ensure it works in all environments.
+      c.header('Set-Cookie', 'better-auth.session_token=; Max-Age=0; Path=/; HttpOnly');
+      c.header('Set-Cookie', '__Secure-better-auth.session_token=; Max-Age=0; Path=/; HttpOnly; Secure', { append: true });
+      
+      // Return JSON directly to ensure headers are sent (throwing AppError might be handled by a global handler that resets headers)
+      return c.json({ error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, 401);
     }
 
     c.set('auth', { userId: session.user.id });

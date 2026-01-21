@@ -7,7 +7,7 @@ import { useCurrentPortfolio } from '../hooks/useCurrentPortfolio';
 
 const AnalysisPage: React.FC = () => {
   const { t } = useI18n();
-  const { portfolioId } = useCurrentPortfolio();
+  const { portfolioId, loading: portfolioLoading, error: portfolioError } = useCurrentPortfolio();
 
   const [displayCurrency] = useState('CNY');
   
@@ -28,12 +28,20 @@ const AnalysisPage: React.FC = () => {
 
   const { startDate, endDate } = getDates(range);
 
-  const { data: history, isLoading, error } = useHistoricalPerformance({
+  const { data: history, isLoading: historyLoading, error: historyError } = useHistoricalPerformance({
     portfolioId: portfolioId || '',
     startDate,
     endDate,
     displayCurrency
   });
+
+  const isLoading = portfolioLoading || historyLoading;
+  const error = portfolioError || historyError;
+
+  // Handle 401 Unauthorized errors by rendering nothing (while redirect happens)
+  if (error && 'response' in error && (error as { response?: { status: number } }).response?.status === 401) {
+    return null;
+  }
 
   // Chart SVG Generation
   const generateChartPath = (width: number, height: number) => {
@@ -184,10 +192,10 @@ const AnalysisPage: React.FC = () => {
           {/* Time Range Selector */}
           <div className="flex justify-between items-center mb-8 px-1">
             <div className="flex flex-1 justify-between gap-1 overflow-x-auto hide-scrollbar">
-              {['1M', '3M', '6M', '1Y', '3Y', 'All'].map((r) => (
+              {(['1M', '3M', '6M', '1Y', '3Y', 'All'] as const).map((r) => (
                 <button 
                   key={r}
-                  onClick={() => setRange(r as any)}
+                  onClick={() => setRange(r)}
                   className={`px-3 py-1.5 text-xs font-semibold rounded-full transition-colors ${
                     range === r 
                       ? 'text-black dark:text-primary bg-white dark:bg-[#1e3b2a] shadow-sm ring-1 ring-black/5 dark:ring-white/10'

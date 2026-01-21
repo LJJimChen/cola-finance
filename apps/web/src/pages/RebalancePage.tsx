@@ -8,7 +8,7 @@ import { useCurrentPortfolio } from '../hooks/useCurrentPortfolio';
 
 const RebalancePage: React.FC = () => {
   const { t } = useI18n();
-  const { portfolioId } = useCurrentPortfolio();
+  const { portfolioId, loading: portfolioLoading, error: portfolioError } = useCurrentPortfolio();
  
   const displayCurrency = 'CNY'; // Default currency for now
 
@@ -16,13 +16,18 @@ const RebalancePage: React.FC = () => {
     portfolioId: portfolioId || '',
   });
 
-  const { data: dashboardData, isLoading: isDashboardLoading } = useDashboardData({
+  const { data: dashboardData, isLoading: isDashboardLoading, error: dashboardError } = useDashboardData({
     portfolioId: portfolioId || '',
     displayCurrency
   });
 
-  const isLoading = isRebalanceLoading || isDashboardLoading;
-  const error = rebalanceError;
+  const isLoading = isRebalanceLoading || isDashboardLoading || portfolioLoading;
+  const error = rebalanceError || dashboardError || portfolioError;
+
+  // Handle 401 Unauthorized errors by rendering nothing (while redirect happens)
+  if (error && 'response' in error && (error as { response?: { status: number } }).response?.status === 401) {
+    return null;
+  }
 
   if (error) {
     return (

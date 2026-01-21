@@ -47,8 +47,17 @@ class ApiClient {
           },
         ],
         beforeError: [
-          (error) => {
+          async (error) => {
             console.error('API Error:', error);
+            
+            // Auto-logout on 401 Unauthorized
+            if (error.response?.status === 401) {
+              this.setAuthToken(null);
+              if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+                window.location.href = '/login';
+              }
+            }
+            
             return error;
           }
         ]

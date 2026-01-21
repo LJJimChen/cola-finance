@@ -9,15 +9,23 @@ import { useCurrentPortfolio } from '../hooks/useCurrentPortfolio';
 
 const DashboardPage: React.FC = () => {
   const { t } = useI18n();
-  const { portfolioId } = useCurrentPortfolio();
+  const { portfolioId, loading: portfolioLoading, error: portfolioError } = useCurrentPortfolio();
 
   // State for currency selection
   const [displayCurrency, setDisplayCurrency] = useState('USD');
 
-  const { data: dashboardData, isLoading, error } = useDashboardData({
+  const { data: dashboardData, isLoading: dashboardLoading, error: dashboardError } = useDashboardData({
     portfolioId: portfolioId || '',
     displayCurrency
   });
+
+  const isLoading = portfolioLoading || dashboardLoading;
+  const error = portfolioError || dashboardError;
+
+  // Handle 401 Unauthorized errors by rendering nothing (while redirect happens)
+  if (error && 'response' in error && (error as { response?: { status: number } }).response?.status === 401) {
+    return null;
+  }
 
   if (error) {
     return (
