@@ -3,7 +3,7 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
-import { users } from '../db/schema';
+import { user } from '../db/schema';
 import { nowIsoUtc } from '../lib/time';
 
 const updateSchema = z.object({
@@ -22,7 +22,7 @@ export const userRoutes = new Hono<{
 
 userRoutes.get('/profile', requireAuth(), async (c) => {
   const { userId } = c.get('auth');
-  const result = await c.get('db').select().from(users).where(eq(users.id, userId)).limit(1);
+  const result = await c.get('db').select().from(user).where(eq(user.id, userId)).limit(1);
   if (result.length === 0) {
     return c.json({ error: { code: 'NOT_FOUND', message: 'User not found' } }, 404);
   }
@@ -43,13 +43,12 @@ userRoutes.get('/profile', requireAuth(), async (c) => {
 userRoutes.put('/profile', requireAuth(), zValidator('json', updateSchema), async (c) => {
   const { userId } = c.get('auth');
   const input = c.req.valid('json');
-  const now = nowIsoUtc();
 
   const updated = await c
     .get('db')
-    .update(users)
-    .set({ ...input, updatedAt: now })
-    .where(eq(users.id, userId))
+    .update(user)
+    .set({ ...input, updatedAt: new Date() })
+    .where(eq(user.id, userId))
     .returning();
 
   if (updated.length === 0) {

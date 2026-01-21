@@ -4,7 +4,6 @@ import type {
   Portfolio,
   Asset,
   Category,
-  PortfolioHistory,
   ExchangeRate,
   CreatePortfolioRequest,
   CreateAssetRequest,
@@ -66,13 +65,28 @@ class ApiClient {
 
   // Authentication endpoints
   async login(email: string, password: string): Promise<{ success: boolean; token: string }> {
-    const result = await this.client.post('auth/login', { json: { email, password } }).json<{ success: boolean; token: string }>();
-    this.setAuthToken(result.token);
-    return result;
+    const result = await this.client.post('auth/sign-in/email', { json: { email, password } }).json<any>();
+    // better-auth response usually contains token or session.token
+    // It does NOT contain a 'success' field by default.
+    const token = result.token || result.session?.token;
+    
+    if (token) {
+      this.setAuthToken(token);
+    }
+    
+    return { 
+      success: !!token, 
+      token,
+      ...result 
+    };
   }
 
-  async signup(email: string, password: string): Promise<{ success: boolean; userId: string }> {
-    return this.client.post('auth/signup', { json: { email, password } }).json();
+  async signup(email: string, password: string, name: string): Promise<{ success: boolean; userId: string; token?: string; user?: any }> {
+    const result = await this.client.post('auth/sign-up/email', { json: { email, password, name } }).json<any>();
+    return {
+      success: !!(result.token || result.user),
+      ...result
+    };
   }
 
   async logout(): Promise<void> {

@@ -25,21 +25,17 @@ const SignUpPage: React.FC = () => {
 
     try {
       const client = getApiClient();
-      // Signup returns { success: boolean; userId: string }
-      // After signup, we should probably auto-login or redirect to login
-      const { success } = await client.signup(email, password);
+      // Signup returns { success: boolean; userId: string; token?: string; user?: any }
+      // better-auth sign-up/email returns the session token and user object directly
+      const result = await client.signup(email, password, email.split('@')[0]); // Use email username as default name
       
-      if (success) {
-        // Auto-login after signup for better UX
-        const loginResult = await client.login(email, password);
-        if (loginResult.success) {
-            window.location.href = '/dashboard';
-        } else {
-            // Fallback to login page if auto-login fails
-            navigate({ to: '/login' });
-        }
+      if (result.token) {
+        // Auto-login successful from signup
+        client.setAuthToken(result.token);
+        window.location.href = '/dashboard';
       } else {
-        setError('Signup failed');
+        // Fallback to login page if no token returned (e.g. email verification required)
+        navigate({ to: '/login' });
       }
     } catch (err) {
       setError((err as Error).message || 'An error occurred');

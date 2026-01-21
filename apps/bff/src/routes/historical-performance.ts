@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { and, asc, eq, gte, lte } from 'drizzle-orm';
 import type { HistoricalPerformance } from '@repo/shared-types';
 import { requireAuth } from '../middleware/auth';
-import { portfolios, portfolioHistories, users } from '../db/schema';
+import { portfolios, portfolioHistories, user } from '../db/schema';
 import { fromMoney4, roundMoney4 } from '../lib/money';
 import { toIsoDateInTimeZone } from '../lib/time';
 import { ExchangeRateService } from '../services/exchange-rate-service';
@@ -39,8 +39,8 @@ historicalPerformanceRoutes.get('/:portfolioId', requireAuth(), zValidator('quer
     return c.json({ error: { code: 'NOT_FOUND', message: 'Portfolio not found' } }, 404);
   }
 
-  const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-  const timeZone = user[0]?.timeZone ?? 'UTC';
+  const userRows = await db.select().from(user).where(eq(user.id, userId)).limit(1);
+  const timeZone = userRows[0]?.timeZone ?? 'UTC';
 
   const startIso = new Date(`${q.startDate}T00:00:00.000Z`).toISOString();
   const endIso = new Date(`${q.endDate}T23:59:59.999Z`).toISOString();

@@ -3,12 +3,13 @@ import Layout from '../components/Layout';
 import { useI18n } from '../lib/i18n';
 import { useHistoricalPerformance } from '../hooks/useHistoricalPerformance';
 import Skeleton from '../components/Skeleton';
+import { useCurrentPortfolio } from '../hooks/useCurrentPortfolio';
 
 const AnalysisPage: React.FC = () => {
   const { t } = useI18n();
-  // Mock portfolio ID - in real app, get from context or route
-  const portfolioId = 'portfolio-123';
-  const displayCurrency = 'USD'; // Should come from settings
+  const { portfolioId } = useCurrentPortfolio();
+
+  const [displayCurrency] = useState('CNY');
   
   // Date range logic
   const [range, setRange] = useState<'1M' | '3M' | '6M' | '1Y' | '3Y' | 'All'>('1Y');
@@ -28,7 +29,7 @@ const AnalysisPage: React.FC = () => {
   const { startDate, endDate } = getDates(range);
 
   const { data: history, isLoading, error } = useHistoricalPerformance({
-    portfolioId,
+    portfolioId: portfolioId || '',
     startDate,
     endDate,
     displayCurrency

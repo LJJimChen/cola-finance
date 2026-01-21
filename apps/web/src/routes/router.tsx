@@ -1,5 +1,5 @@
 import React from 'react';
-import { createRootRoute, createRoute, createRouter, Outlet } from '@tanstack/react-router';
+import { createRootRoute, createRoute, createRouter, Outlet, redirect } from '@tanstack/react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ErrorBoundary from '../components/ErrorBoundary';
 
@@ -11,6 +11,16 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Auth check function
+const authCheck = () => {
+  const token = window.localStorage.getItem('cola.finance.authToken');
+  if (!token) {
+    throw redirect({
+      to: '/login',
+    });
+  }
+};
 
 // Define lazy-loaded components
 const DashboardPageLazy = React.lazy(() => import('../pages/DashboardPage'));
@@ -48,12 +58,14 @@ const analysisRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/analysis',
   component: AnalysisPageLazy,
+  beforeLoad: authCheck,
 });
 
 const notificationsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/notifications',
   component: NotificationsPageLazy,
+  beforeLoad: authCheck,
 });
 
 const welcomeRoute = createRoute({
@@ -90,24 +102,28 @@ const dashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/dashboard',
   component: DashboardPageLazy,
+  beforeLoad: authCheck,
 });
 
 const portfolioRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/portfolio',
   component: PortfolioPageLazy,
+  beforeLoad: authCheck,
 });
 
 const rebalanceRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/rebalance',
   component: RebalancePageLazy,
+  beforeLoad: authCheck,
 });
 
 const settingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/settings',
   component: SettingsPageLazy,
+  beforeLoad: authCheck,
 });
 
 const loginRoute = createRoute({

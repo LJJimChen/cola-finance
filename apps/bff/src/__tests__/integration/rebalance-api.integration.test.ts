@@ -3,42 +3,45 @@ import { describe, expect, it } from 'vitest';
 import { apiRoutes } from '../../routes';
 import type { AppDb } from '../../db';
 import { createTestDb } from '../../db/testing';
-import { assets, categories, exchangeRates, portfolios, sessions, users } from '../../db/schema';
+import { assets, categories, exchangeRates, portfolios, session, user } from '../../db/schema';
 import { toMoney4, toRate8 } from '../../lib/money';
 import { toAppError } from '../../lib/errors';
 import type { RebalanceRecommendations } from '@repo/shared-types';
+import { createAuth } from '../../lib/auth';
+import { ContentfulStatusCode } from 'hono/utils/http-status';
 
 describe('Rebalance API', () => {
   it('returns rebalance recommendations for authorized user', async () => {
     const { db } = await createTestDb();
     const now = new Date().toISOString();
     const today = now.slice(0, 10);
-    const userId = 'user-1';
-    const token = 'token-1';
+    
+    // Setup user and session via better-auth
+    const auth = createAuth(db);
+    await auth.api.signUpEmail({
+      body: {
+        email: 'u@example.com',
+        password: 'password123',
+        name: 'Test User',
+      }
+    });
+
+    const signInRes = await auth.api.signInEmail({
+      body: {
+        email: 'u@example.com',
+        password: 'password123',
+      }
+    });
+    
+    if (!signInRes || !signInRes.token) {
+      throw new Error('Failed to sign in');
+    }
+
+    const userId = signInRes.user.id;
+    const token = signInRes.token;
     const portfolioId = 'portfolio-1';
     const categoryId1 = 'category-1';
     const categoryId2 = 'category-2';
-
-    // Setup user and session
-    await db.insert(users).values({
-      id: userId,
-      email: 'u@example.com',
-      passwordHash: 'x',
-      languagePreference: 'zh',
-      themeSettings: 'auto',
-      displayCurrency: 'CNY',
-      timeZone: 'UTC',
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    await db.insert(sessions).values({
-      id: 'session-1',
-      userId,
-      token,
-      createdAt: now,
-      expiresAt: '2099-01-01T00:00:00.000Z',
-    });
 
     // Setup portfolio
     await db.insert(portfolios).values({
@@ -115,7 +118,7 @@ describe('Rebalance API', () => {
     app.route('/api', apiRoutes);
     app.onError((err, c) => {
       const e = toAppError(err);
-      return c.json({ error: { code: e.code, message: e.message } }, e.status);
+      return c.json({ error: { code: e.code, message: e.message } }, e.status as ContentfulStatusCode);
     });
 
     const res = await app.request(`/api/portfolios/${portfolioId}/rebalance`, {

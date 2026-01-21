@@ -98,7 +98,41 @@ portfolioRoutes.use('*', requireAuth());
 
 portfolioRoutes.get('/', async (c) => {
   const { userId } = c.get('auth');
-  const rows = await c.get('db').select().from(portfolios).where(eq(portfolios.userId, userId)).orderBy(asc(portfolios.name));
+  let rows = await c.get('db').select().from(portfolios).where(eq(portfolios.userId, userId)).orderBy(asc(portfolios.name));
+
+  // Lazy creation: If user has no portfolios, create a default one
+  if (rows.length === 0) {
+    const now = nowIsoUtc();
+    const defaultPortfolioId = crypto.randomUUID();
+    
+    const [newPortfolio] = await c
+      .get('db')
+      .insert(portfolios)
+      .values({
+        id: defaultPortfolioId,
+        userId,
+        name: 'Default Portfolio',
+        description: 'Automatically created default portfolio',
+        totalValueCny4: 0,
+        dailyProfitCny4: 0,
+        currentTotalProfitCny4: 0,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning();
+
+    await c.get('db').insert(portfolioHistories).values({
+      id: crypto.randomUUID(),
+      portfolioId: defaultPortfolioId,
+      timestampUtc: now,
+      totalValueCny4: 0,
+      dailyProfitCny4: 0,
+      currentTotalProfitCny4: 0,
+    });
+
+    rows = [newPortfolio];
+  }
+
   return c.json(rows.map(portfolioRowToApi));
 });
 

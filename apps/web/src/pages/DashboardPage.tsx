@@ -5,18 +5,17 @@ import Layout from '../components/Layout';
 import AllocationChart from '../components/charts/AllocationChart';
 import Skeleton from '../components/Skeleton';
 import { Link } from '@tanstack/react-router';
+import { useCurrentPortfolio } from '../hooks/useCurrentPortfolio';
 
 const DashboardPage: React.FC = () => {
   const { t } = useI18n();
-
-  // Mock portfolio ID - in a real app, this would come from routing or user context
-  const portfolioId = 'portfolio-123';
+  const { portfolioId } = useCurrentPortfolio();
 
   // State for currency selection
   const [displayCurrency, setDisplayCurrency] = useState('USD');
 
   const { data: dashboardData, isLoading, error } = useDashboardData({
-    portfolioId,
+    portfolioId: portfolioId || '',
     displayCurrency
   });
 

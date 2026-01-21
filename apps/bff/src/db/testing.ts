@@ -11,26 +11,58 @@ export async function createTestDb(): Promise<{ db: AppDb; client: Client }> {
 }
 
 async function createTables(client: Client): Promise<void> {
-  await client.execute(`CREATE TABLE users (
+  // better-auth tables
+  await client.execute(`CREATE TABLE user (
     id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
     email TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
-    language_preference TEXT NOT NULL,
-    theme_settings TEXT NOT NULL,
-    display_currency TEXT NOT NULL,
-    time_zone TEXT NOT NULL,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
+    email_verified INTEGER NOT NULL,
+    image TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    language_preference TEXT DEFAULT 'zh',
+    theme_settings TEXT DEFAULT 'auto',
+    display_currency TEXT DEFAULT 'CNY',
+    time_zone TEXT DEFAULT 'Asia/Shanghai'
   );`);
 
-  await client.execute(`CREATE TABLE sessions (
+  await client.execute(`CREATE TABLE session (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     token TEXT NOT NULL UNIQUE,
-    created_at TEXT NOT NULL,
-    expires_at TEXT NOT NULL
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    expires_at INTEGER NOT NULL,
+    ip_address TEXT,
+    user_agent TEXT
   );`);
 
+  await client.execute(`CREATE TABLE account (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    account_id TEXT NOT NULL,
+    provider_id TEXT NOT NULL,
+    access_token TEXT,
+    refresh_token TEXT,
+    id_token TEXT,
+    access_token_expires_at INTEGER,
+    refresh_token_expires_at INTEGER,
+    scope TEXT,
+    password TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  );`);
+
+  await client.execute(`CREATE TABLE verification (
+    id TEXT PRIMARY KEY,
+    identifier TEXT NOT NULL,
+    value TEXT NOT NULL,
+    expires_at INTEGER NOT NULL,
+    created_at INTEGER,
+    updated_at INTEGER
+  );`);
+
+  // Existing app tables
   await client.execute(`CREATE TABLE portfolios (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
@@ -39,8 +71,8 @@ async function createTables(client: Client): Promise<void> {
     total_value_cny4 INTEGER NOT NULL,
     daily_profit_cny4 INTEGER NOT NULL,
     current_total_profit_cny4 INTEGER NOT NULL,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
   );`);
 
   await client.execute(`CREATE TABLE categories (
@@ -50,8 +82,8 @@ async function createTables(client: Client): Promise<void> {
     name TEXT NOT NULL,
     target_allocation_bps INTEGER NOT NULL,
     current_allocation_bps INTEGER NOT NULL,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
   );`);
 
   await client.execute(`CREATE TABLE assets (
@@ -67,8 +99,8 @@ async function createTables(client: Client): Promise<void> {
     current_price4 INTEGER NOT NULL,
     currency TEXT NOT NULL,
     broker_source TEXT NOT NULL,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
   );`);
 
   await client.execute(`CREATE TABLE portfolio_histories (
@@ -86,7 +118,6 @@ async function createTables(client: Client): Promise<void> {
     target_currency TEXT NOT NULL,
     rate8 INTEGER NOT NULL,
     date TEXT NOT NULL,
-    created_at TEXT NOT NULL
+    created_at INTEGER NOT NULL
   );`);
 }
-

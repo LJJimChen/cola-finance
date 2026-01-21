@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createTestDb } from '../../db/testing';
-import { assets, exchangeRates, portfolios, users } from '../../db/schema';
+import { assets, exchangeRates, portfolios, user } from '../../db/schema';
 import { toMoney4, toRate8 } from '../../lib/money';
 import { PortfolioMetricsService } from '../../services/portfolio-metrics-service';
 import { eq } from 'drizzle-orm';
@@ -13,16 +13,17 @@ describe('PortfolioMetricsService', () => {
     const userId = 'user-1';
     const portfolioId = 'portfolio-1';
 
-    await db.insert(users).values({
+    await db.insert(user).values({
       id: userId,
       email: 'u@example.com',
-      passwordHash: 'x',
+      name: 'Test User',
+      emailVerified: true,
       languagePreference: 'zh',
       themeSettings: 'auto',
       displayCurrency: 'CNY',
       timeZone: 'UTC',
-      createdAt: now,
-      updatedAt: now,
+      createdAt: new Date(now),
+      updatedAt: new Date(now),
     });
 
     await db.insert(portfolios).values({

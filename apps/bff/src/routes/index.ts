@@ -4,6 +4,7 @@ import { userRoutes } from './users';
 import { portfolioRoutes, categoryRoutes } from './portfolios';
 import { historicalPerformanceRoutes } from './historical-performance';
 import { exchangeRateRoutes } from './exchange-rates';
+import { devRoutes } from './dev';
 
 export const apiRoutes = new Hono();
 
@@ -13,4 +14,5 @@ apiRoutes.route('/portfolios', portfolioRoutes);
 apiRoutes.route('/categories', categoryRoutes);
 apiRoutes.route('/historical-performance', historicalPerformanceRoutes);
 apiRoutes.route('/exchange-rates', exchangeRateRoutes);
+apiRoutes.route('/dev', devRoutes);
 

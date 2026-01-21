@@ -4,19 +4,20 @@ import { useI18n } from '../lib/i18n';
 import Layout from '../components/Layout';
 import Skeleton from '../components/Skeleton';
 import { useDashboardData } from '../hooks/useDashboardData';
+import { useCurrentPortfolio } from '../hooks/useCurrentPortfolio';
 
 const RebalancePage: React.FC = () => {
   const { t } = useI18n();
-  // Mock portfolio ID
-  const portfolioId = 'portfolio-123';
+  const { portfolioId } = useCurrentPortfolio();
+ 
   const displayCurrency = 'CNY'; // Default currency for now
 
   const { data: rebalanceData, isLoading: isRebalanceLoading, error: rebalanceError } = useRebalanceData({
-    portfolioId,
+    portfolioId: portfolioId || '',
   });
 
   const { data: dashboardData, isLoading: isDashboardLoading } = useDashboardData({
-    portfolioId,
+    portfolioId: portfolioId || '',
     displayCurrency
   });
 

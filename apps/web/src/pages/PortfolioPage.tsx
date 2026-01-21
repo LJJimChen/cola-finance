@@ -3,17 +3,17 @@ import { useAllocationData } from '../hooks/useAllocationData';
 import { useI18n } from '../lib/i18n';
 import Layout from '../components/Layout';
 import Skeleton from '../components/Skeleton';
+import { useCurrentPortfolio } from '../hooks/useCurrentPortfolio';
 
 const PortfolioPage: React.FC = () => {
   const { t } = useI18n();
-  
-  // Mock portfolio ID - in a real app, this would come from routing
-  const portfolioId = 'portfolio-123';
+  const { portfolioId } = useCurrentPortfolio();
+ 
   const [displayCurrency] = useState('USD');
   const [isEditingTargets, setIsEditingTargets] = useState(false);
 
   const { data: allocationData, isLoading, error } = useAllocationData({
-    portfolioId,
+    portfolioId: portfolioId || '',
     displayCurrency
   });
 

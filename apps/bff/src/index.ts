@@ -38,6 +38,7 @@ app.route('/api', apiRoutes);
 app.get('/', (c) => c.json({ status: 'ok' }));
 
 app.onError((err, c) => {
+  console.error('Unhandled Error:', err);
   const e = toAppError(err);
   return c.json(
     {

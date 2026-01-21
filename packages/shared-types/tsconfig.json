@@ -6,10 +6,9 @@
     "moduleResolution": "Bundler",
     "strict": true,
     "declaration": true,
-    "emitDeclarationOnly": false,
-    "outDir": "dist",
-    "rootDir": ".",
-    "skipLibCheck": true
+    "noEmit": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
   },
   "include": ["./index.ts", "./api-client.ts", "./import-meta.d.ts"]
 }
