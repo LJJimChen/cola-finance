@@ -99,7 +99,11 @@ class ApiClient {
   }
 
   async logout(): Promise<void> {
-    await this.client.post('auth/logout');
+    try {
+      await this.client.post('auth/sign-out');
+    } catch (e) {
+      // Ignore errors on logout
+    }
     this.setAuthToken(null);
   }
 

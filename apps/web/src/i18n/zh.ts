@@ -76,6 +76,7 @@ export const zh = {
   },
   settings: {
     title: '设置',
+    account: '账户',
     language: '语言',
     theme: '主题',
     currency: '显示货币',

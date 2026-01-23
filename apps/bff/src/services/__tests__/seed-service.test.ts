@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createTestDb } from '../../db/testing';
 import { seedNewUser } from '../seed-service';
-import { portfolios, categories, assets, exchangeRates } from '../../db/schema';
+import { portfolios, categories, assets, exchangeRates, portfolioHistories } from '../../db/schema';
 import { eq } from 'drizzle-orm';
 
 describe('Seed Service', () => {
@@ -14,21 +14,20 @@ describe('Seed Service', () => {
 
     // Check Portfolios
     const allPortfolios = await db.select().from(portfolios).where(eq(portfolios.userId, userId));
-    expect(allPortfolios).toHaveLength(2);
+    expect(allPortfolios).toHaveLength(3); // 2 default + 1 ETF
     expect(allPortfolios.map(p => p.name)).toContain('Main Portfolio');
     expect(allPortfolios.map(p => p.name)).toContain('Growth Bets');
+    expect(allPortfolios.map(p => p.name)).toContain('ETF Portfolio');
 
     // Check Categories
     const allCategories = await db.select().from(categories);
-    // Main Portfolio has 3 cats, Growth has 2. Total 5.
-    // Note: Since category names are reused (e.g. US Equities could be in multiple portfolios potentially, 
-    // but here they are distinct sets in the seed data), we just check count.
-    expect(allCategories.length).toBe(5);
+    // Main Portfolio has 3 cats, Growth has 2. ETF has 1. Total 6.
+    expect(allCategories.length).toBe(6);
 
     // Check Assets
     const allAssets = await db.select().from(assets);
-    // Main has 5, Growth has 3. Total 8.
-    expect(allAssets).toHaveLength(8);
+    // Main has 5, Growth has 3. ETF has 7. Total 15.
+    expect(allAssets).toHaveLength(15);
 
     // Check Exchange Rates
     const rates = await db.select().from(exchangeRates);
@@ -39,5 +38,20 @@ describe('Seed Service', () => {
     expect(aapl).toBeDefined();
     expect(aapl?.quantity).toBe(15);
     expect(aapl?.brokerAccount).toBe('U1234567');
+
+    // Verify ETF Portfolio History
+    const etfPortfolio = allPortfolios.find(p => p.name === 'ETF Portfolio');
+    expect(etfPortfolio).toBeDefined();
+    
+    if (etfPortfolio) {
+      const history = await db.select().from(portfolioHistories).where(eq(portfolioHistories.portfolioId, etfPortfolio.id));
+      expect(history.length).toBeGreaterThan(0);
+      // Check that history is sorted by time if we were to query it that way, 
+      // but here just check we have data points.
+      // The CSVs have data from at least 2025-04-16 (from Read output)
+      // Wait, 2025? Today is 2026-01-23. The data seems recent or future relative to file creation?
+      // Ah, the file content I read showed "2025-04-16".
+      // Let's just verify count.
+    }
   });
 });

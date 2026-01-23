@@ -1,9 +1,12 @@
 import React from 'react';
 import { useI18n } from '../lib/i18n';
 import Layout from '../components/Layout';
+import { useNavigate } from '@tanstack/react-router';
+import { getApiClient } from '@repo/shared-types';
 
 const SettingsPage: React.FC = () => {
   const { t, language, changeLanguage, supportedLanguages } = useI18n();
+  const navigate = useNavigate();
   
   // Mock theme state for now (would use a theme provider in real app)
   const [theme, setTheme] = React.useState<'light' | 'dark' | 'auto'>('dark');
@@ -25,6 +28,14 @@ const SettingsPage: React.FC = () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await getApiClient().logout();
+    } finally {
+      navigate({ to: '/login' });
+    }
+  };
+
   return (
     <Layout>
       <div className="flex flex-col h-full">
@@ -38,6 +49,18 @@ const SettingsPage: React.FC = () => {
         </header>
 
         <div className="space-y-6">
+          {/* Account Settings */}
+          <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-white/5 shadow-sm p-4">
+            <h3 className="text-sm font-semibold mb-3 text-slate-900 dark:text-white">{t('settings.account')}</h3>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-lg text-sm font-medium hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>logout</span>
+              {t('common.logout')}
+            </button>
+          </div>
+
           {/* Language Settings */}
           <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-white/5 shadow-sm p-4">
             <h3 className="text-sm font-semibold mb-3 text-slate-900 dark:text-white">{t('settings.language')}</h3>

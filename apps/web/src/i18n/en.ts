@@ -74,6 +74,7 @@ export const en = {
   },
   settings: {
     title: 'Settings',
+    account: 'Account',
     language: 'Language',
     theme: 'Theme',
     currency: 'Display Currency',

@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, desc, eq, lte } from 'drizzle-orm';
 import type { AppDb } from '../db';
 import { exchangeRates } from '../db/schema';
 import { AppError } from '../lib/errors';
@@ -16,11 +16,33 @@ export class ExchangeRateService {
       return 1;
     }
 
-    const result = await this.#db
+    let result = await this.#db
       .select()
       .from(exchangeRates)
-      .where(and(eq(exchangeRates.sourceCurrency, sourceCurrency), eq(exchangeRates.targetCurrency, 'CNY'), eq(exchangeRates.date, date)))
+      .where(
+        and(
+          eq(exchangeRates.sourceCurrency, sourceCurrency),
+          eq(exchangeRates.targetCurrency, 'CNY'),
+          eq(exchangeRates.date, date),
+        ),
+      )
       .limit(1);
+
+    if (result.length === 0) {
+      // Fallback to latest available rate
+      result = await this.#db
+        .select()
+        .from(exchangeRates)
+        .where(
+          and(
+            eq(exchangeRates.sourceCurrency, sourceCurrency),
+            eq(exchangeRates.targetCurrency, 'CNY'),
+            lte(exchangeRates.date, date),
+          ),
+        )
+        .orderBy(desc(exchangeRates.date))
+        .limit(1);
+    }
 
     if (result.length === 0) {
       throw new AppError({

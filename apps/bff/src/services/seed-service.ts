@@ -1,8 +1,9 @@
 import type { AppDb } from '../db';
-import { assets, categories, exchangeRates, portfolios } from '../db/schema';
+import { assets, categories, exchangeRates, portfolioHistories, portfolios } from '../db/schema';
 import { toMoney4, toRate8 } from '../lib/money';
 import { AppError } from '../lib/errors';
 import { PortfolioMetricsService } from './portfolio-metrics-service';
+import { etfData } from './etf-data';
 
 type SeedArgs = {
   userId: string;
@@ -171,4 +172,171 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
     // Compute Metrics for this portfolio
     await metrics.recomputeAndPersist(args.userId, portfolioId, { asOfUtc: args.now });
   }
+
+  // 4. Seed ETF Portfolio from CSV History
+  const etfPortfolioId = crypto.randomUUID();
+  await db.insert(portfolios).values({
+    id: etfPortfolioId,
+    userId: args.userId,
+    name: 'ETF Portfolio',
+    description: 'Imported from ETF history CSVs',
+    totalValueCny4: 0,
+    dailyProfitCny4: 0,
+    currentTotalProfitCny4: 0,
+    createdAt: args.now,
+    updatedAt: args.now,
+  });
+
+  const etfCategoryId = crypto.randomUUID();
+  await db.insert(categories).values({
+    id: etfCategoryId,
+    portfolioId: etfPortfolioId,
+    name: 'Sector ETFs',
+    targetAllocationBps: 100_00,
+    currentAllocationBps: 0,
+    createdAt: args.now,
+    updatedAt: args.now,
+  });
+
+  const INITIAL_CAPITAL = 100_000;
+  const PER_TRADE_CAPITAL = 10_000;
+  let remainingCash = INITIAL_CAPITAL;
+
+  // Determine which assets to buy and how much
+  const assetAllocations = new Map<string, { quantity: number, costBasis: number }>();
+  
+  for (const [symbol, data] of Object.entries(etfData)) {
+    if (data.history.length === 0) continue;
+    if (remainingCash < PER_TRADE_CAPITAL) break; // Not enough cash to buy more
+
+    const firstPoint = data.history[0];
+    const price = firstPoint.price;
+    const quantity = Math.floor(PER_TRADE_CAPITAL / price);
+    
+    if (quantity > 0) {
+      assetAllocations.set(symbol, {
+        quantity,
+        costBasis: price
+      });
+      remainingCash -= quantity * price;
+    }
+  }
+
+  const allDates = new Set<string>();
+  const priceMap = new Map<string, Map<string, number>>(); // date -> symbol -> price
+
+  // Insert Assets
+  for (const [symbol, data] of Object.entries(etfData)) {
+    if (!assetAllocations.has(symbol)) continue; // Skip if not allocated
+    
+    const allocation = assetAllocations.get(symbol)!;
+    const lastPoint = data.history[data.history.length - 1];
+    const prevPoint = data.history.length > 1 ? data.history[data.history.length - 2] : lastPoint;
+
+    // Daily profit for the asset today (change in value)
+    const dailyProfit = (lastPoint.price - prevPoint.price) * allocation.quantity;
+
+    await db.insert(assets).values({
+      id: crypto.randomUUID(),
+      portfolioId: etfPortfolioId,
+      categoryId: etfCategoryId,
+      symbol: symbol,
+      name: data.name,
+      quantity: allocation.quantity,
+      costBasis4: toMoney4(allocation.costBasis),
+      dailyProfit4: toMoney4(dailyProfit),
+      currentPrice4: toMoney4(lastPoint.price),
+      currency: 'CNY',
+      brokerSource: 'Manual',
+      brokerAccount: 'CSV-Import',
+      createdAt: args.now,
+      updatedAt: args.now,
+    });
+
+    // Populate price map for history
+    for (const point of data.history) {
+      allDates.add(point.date);
+      if (!priceMap.has(point.date)) {
+        priceMap.set(point.date, new Map());
+      }
+      priceMap.get(point.date)!.set(symbol, point.price);
+    }
+  }
+
+  // Generate Portfolio History
+  const sortedDates = Array.from(allDates).sort();
+  
+  // To fill forward, keep track of last known prices
+  const lastKnownPrices = new Map<string, number>();
+
+  // Helper to get previous date's value for daily profit calc
+  let prevTotalValue = 0;
+
+  for (const date of sortedDates) {
+    // Update last known prices with today's data
+    const todaysPrices = priceMap.get(date);
+    if (todaysPrices) {
+      for (const [symbol, price] of todaysPrices) {
+        lastKnownPrices.set(symbol, price);
+      }
+    }
+
+    // Calculate total value
+    // Total Value = Cash + Sum(Asset Value)
+    // Cash starts at INITIAL_CAPITAL and decreases as assets are "bought"
+    // Buying happens on the first day data is available for an asset
+    
+    let currentCash = INITIAL_CAPITAL;
+    let assetsValue = 0;
+    let investedCost = 0;
+
+    for (const [symbol, alloc] of assetAllocations) {
+      // Check if this asset has "started" trading yet (has a price known)
+      // AND if the current date is >= asset start date.
+      // Since we iterate sorted dates, if we have a price for it in lastKnownPrices, 
+      // it means it has started trading (or we have filled forward).
+      // However, strict logic: buy on the FIRST day data appears.
+      
+      // Better check: is date >= asset's first history date?
+      const assetData = etfData[symbol];
+      if (assetData && assetData.history.length > 0) {
+        const startDate = assetData.history[0].date;
+        if (date >= startDate && lastKnownPrices.has(symbol)) {
+           // Asset is bought
+           const currentPrice = lastKnownPrices.get(symbol)!;
+           const cost = alloc.quantity * alloc.costBasis;
+           
+           currentCash -= cost;
+           assetsValue += alloc.quantity * currentPrice;
+           investedCost += cost;
+        }
+      }
+    }
+
+    const totalValue = currentCash + assetsValue;
+    
+    // Daily profit = Change in Total Value
+    // Note: Since cash decreases and asset value increases by same amount on buy day (ignoring price change on day 1),
+    // Total Value should be continuous.
+    let dailyProfit = totalValue - prevTotalValue;
+    if (prevTotalValue === 0) dailyProfit = 0;
+
+    // Current Total Profit = Current Value - Initial Capital
+    // (Or Current Value - (Initial Capital + Deposits)), here Deposits=0
+    const currentTotalProfit = totalValue - INITIAL_CAPITAL;
+
+    await db.insert(portfolioHistories).values({
+      id: crypto.randomUUID(),
+      portfolioId: etfPortfolioId,
+      timestampUtc: new Date(date).toISOString(),
+      totalValueCny4: toMoney4(totalValue),
+      dailyProfitCny4: toMoney4(dailyProfit),
+      currentTotalProfitCny4: toMoney4(currentTotalProfit),
+    });
+
+    prevTotalValue = totalValue;
+  }
+
+  // Final recompute for the ETF portfolio to ensure consistency
+  await metrics.recomputeAndPersist(args.userId, etfPortfolioId, { asOfUtc: args.now });
 }

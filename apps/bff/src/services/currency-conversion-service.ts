@@ -1,7 +1,8 @@
 import { Context } from 'hono';
 import { db } from '../db';
 import { exchangeRates } from '../db/schema';
-import { eq, and } from 'drizzle-orm';
+import { and, desc, eq, lte } from 'drizzle-orm';
+import { fromRate8 } from '../lib/money';
 
 export interface CurrencyConversionService {
   convert(fromCurrency: string, toCurrency: string, amount: number, date?: Date): Promise<number>;
@@ -61,8 +62,8 @@ export class CurrencyConversionServiceImpl implements CurrencyConversionService 
     const dateString = queryDate.toISOString().split('T')[0];
 
     // Query the database for the exchange rate
-    const result = await db
-      .select({ exchangeRate: exchangeRates.exchangeRate })
+    let result = await db
+      .select({ rate8: exchangeRates.rate8 })
       .from(exchangeRates)
       .where(
         and(
@@ -74,10 +75,26 @@ export class CurrencyConversionServiceImpl implements CurrencyConversionService 
       .limit(1);
 
     if (result.length === 0) {
+      // Fallback: get latest rate before or on the date
+      result = await db
+        .select({ rate8: exchangeRates.rate8 })
+        .from(exchangeRates)
+        .where(
+          and(
+            eq(exchangeRates.sourceCurrency, currency),
+            eq(exchangeRates.targetCurrency, 'CNY'),
+            lte(exchangeRates.date, dateString)
+          )
+        )
+        .orderBy(desc(exchangeRates.date))
+        .limit(1);
+    }
+
+    if (result.length === 0) {
       throw new Error(`Exchange rate not found for ${currency} to CNY on ${dateString}`);
     }
 
-    return result[0].exchangeRate;
+    return fromRate8(result[0].rate8);
   }
 }
 
