@@ -1,34 +1,30 @@
-import { db } from '../db';
-import { portfolios, assets, categories, portfolioHistories } from '../db/schema';
-import { eq, and, desc, sum, avg } from 'drizzle-orm';
+import { portfolios, assets, categories } from '../db/schema';
+import { eq, and, type InferSelectModel } from 'drizzle-orm';
 import { ExchangeRateService } from '../services/exchange-rate-service';
+import { fromMoney4 } from '../lib/money';
+import type { AppDb } from '../db';
 import type { 
-  Portfolio, 
-  Asset, 
-  Category, 
-  PortfolioHistory, 
   DashboardData,
-  AllocationData
+  AllocationData,
+  Asset
 } from '@repo/shared-types';
 
 export interface PortfolioService {
-  getDashboardData(userId: string, portfolioId: string, displayCurrency?: string): Promise<DashboardData>;
-  getAllocationData(userId: string, portfolioId: string, displayCurrency?: string): Promise<AllocationData>;
-  calculatePortfolioMetrics(portfolioId: string): Promise<{
+  getDashboardData(db: AppDb, userId: string, portfolioId: string, displayCurrency?: string): Promise<DashboardData>;
+  getAllocationData(db: AppDb, userId: string, portfolioId: string, displayCurrency?: string): Promise<AllocationData>;
+  calculatePortfolioMetrics(db: AppDb, portfolioId: string): Promise<{
     totalValueCny: number;
     dailyProfitCny: number;
     currentTotalProfitCny: number;
+    totalCostCny: number;
   }>;
 }
 
 export class PortfolioServiceImpl implements PortfolioService {
-  private exchangeRateService: ExchangeRateService;
-
-  constructor() {
-    this.exchangeRateService = new ExchangeRateService(db);
-  }
-
-  async getDashboardData(userId: string, portfolioId: string, displayCurrency: string = 'CNY'): Promise<DashboardData> {
+  
+  async getDashboardData(db: AppDb, userId: string, portfolioId: string, displayCurrency: string = 'CNY'): Promise<DashboardData> {
+    const exchangeRateService = new ExchangeRateService(db);
+    
     // Verify user owns this portfolio
     const portfolioResult = await db
       .select()
@@ -40,23 +36,26 @@ export class PortfolioServiceImpl implements PortfolioService {
       throw new Error('Portfolio not found or access denied');
     }
 
-    const portfolio = portfolioResult[0];
-
     // Get all assets in the portfolio
     const assetsResult = await db
       .select()
       .from(assets)
       .where(eq(assets.portfolioId, portfolioId));
 
-    // Get all categories in the portfolio
+    // Get all categories for this portfolio (to avoid N+1 in allocation calc)
     const categoriesResult = await db
       .select()
       .from(categories)
-      .where(eq(categories.userId, userId));
+      .where(eq(categories.portfolioId, portfolioId));
+      
+    const categoriesMap = new Map<string, string>();
+    for (const cat of categoriesResult) {
+      categoriesMap.set(cat.id, cat.name);
+    }
 
     // Calculate metrics
-    const { totalValueCny, dailyProfitCny, currentTotalProfitCny } = 
-      await this.calculatePortfolioMetrics(portfolioId);
+    const { totalValueCny, dailyProfitCny, currentTotalProfitCny, totalCostCny } = 
+      await this.calculatePortfolioMetrics(db, portfolioId);
 
     // Convert values to display currency if needed
     let totalValue = totalValueCny;
@@ -64,25 +63,29 @@ export class PortfolioServiceImpl implements PortfolioService {
     const today = new Date().toISOString().slice(0, 10);
 
     if (displayCurrency !== 'CNY') {
-      totalValue = await this.exchangeRateService.convertMoney(totalValueCny, 'CNY', displayCurrency, today);
-      dailyProfit = await this.exchangeRateService.convertMoney(dailyProfitCny, 'CNY', displayCurrency, today);
+      totalValue = await exchangeRateService.convertMoney(totalValueCny, 'CNY', displayCurrency, today);
+      dailyProfit = await exchangeRateService.convertMoney(dailyProfitCny, 'CNY', displayCurrency, today);
     }
 
-    // Calculate annual return (simplified calculation)
-    const annualReturn = portfolio.totalValueCny > 0 
-      ? (currentTotalProfitCny / portfolio.totalValueCny) * 100 
+    // Calculate total return rate (ROI)
+    // Note: The field is named 'annualReturn' in the API contract, but we are returning 
+    // the Total Return % (Profit / Cost) as it's a more stable and useful metric for the dashboard.
+    const annualReturn = totalCostCny > 0 
+      ? (currentTotalProfitCny / totalCostCny) * 100 
       : 0;
 
     // Calculate allocation by category
     const allocationByCategory = await this.calculateAllocationByCategory(
+      exchangeRateService,
       assetsResult, 
+      categoriesMap,
       totalValueCny, 
       displayCurrency
     );
 
     // Get top performing assets
     const topPerformingAssets = [...assetsResult]
-      .sort((a, b) => b.dailyProfit - a.dailyProfit)
+      .sort((a, b) => fromMoney4(b.dailyProfit4) - fromMoney4(a.dailyProfit4))
       .slice(0, 5); // Top 5 performing assets
 
     return {
@@ -90,13 +93,15 @@ export class PortfolioServiceImpl implements PortfolioService {
       dailyProfit,
       annualReturn,
       currency: displayCurrency,
-      lastUpdated: new Date(),
+      lastUpdated: new Date().toISOString(),
       allocationByCategory,
       topPerformingAssets: topPerformingAssets as unknown as Asset[],
     };
   }
 
-  async getAllocationData(userId: string, portfolioId: string, displayCurrency: string = 'CNY'): Promise<AllocationData> {
+  async getAllocationData(db: AppDb, userId: string, portfolioId: string, displayCurrency: string = 'CNY'): Promise<AllocationData> {
+    const exchangeRateService = new ExchangeRateService(db);
+
     // Verify user owns this portfolio
     const portfolioResult = await db
       .select()
@@ -118,16 +123,16 @@ export class PortfolioServiceImpl implements PortfolioService {
     const categoriesResult = await db
       .select()
       .from(categories)
-      .where(eq(categories.userId, userId));
+      .where(eq(categories.portfolioId, portfolioId));
 
     // Calculate total value in CNY
-    const { totalValueCny } = await this.calculatePortfolioMetrics(portfolioId);
+    const { totalValueCny } = await this.calculatePortfolioMetrics(db, portfolioId);
 
     // Convert to display currency if needed
     let displayTotalValue = totalValueCny;
     const today = new Date().toISOString().slice(0, 10);
     if (displayCurrency !== 'CNY') {
-      displayTotalValue = await this.exchangeRateService.convertMoney(totalValueCny, 'CNY', displayCurrency, today);
+      displayTotalValue = await exchangeRateService.convertMoney(totalValueCny, 'CNY', displayCurrency, today);
     }
 
     // Group assets by category
@@ -145,20 +150,26 @@ export class PortfolioServiceImpl implements PortfolioService {
     for (const category of categoriesResult) {
       const categoryAssets = assetsByCategory.get(category.id) || [];
       
-      // Calculate total value of assets in this category (in CNY)
+      // Calculate total value and cost of assets in this category (in CNY)
       let categoryValueCny = 0;
-      let categoryProfitAmount = 0;
+      let categoryCostCny = 0;
+      let categoryTotalProfitCny = 0;
+
       for (const asset of categoryAssets) {
-        categoryValueCny += asset.currentPrice * asset.quantity;
-        categoryProfitAmount += asset.dailyProfit;
+        const currentPrice = fromMoney4(asset.currentPrice4);
+        const costBasis = fromMoney4(asset.costBasis4);
+        
+        categoryValueCny += currentPrice * asset.quantity;
+        categoryCostCny += costBasis * asset.quantity;
+        categoryTotalProfitCny += (currentPrice - costBasis) * asset.quantity;
       }
 
       // Convert to display currency if needed
       let displayCategoryValue = categoryValueCny;
-      let displayCategoryProfit = categoryProfitAmount;
+      let displayCategoryProfit = categoryTotalProfitCny;
       if (displayCurrency !== 'CNY') {
-        displayCategoryValue = await this.exchangeRateService.convertMoney(categoryValueCny, 'CNY', displayCurrency, today);
-        displayCategoryProfit = await this.exchangeRateService.convertMoney(categoryProfitAmount, 'CNY', displayCurrency, today);
+        displayCategoryValue = await exchangeRateService.convertMoney(categoryValueCny, 'CNY', displayCurrency, today);
+        displayCategoryProfit = await exchangeRateService.convertMoney(categoryTotalProfitCny, 'CNY', displayCurrency, today);
       }
 
       // Calculate allocation percentage
@@ -166,24 +177,31 @@ export class PortfolioServiceImpl implements PortfolioService {
         ? (categoryValueCny / totalValueCny) * 100 
         : 0;
 
-      // Calculate yield
-      const yieldValue = categoryValueCny > 0 
-        ? (categoryProfitAmount / categoryValueCny) * 100 
+      // Calculate yield (Total Return %)
+      const yieldValue = categoryCostCny > 0 
+        ? (categoryTotalProfitCny / categoryCostCny) * 100 
         : 0;
 
       // Process individual assets in the category
       const processedAssets = [];
       for (const asset of categoryAssets) {
-        let displayAssetValue = asset.currentPrice * asset.quantity;
-        let displayAssetProfit = asset.dailyProfit;
+        const currentPrice = fromMoney4(asset.currentPrice4);
+        const costBasis = fromMoney4(asset.costBasis4);
+        
+        const assetTotalProfitCny = (currentPrice - costBasis) * asset.quantity;
+        const assetValueCny = currentPrice * asset.quantity;
+        
+        let displayAssetValue = assetValueCny;
+        let displayAssetProfit = assetTotalProfitCny;
         
         if (displayCurrency !== 'CNY') {
-          displayAssetValue = await this.exchangeRateService.convertMoney(displayAssetValue, 'CNY', displayCurrency, today);
-          displayAssetProfit = await this.exchangeRateService.convertMoney(asset.dailyProfit, 'CNY', displayCurrency, today);
+          displayAssetValue = await exchangeRateService.convertMoney(assetValueCny, 'CNY', displayCurrency, today);
+          displayAssetProfit = await exchangeRateService.convertMoney(assetTotalProfitCny, 'CNY', displayCurrency, today);
         }
 
-        const assetYield = (asset.currentPrice * asset.quantity) > 0 
-          ? (asset.dailyProfit / (asset.currentPrice * asset.quantity)) * 100 
+        const assetCostCny = costBasis * asset.quantity;
+        const assetYield = assetCostCny > 0 
+          ? (assetTotalProfitCny / assetCostCny) * 100 
           : 0;
 
         processedAssets.push({
@@ -200,7 +218,7 @@ export class PortfolioServiceImpl implements PortfolioService {
       categoriesWithAllocation.push({
         id: category.id,
         name: category.name,
-        targetAllocation: category.targetAllocation,
+        targetAllocation: category.targetAllocationBps / 100,
         currentAllocation,
         value: displayCategoryValue,
         profitAmount: displayCategoryProfit,
@@ -213,43 +231,56 @@ export class PortfolioServiceImpl implements PortfolioService {
     const uncategorizedAssets = assetsByCategory.get('uncategorized') || [];
     if (uncategorizedAssets.length > 0) {
       let uncategorizedValueCny = 0;
-      let uncategorizedProfitAmount = 0;
+      let uncategorizedCostCny = 0;
+      let uncategorizedTotalProfitCny = 0;
+
       for (const asset of uncategorizedAssets) {
-        uncategorizedValueCny += asset.currentPrice * asset.quantity;
-        uncategorizedProfitAmount += asset.dailyProfit;
+        const currentPrice = fromMoney4(asset.currentPrice4);
+        const costBasis = fromMoney4(asset.costBasis4);
+        
+        uncategorizedValueCny += currentPrice * asset.quantity;
+        uncategorizedCostCny += costBasis * asset.quantity;
+        uncategorizedTotalProfitCny += (currentPrice - costBasis) * asset.quantity;
       }
 
       let displayUncategorizedValue = uncategorizedValueCny;
-      let displayUncategorizedProfit = uncategorizedProfitAmount;
+      let displayUncategorizedProfit = uncategorizedTotalProfitCny;
       if (displayCurrency !== 'CNY') {
-        displayUncategorizedValue = await this.exchangeRateService.convertMoney(uncategorizedValueCny, 'CNY', displayCurrency, today);
-        displayUncategorizedProfit = await this.exchangeRateService.convertMoney(uncategorizedProfitAmount, 'CNY', displayCurrency, today);
+        displayUncategorizedValue = await exchangeRateService.convertMoney(uncategorizedValueCny, 'CNY', displayCurrency, today);
+        displayUncategorizedProfit = await exchangeRateService.convertMoney(uncategorizedTotalProfitCny, 'CNY', displayCurrency, today);
       }
 
       const currentAllocation = totalValueCny > 0 
         ? (uncategorizedValueCny / totalValueCny) * 100 
         : 0;
 
-      const yieldValue = uncategorizedValueCny > 0 
-        ? (uncategorizedProfitAmount / uncategorizedValueCny) * 100 
+      const yieldValue = uncategorizedCostCny > 0 
+        ? (uncategorizedTotalProfitCny / uncategorizedCostCny) * 100 
         : 0;
 
       const processedAssets = [];
       for (const asset of uncategorizedAssets) {
-        let displayAssetValue = asset.currentPrice * asset.quantity;
-        let displayAssetProfit = asset.dailyProfit;
+        const currentPrice = fromMoney4(asset.currentPrice4);
+        const costBasis = fromMoney4(asset.costBasis4);
+        
+        const assetTotalProfitCny = (currentPrice - costBasis) * asset.quantity;
+        const assetValueCny = currentPrice * asset.quantity;
+        
+        let displayAssetValue = assetValueCny;
+        let displayAssetProfit = assetTotalProfitCny;
         
         if (displayCurrency !== 'CNY') {
-          displayAssetValue = await this.exchangeRateService.convertMoney(displayAssetValue, 'CNY', displayCurrency, today);
-          displayAssetProfit = await this.exchangeRateService.convertMoney(asset.dailyProfit, 'CNY', displayCurrency, today);
+          displayAssetValue = await exchangeRateService.convertMoney(assetValueCny, 'CNY', displayCurrency, today);
+          displayAssetProfit = await exchangeRateService.convertMoney(assetTotalProfitCny, 'CNY', displayCurrency, today);
         }
 
-        const assetYield = (asset.currentPrice * asset.quantity) > 0 
-          ? (asset.dailyProfit / (asset.currentPrice * asset.quantity)) * 100 
+        const assetCostCny = costBasis * asset.quantity;
+        const assetYield = assetCostCny > 0 
+          ? (assetTotalProfitCny / assetCostCny) * 100 
           : 0;
 
         processedAssets.push({
-          id: asset.id,
+          id: 'uncategorized',
           symbol: asset.symbol,
           name: asset.name,
           quantity: asset.quantity,
@@ -278,10 +309,11 @@ export class PortfolioServiceImpl implements PortfolioService {
     };
   }
 
-  async calculatePortfolioMetrics(portfolioId: string): Promise<{
+  async calculatePortfolioMetrics(db: AppDb, portfolioId: string): Promise<{
     totalValueCny: number;
     dailyProfitCny: number;
     currentTotalProfitCny: number;
+    totalCostCny: number;
   }> {
     // Get all assets in the portfolio
     const assetsResult = await db
@@ -292,25 +324,32 @@ export class PortfolioServiceImpl implements PortfolioService {
     // Calculate total value in CNY
     let totalValueCny = 0;
     let dailyProfitCny = 0;
+    let currentTotalProfitCny = 0;
+    let totalCostCny = 0;
 
     for (const asset of assetsResult) {
-      totalValueCny += asset.currentPrice * asset.quantity;
-      dailyProfitCny += asset.dailyProfit;
-    }
+      const currentPrice = fromMoney4(asset.currentPrice4);
+      const costBasis = fromMoney4(asset.costBasis4);
+      const dailyProfit = fromMoney4(asset.dailyProfit4);
 
-    // Calculate current total profit (simplified - in a real system, you'd need to track initial investment)
-    // For now, we'll use daily profit as a proxy for current profit
-    const currentTotalProfitCny = dailyProfitCny;
+      totalValueCny += currentPrice * asset.quantity;
+      dailyProfitCny += dailyProfit;
+      totalCostCny += costBasis * asset.quantity;
+      currentTotalProfitCny += (currentPrice - costBasis) * asset.quantity;
+    }
 
     return {
       totalValueCny,
       dailyProfitCny,
       currentTotalProfitCny,
+      totalCostCny,
     };
   }
 
   private async calculateAllocationByCategory(
-    assets: typeof assets[], 
+    exchangeRateService: ExchangeRateService,
+    assetList: InferSelectModel<typeof assets>[], 
+    categoriesMap: Map<string, string>,
     totalValueCny: number, 
     displayCurrency: string
   ) {
@@ -320,9 +359,10 @@ export class PortfolioServiceImpl implements PortfolioService {
       percentage: number 
     }>();
 
-    for (const asset of assets) {
+    for (const asset of assetList) {
       const categoryId = asset.categoryId || 'uncategorized';
-      const assetValueCny = asset.currentPrice * asset.quantity;
+      const currentPrice = fromMoney4(asset.currentPrice4);
+      const assetValueCny = currentPrice * asset.quantity;
 
       if (allocationByCategory.has(categoryId)) {
         const existing = allocationByCategory.get(categoryId)!;
@@ -332,26 +372,12 @@ export class PortfolioServiceImpl implements PortfolioService {
           percentage: 0, // Will recalculate percentages after all values are known
         });
       } else {
-        // Need to fetch category name
-        if (asset.categoryId) {
-          const categoryResult = await db
-            .select({ name: categories.name })
-            .from(categories)
-            .where(eq(categories.id, asset.categoryId))
-            .limit(1);
-
-          allocationByCategory.set(categoryId, {
-            categoryName: categoryResult[0]?.name || 'Uncategorized',
-            valueCny: assetValueCny,
-            percentage: 0,
-          });
-        } else {
-          allocationByCategory.set(categoryId, {
-            categoryName: 'Uncategorized',
-            valueCny: assetValueCny,
-            percentage: 0,
-          });
-        }
+        const categoryName = categoriesMap.get(categoryId) || 'Uncategorized';
+        allocationByCategory.set(categoryId, {
+          categoryName: categoryName,
+          valueCny: assetValueCny,
+          percentage: 0,
+        });
       }
     }
 
@@ -363,7 +389,7 @@ export class PortfolioServiceImpl implements PortfolioService {
       
       let displayValue = data.valueCny;
       if (displayCurrency !== 'CNY') {
-        displayValue = await this.exchangeRateService.convertMoney(data.valueCny, 'CNY', displayCurrency, today);
+        displayValue = await exchangeRateService.convertMoney(data.valueCny, 'CNY', displayCurrency, today);
       }
 
       result.push({
