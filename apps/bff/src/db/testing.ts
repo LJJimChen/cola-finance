@@ -5,6 +5,7 @@ import * as schema from './schema';
 
 export async function createTestDb(): Promise<{ db: AppDb; client: Client }> {
   const client = createClient({ url: 'file::memory:' });
+  await client.execute('PRAGMA foreign_keys = ON;');
   await createTables(client);
   const db = drizzle(client, { schema });
   return { db, client };
@@ -34,7 +35,8 @@ async function createTables(client: Client): Promise<void> {
     updated_at INTEGER NOT NULL,
     expires_at INTEGER NOT NULL,
     ip_address TEXT,
-    user_agent TEXT
+    user_agent TEXT,
+    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
   );`);
 
   await client.execute(`CREATE TABLE account (
@@ -50,7 +52,8 @@ async function createTables(client: Client): Promise<void> {
     scope TEXT,
     password TEXT,
     created_at INTEGER NOT NULL,
-    updated_at INTEGER NOT NULL
+    updated_at INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
   );`);
 
   await client.execute(`CREATE TABLE verification (
@@ -72,7 +75,8 @@ async function createTables(client: Client): Promise<void> {
     daily_profit_cny4 INTEGER NOT NULL,
     current_total_profit_cny4 INTEGER NOT NULL,
     created_at INTEGER NOT NULL,
-    updated_at INTEGER NOT NULL
+    updated_at INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
   );`);
 
   await client.execute(`CREATE TABLE categories (
@@ -82,7 +86,8 @@ async function createTables(client: Client): Promise<void> {
     target_allocation_bps INTEGER NOT NULL,
     current_allocation_bps INTEGER NOT NULL,
     created_at INTEGER NOT NULL,
-    updated_at INTEGER NOT NULL
+    updated_at INTEGER NOT NULL,
+    FOREIGN KEY (portfolio_id) REFERENCES portfolios(id) ON DELETE CASCADE
   );`);
 
   await client.execute(`CREATE TABLE assets (
@@ -99,7 +104,8 @@ async function createTables(client: Client): Promise<void> {
     broker_source TEXT NOT NULL,
     broker_account TEXT NOT NULL,
     created_at INTEGER NOT NULL,
-    updated_at INTEGER NOT NULL
+    updated_at INTEGER NOT NULL,
+    FOREIGN KEY (portfolio_id) REFERENCES portfolios(id) ON DELETE CASCADE
   );`);
 
   await client.execute(`CREATE TABLE portfolio_histories (
@@ -108,7 +114,8 @@ async function createTables(client: Client): Promise<void> {
     timestamp_utc TEXT NOT NULL,
     total_value_cny4 INTEGER NOT NULL,
     daily_profit_cny4 INTEGER NOT NULL,
-    current_total_profit_cny4 INTEGER NOT NULL
+    current_total_profit_cny4 INTEGER NOT NULL,
+    FOREIGN KEY (portfolio_id) REFERENCES portfolios(id) ON DELETE CASCADE
   );`);
 
   await client.execute(`CREATE TABLE exchange_rates (

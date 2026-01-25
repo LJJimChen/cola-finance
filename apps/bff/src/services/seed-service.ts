@@ -44,112 +44,95 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
     });
   }
 
-  // 2. Define Portfolios Data
-  const portfoliosData = [
-    {
-      name: 'Main Portfolio',
-      description: 'Core long-term investments',
-      categories: [
-        { name: 'US Equities', target: 40_00 },
-        { name: 'China Equities', target: 30_00 },
-        { name: 'Bonds', target: 30_00 },
-      ],
-      assets: [
-        { 
-          symbol: 'AAPL', name: 'Apple Inc.', quantity: 15, cost: 175, price: 185, 
-          currency: 'USD', cat: 'US Equities', brokerSource: 'IBKR', brokerAccount: 'U1234567' 
-        },
-        { 
-          symbol: 'MSFT', name: 'Microsoft', quantity: 10, cost: 320, price: 410, 
-          currency: 'USD', cat: 'US Equities', brokerSource: 'IBKR', brokerAccount: 'U1234567' 
-        },
-        { 
-          symbol: 'BABA', name: 'Alibaba', quantity: 50, cost: 85, price: 72, 
-          currency: 'USD', cat: 'China Equities', brokerSource: 'Futu', brokerAccount: 'F888888' 
-        },
-        { 
-          symbol: '0700.HK', name: 'Tencent', quantity: 200, cost: 320, price: 290, 
-          currency: 'HKD', cat: 'China Equities', brokerSource: 'Futu', brokerAccount: 'F888888' 
-        },
-        { 
-          symbol: 'TLT', name: '20+ Year Treasury Bond ETF', quantity: 40, cost: 98, price: 92, 
-          currency: 'USD', cat: 'Bonds', brokerSource: 'IBKR', brokerAccount: 'U1234567' 
-        },
-      ]
-    },
-    {
-      name: 'Growth Bets',
-      description: 'High risk high reward speculative assets',
-      categories: [
-        { name: 'Tech Growth', target: 60_00 },
-        { name: 'Crypto Proxies', target: 40_00 },
-      ],
-      assets: [
-        { 
-          symbol: 'NVDA', name: 'NVIDIA', quantity: 5, cost: 450, price: 720, 
-          currency: 'USD', cat: 'Tech Growth', brokerSource: 'Robinhood', brokerAccount: 'R555555' 
-        },
-        { 
-          symbol: 'PLTR', name: 'Palantir', quantity: 100, cost: 15, price: 22, 
-          currency: 'USD', cat: 'Tech Growth', brokerSource: 'Robinhood', brokerAccount: 'R555555' 
-        },
-        { 
-          symbol: 'COIN', name: 'Coinbase', quantity: 30, cost: 120, price: 180, 
-          currency: 'USD', cat: 'Crypto Proxies', brokerSource: 'Robinhood', brokerAccount: 'R555555' 
-        },
-      ]
-    }
+  // 2. Define Main Portfolio
+  const portfolioId = crypto.randomUUID();
+  const now = args.now;
+
+  await db.insert(portfolios).values({
+    id: portfolioId,
+    userId: args.userId,
+    name: 'Main Portfolio',
+    description: 'Combined investments including ETFs',
+    totalValueCny4: 0,
+    dailyProfitCny4: 0,
+    currentTotalProfitCny4: 0,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  // 3. Define Categories
+  const categoriesList = [
+    { name: 'US Equities', target: 30_00 },
+    { name: 'China Equities', target: 30_00 },
+    { name: 'Bonds', target: 20_00 },
+    { name: 'Japan Equities', target: 10_00 },
+    { name: 'Global Tech', target: 10_00 },
+    { name: 'Cash', target: 0 },
   ];
 
-  // 3. Loop and Insert Portfolios, Categories, and Assets
-  const metrics = new PortfolioMetricsService(db);
-
-  for (const pData of portfoliosData) {
-    const portfolioId = crypto.randomUUID();
-
-    // Create Portfolio
-    await db.insert(portfolios).values({
-      id: portfolioId,
-      userId: args.userId,
-      name: pData.name,
-      description: pData.description,
-      totalValueCny4: 0,
-      dailyProfitCny4: 0,
-      currentTotalProfitCny4: 0,
-      createdAt: args.now,
-      updatedAt: args.now,
+  const categoryIdsByName = new Map<string, string>();
+  for (const c of categoriesList) {
+    const catId = crypto.randomUUID();
+    categoryIdsByName.set(c.name, catId);
+    await db.insert(categories).values({
+      id: catId,
+      portfolioId: portfolioId,
+      name: c.name,
+      targetAllocationBps: c.target,
+      currentAllocationBps: 0,
+      createdAt: now,
+      updatedAt: now,
     });
+  }
 
-    // Create Categories and map name -> id
-    const categoryIdsByName = new Map<string, string>();
-    for (const c of pData.categories) {
-      const catId = crypto.randomUUID();
-      categoryIdsByName.set(c.name, catId);
-      await db.insert(categories).values({
-        id: catId,
-        portfolioId: portfolioId, // Correctly linked to portfolio
-        name: c.name,
-        targetAllocationBps: c.target,
-        currentAllocationBps: 0,
-        createdAt: args.now,
-        updatedAt: args.now,
-      });
+  // 4. Shared Capital Management
+  const INITIAL_CAPITAL = 100_000;
+  const MAX_ALLOCATION_PER_ASSET = INITIAL_CAPITAL / 20;
+  let remainingCash = INITIAL_CAPITAL;
+
+  // Helper for FX rates
+  const fxRates = new Map<string, number>();
+  for (const fx of fxSeed) {
+    if (fx.target === 'CNY') {
+      fxRates.set(fx.source, fx.rate);
     }
+  }
 
-    // Create Assets
-    for (const asset of pData.assets) {
-      const categoryId = categoryIdsByName.get(asset.cat);
-      if (!categoryId) {
-        throw new AppError({ status: 500, code: 'INTERNAL_ERROR', message: `Seed category missing: ${asset.cat}` });
-      }
+  // 5. Seed Manual Assets
+  const manualAssets = [
+    { 
+      symbol: 'AAPL', name: 'Apple Inc.', cost: 175, price: 185, 
+      currency: 'USD', cat: 'US Equities', brokerSource: 'IBKR', brokerAccount: 'U1234567' 
+    },
+    { 
+      symbol: 'MSFT', name: 'Microsoft', cost: 320, price: 410, 
+      currency: 'USD', cat: 'US Equities', brokerSource: 'IBKR', brokerAccount: 'U1234567' 
+    },
+    { 
+      symbol: 'BABA', name: 'Alibaba', cost: 85, price: 72, 
+      currency: 'USD', cat: 'China Equities', brokerSource: 'Futu', brokerAccount: 'F888888' 
+    },
+    { 
+      symbol: '0700.HK', name: 'Tencent', cost: 320, price: 290, 
+      currency: 'HKD', cat: 'China Equities', brokerSource: 'Futu', brokerAccount: 'F888888' 
+    },
+    { 
+      symbol: 'TLT', name: '20+ Year Treasury Bond ETF', cost: 98, price: 92, 
+      currency: 'USD', cat: 'Bonds', brokerSource: 'IBKR', brokerAccount: 'U1234567' 
+    },
+  ];
 
-      // Calculate simple daily profit approximation for seed data
-      // (Current - Cost) / Days? Or just arbitrary? 
-      // The original code had explicit dailyProfit. 
-      // Let's approximate daily change as (Current Price * 0.01 * random direction) or just static logic.
-      // For simplicity, let's assume daily profit is just (Price - Cost) * 0.05 (totally fake)
-      // Or better, let's just make it up based on the asset for variety.
-      const dailyProfit = (asset.price - asset.cost) * 0.1; // 10% of total gain is daily change? A bit high but visible.
+  for (const asset of manualAssets) {
+    const rate = fxRates.get(asset.currency) || 1.0;
+    const costInCny = asset.cost * rate;
+    
+    // Calculate quantity based on max allocation
+    const quantity = Math.floor(MAX_ALLOCATION_PER_ASSET / costInCny);
+    
+    if (quantity > 0) {
+      remainingCash -= quantity * costInCny;
+      const categoryId = categoryIdsByName.get(asset.cat)!;
+      const dailyProfit = (asset.price - asset.cost) * 0.1; 
 
       await db.insert(assets).values({
         id: crypto.randomUUID(),
@@ -157,89 +140,76 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
         categoryId,
         symbol: asset.symbol,
         name: asset.name,
-        quantity: asset.quantity,
+        quantity: quantity,
         costBasis4: toMoney4(asset.cost),
         dailyProfit4: toMoney4(dailyProfit),
         currentPrice4: toMoney4(asset.price),
         currency: asset.currency,
         brokerSource: asset.brokerSource,
         brokerAccount: asset.brokerAccount,
-        createdAt: args.now,
-        updatedAt: args.now,
+        createdAt: now,
+        updatedAt: now,
       });
     }
-
-    // Compute Metrics for this portfolio
-    await metrics.recomputeAndPersist(args.userId, portfolioId, { asOfUtc: args.now });
   }
 
-  // 4. Seed ETF Portfolio from CSV History
-  const etfPortfolioId = crypto.randomUUID();
-  await db.insert(portfolios).values({
-    id: etfPortfolioId,
-    userId: args.userId,
-    name: 'ETF Portfolio',
-    description: 'Imported from ETF history CSVs',
-    totalValueCny4: 0,
-    dailyProfitCny4: 0,
-    currentTotalProfitCny4: 0,
-    createdAt: args.now,
-    updatedAt: args.now,
-  });
-
-  const etfCategoryId = crypto.randomUUID();
-  await db.insert(categories).values({
-    id: etfCategoryId,
-    portfolioId: etfPortfolioId,
-    name: 'Sector ETFs',
-    targetAllocationBps: 100_00,
-    currentAllocationBps: 0,
-    createdAt: args.now,
-    updatedAt: args.now,
-  });
-
-  const INITIAL_CAPITAL = 100_000;
-  const PER_TRADE_CAPITAL = 10_000;
-  let remainingCash = INITIAL_CAPITAL;
-
-  // Determine which assets to buy and how much
+  // 6. Seed ETF Assets
   const assetAllocations = new Map<string, { quantity: number, costBasis: number }>();
   
   for (const [symbol, data] of Object.entries(etfData)) {
     if (data.history.length === 0) continue;
-    if (remainingCash < PER_TRADE_CAPITAL) break; // Not enough cash to buy more
-
+    
+    // ETF data is in CNY (implied), so rate is 1.0
+    // Check if we have enough cash left for at least 1 unit, but bounded by MAX_ALLOCATION_PER_ASSET
+    // Actually, the rule is "Max 1 part per asset", not "Must spend 1 part".
+    // And also bounded by remainingCash.
+    
     const firstPoint = data.history[0];
     const price = firstPoint.price;
-    const quantity = Math.floor(PER_TRADE_CAPITAL / price);
+    
+    // Max quantity allowed by the 1/20 rule
+    const maxQuantityByRule = Math.floor(MAX_ALLOCATION_PER_ASSET / price);
+    // Max quantity allowed by remaining cash (though we probably want to reserve cash for all assets? 
+    // The user said "Divide into 20 parts", usually means "Allocate 1/20 to each". 
+    // If remaining cash runs out, we stop.
+    
+    if (remainingCash < price) continue;
+    
+    // We use the rule limit, but also check if we have enough cash
+    let quantity = maxQuantityByRule;
+    if (quantity * price > remainingCash) {
+      quantity = Math.floor(remainingCash / price);
+    }
     
     if (quantity > 0) {
-      assetAllocations.set(symbol, {
-        quantity,
-        costBasis: price
-      });
+      assetAllocations.set(symbol, { quantity, costBasis: price });
       remainingCash -= quantity * price;
     }
   }
 
   const allDates = new Set<string>();
-  const priceMap = new Map<string, Map<string, number>>(); // date -> symbol -> price
+  const priceMap = new Map<string, Map<string, number>>();
 
-  // Insert Assets
   for (const [symbol, data] of Object.entries(etfData)) {
-    if (!assetAllocations.has(symbol)) continue; // Skip if not allocated
+    if (!assetAllocations.has(symbol)) continue;
     
     const allocation = assetAllocations.get(symbol)!;
     const lastPoint = data.history[data.history.length - 1];
     const prevPoint = data.history.length > 1 ? data.history[data.history.length - 2] : lastPoint;
-
-    // Daily profit for the asset today (change in value)
     const dailyProfit = (lastPoint.price - prevPoint.price) * allocation.quantity;
+
+    // Determine Category
+    let categoryName = 'China Equities'; // Default
+    if (data.name.includes('纳斯达克')) categoryName = 'US Equities';
+    else if (data.name.includes('日经')) categoryName = 'Japan Equities';
+    else if (data.name.includes('芯片')) categoryName = 'Global Tech';
+    
+    const categoryId = categoryIdsByName.get(categoryName)!;
 
     await db.insert(assets).values({
       id: crypto.randomUUID(),
-      portfolioId: etfPortfolioId,
-      categoryId: etfCategoryId,
+      portfolioId: portfolioId,
+      categoryId,
       symbol: symbol,
       name: data.name,
       quantity: allocation.quantity,
@@ -249,31 +219,43 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
       currency: 'CNY',
       brokerSource: 'Manual',
       brokerAccount: 'CSV-Import',
-      createdAt: args.now,
-      updatedAt: args.now,
+      createdAt: now,
+      updatedAt: now,
     });
 
-    // Populate price map for history
     for (const point of data.history) {
       allDates.add(point.date);
-      if (!priceMap.has(point.date)) {
-        priceMap.set(point.date, new Map());
-      }
+      if (!priceMap.has(point.date)) priceMap.set(point.date, new Map());
       priceMap.get(point.date)!.set(symbol, point.price);
     }
   }
 
-  // Generate Portfolio History
-  const sortedDates = Array.from(allDates).sort();
-  
-  // To fill forward, keep track of last known prices
-  const lastKnownPrices = new Map<string, number>();
+  // 6. Seed Cash Asset
+  if (remainingCash > 0) {
+    await db.insert(assets).values({
+      id: crypto.randomUUID(),
+      portfolioId: portfolioId,
+      categoryId: categoryIdsByName.get('Cash')!,
+      symbol: 'CNY',
+      name: 'Chinese Yuan',
+      quantity: remainingCash,
+      costBasis4: toMoney4(1),
+      dailyProfit4: toMoney4(0),
+      currentPrice4: toMoney4(1),
+      currency: 'CNY',
+      brokerSource: 'Bank',
+      brokerAccount: 'Savings',
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
 
-  // Helper to get previous date's value for daily profit calc
+  // 7. Generate Portfolio History
+  const sortedDates = Array.from(allDates).sort();
+  const lastKnownPrices = new Map<string, number>();
   let prevTotalValue = 0;
 
   for (const date of sortedDates) {
-    // Update last known prices with today's data
     const todaysPrices = priceMap.get(date);
     if (todaysPrices) {
       for (const [symbol, price] of todaysPrices) {
@@ -281,53 +263,30 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
       }
     }
 
-    // Calculate total value
-    // Total Value = Cash + Sum(Asset Value)
-    // Cash starts at INITIAL_CAPITAL and decreases as assets are "bought"
-    // Buying happens on the first day data is available for an asset
-    
     let currentCash = INITIAL_CAPITAL;
     let assetsValue = 0;
-    let investedCost = 0;
 
     for (const [symbol, alloc] of assetAllocations) {
-      // Check if this asset has "started" trading yet (has a price known)
-      // AND if the current date is >= asset start date.
-      // Since we iterate sorted dates, if we have a price for it in lastKnownPrices, 
-      // it means it has started trading (or we have filled forward).
-      // However, strict logic: buy on the FIRST day data appears.
-      
-      // Better check: is date >= asset's first history date?
       const assetData = etfData[symbol];
       if (assetData && assetData.history.length > 0) {
         const startDate = assetData.history[0].date;
         if (date >= startDate && lastKnownPrices.has(symbol)) {
-           // Asset is bought
            const currentPrice = lastKnownPrices.get(symbol)!;
            const cost = alloc.quantity * alloc.costBasis;
-           
            currentCash -= cost;
            assetsValue += alloc.quantity * currentPrice;
-           investedCost += cost;
         }
       }
     }
 
     const totalValue = currentCash + assetsValue;
-    
-    // Daily profit = Change in Total Value
-    // Note: Since cash decreases and asset value increases by same amount on buy day (ignoring price change on day 1),
-    // Total Value should be continuous.
     let dailyProfit = totalValue - prevTotalValue;
     if (prevTotalValue === 0) dailyProfit = 0;
-
-    // Current Total Profit = Current Value - Initial Capital
-    // (Or Current Value - (Initial Capital + Deposits)), here Deposits=0
     const currentTotalProfit = totalValue - INITIAL_CAPITAL;
 
     await db.insert(portfolioHistories).values({
       id: crypto.randomUUID(),
-      portfolioId: etfPortfolioId,
+      portfolioId: portfolioId,
       timestampUtc: new Date(date).toISOString(),
       totalValueCny4: toMoney4(totalValue),
       dailyProfitCny4: toMoney4(dailyProfit),
@@ -337,6 +296,7 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
     prevTotalValue = totalValue;
   }
 
-  // Final recompute for the ETF portfolio to ensure consistency
-  await metrics.recomputeAndPersist(args.userId, etfPortfolioId, { asOfUtc: args.now });
+  // 8. Compute Metrics
+  const metrics = new PortfolioMetricsService(db);
+  await metrics.recomputeAndPersist(args.userId, portfolioId, { asOfUtc: now });
 }
