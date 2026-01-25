@@ -11,6 +11,22 @@ describe('Formatting Utilities', () => {
       expect(formatCurrency(1234.56, 'CNY', 'zh-CN')).toBe('¥1,234.56');
     });
 
+    it('strips CN prefix for CNY in en-US locale', () => {
+      // Typically en-US outputs CN¥ for CNY. We want to ensure CN is stripped.
+      const result = formatCurrency(1234.56, 'CNY', 'en-US');
+      expect(result).not.toContain('CN');
+      // It should still contain the symbol
+      expect(result).toContain('¥');
+    });
+
+    it('strips CN prefix for negative CNY in en-US locale', () => {
+      const result = formatCurrency(-30.69, 'CNY', 'en-US');
+      expect(result).not.toContain('CN');
+      // Should handle negative sign
+      expect(result).toContain('-');
+      expect(result).toContain('¥');
+    });
+
     it('formats currency in EUR', () => {
       expect(formatCurrency(1234.56, 'EUR', 'de-DE')).toBe('1.234,56\u00A0€');
     });
@@ -28,7 +44,8 @@ describe('Formatting Utilities', () => {
 
   describe('formatPercentage', () => {
     it('formats percentage correctly', () => {
-      expect(formatPercentage(15)).toBe('15%');
+      // formatPercentage forces 2 decimal places
+      expect(formatPercentage(15)).toBe('15.00%');
     });
 
     it('formats percentage with decimals', () => {

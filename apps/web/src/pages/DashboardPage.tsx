@@ -1,11 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useDashboardData } from '../hooks/useDashboardData';
+import { useHistoricalPerformance } from '../hooks/useHistoricalPerformance';
 import { useI18n } from '../lib/i18n';
 import Layout from '../components/Layout';
 import AllocationChart from '../components/charts/AllocationChart';
 import Skeleton from '../components/Skeleton';
 import { Link } from '@tanstack/react-router';
 import { useCurrentPortfolio } from '../hooks/useCurrentPortfolio';
+import { formatCurrency } from '../utils/formatting';
+
+import PerformanceChart from '../components/charts/PerformanceChart';
+
+type TimeRange = '1Y' | '2Y' | '3Y' | '5Y' | 'ALL';
 
 const DashboardPage: React.FC = () => {
   const { t } = useI18n();
@@ -13,14 +19,85 @@ const DashboardPage: React.FC = () => {
 
   // State for currency selection
   const [displayCurrency, setDisplayCurrency] = useState('USD');
+  // State for time range
+  const [timeRange, setTimeRange] = useState<TimeRange>('1Y');
+
+  // Calculate start/end dates for historical performance
+  const { startDate, endDate } = useMemo(() => {
+    const end = new Date();
+    const start = new Date();
+
+    switch (timeRange) {
+      case '1Y':
+        start.setFullYear(end.getFullYear() - 1);
+        break;
+      case '2Y':
+        start.setFullYear(end.getFullYear() - 2);
+        break;
+      case '3Y':
+        start.setFullYear(end.getFullYear() - 3);
+        break;
+      case '5Y':
+        start.setFullYear(end.getFullYear() - 5);
+        break;
+      case 'ALL':
+        start.setFullYear(end.getFullYear() - 20); // Fallback for ALL
+        break;
+    }
+    return { startDate: start, endDate: end };
+  }, [timeRange]);
 
   const { data: dashboardData, isLoading: dashboardLoading, error: dashboardError } = useDashboardData({
     portfolioId: portfolioId || '',
     displayCurrency
   });
 
+  const { data: historicalData, isLoading: historyLoading } = useHistoricalPerformance({
+    portfolioId: portfolioId || '',
+    startDate,
+    endDate,
+    displayCurrency
+  });
+
   const isLoading = portfolioLoading || dashboardLoading;
   const error = portfolioError || dashboardError;
+
+  // Process historical data for chart
+  const chartData = useMemo(() => {
+    if (!historicalData?.snapshots || historicalData.snapshots.length === 0) return null;
+
+    const snapshots = historicalData.snapshots;
+    const values = snapshots.map(s => s.totalValue);
+    
+    // Calculate metrics
+    const startVal = values[0];
+    const endVal = values[values.length - 1];
+    const growth = ((endVal - startVal) / startVal) * 100;
+
+    // Calculate max drawdown
+    let maxDrawdown = 0;
+    let peak = values[0];
+    for (const val of values) {
+      if (val > peak) peak = val;
+      const drawdown = (peak - val) / peak;
+      if (drawdown > maxDrawdown) maxDrawdown = drawdown;
+    }
+
+    // Format data for Recharts
+    const data = snapshots.map(s => ({
+      date: s.date,
+      value: s.totalValue,
+      formattedDate: new Date(s.date).toLocaleDateString(undefined, { month: 'short', year: '2-digit' })
+    }));
+
+    return {
+      data,
+      growth,
+      maxDrawdown: maxDrawdown * 100,
+    };
+  }, [historicalData]);
+
+
 
   // Handle 401 Unauthorized errors by rendering nothing (while redirect happens)
   if (error && 'response' in error && (error as { response?: { status: number } }).response?.status === 401) {
@@ -53,13 +130,13 @@ const DashboardPage: React.FC = () => {
             {t('dashboard.totalValue')}
           </span>
           <h1 className="text-[40px] leading-none font-extrabold tracking-tight text-slate-900 dark:text-white tabular-nums">
-            {isLoading ? <Skeleton width={200} height={40} /> : dashboardData?.totalValue?.toLocaleString(undefined, { style: 'currency', currency: displayCurrency })}
+            {isLoading ? <Skeleton width={200} height={40} /> : formatCurrency(dashboardData?.totalValue || 0, displayCurrency)}
           </h1>
           <div className="flex items-center gap-2 mt-2">
             <p className="text-gray-500 dark:text-gray-400 text-sm font-medium flex items-center gap-1 bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded-md">
               <span className="material-symbols-outlined text-[16px]">currency_exchange</span>
               <span className="tabular-nums">
-                ≈ {isLoading ? '...' : dashboardData?.totalValue?.toLocaleString(undefined, { style: 'currency', currency: displayCurrency === 'USD' ? 'EUR' : 'USD' })}
+                ≈ {isLoading ? '...' : formatCurrency(dashboardData?.totalValue || 0, displayCurrency === 'USD' ? 'EUR' : 'USD')}
               </span>
             </p>
             {/* Currency selector - Temporary UI for MVP */}
@@ -86,7 +163,7 @@ const DashboardPage: React.FC = () => {
             <span className="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-1">{t('dashboard.dailyProfit')}</span>
             <div className={`flex items-baseline gap-1.5 ${dashboardData?.dailyProfit && dashboardData.dailyProfit >= 0 ? 'text-green-600 dark:text-[#13ec5b]' : 'text-red-600 dark:text-red-400'}`}>
               <span className="text-lg font-bold tabular-nums">
-                {isLoading ? <Skeleton width={60} height={24} /> : (dashboardData?.dailyProfit && dashboardData.dailyProfit > 0 ? '+' : '') + dashboardData?.dailyProfit?.toLocaleString(undefined, { style: 'currency', currency: displayCurrency })}
+                {isLoading ? <Skeleton width={60} height={24} /> : (dashboardData?.dailyProfit && dashboardData.dailyProfit > 0 ? '+' : '') + formatCurrency(dashboardData?.dailyProfit || 0, displayCurrency)}
               </span>
               <span className={`text-xs font-semibold px-1.5 py-0.5 rounded tabular-nums ${dashboardData?.dailyProfit && dashboardData.dailyProfit >= 0 ? 'bg-green-500/10 text-green-700 dark:text-green-400' : 'bg-red-500/10 text-red-700 dark:text-red-400'}`}>
                 {dashboardData?.dailyProfit && dashboardData.totalValue ? ((dashboardData.dailyProfit / dashboardData.totalValue) * 100).toFixed(2) : '0.00'}%
@@ -113,44 +190,29 @@ const DashboardPage: React.FC = () => {
           <div className="flex items-center justify-between mb-3 px-1">
             <h2 className="text-slate-900 dark:text-white font-bold text-base">Overall Performance</h2>
             <div className="flex bg-gray-100 dark:bg-white/5 p-1 rounded-lg">
-              <button className="px-2.5 py-1 text-[10px] font-bold bg-white dark:bg-white/10 text-slate-900 dark:text-white rounded shadow-sm transition-all">1Y</button>
-              <button className="px-2.5 py-1 text-[10px] font-medium text-gray-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors">3Y</button>
-              <button className="px-2.5 py-1 text-[10px] font-medium text-gray-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors">All</button>
+              {(['1Y', '2Y', '3Y', '5Y', 'ALL'] as const).map((range) => (
+                <button
+                  key={range}
+                  onClick={() => setTimeRange(range)}
+                  className={`px-2.5 py-1 text-[10px] font-medium transition-all rounded shadow-sm
+                    ${timeRange === range
+                      ? 'bg-white dark:bg-white/10 text-slate-900 dark:text-white font-bold'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                >
+                  {range}
+                </button>
+              ))}
             </div>
           </div>
-          <div className="bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-white/5 rounded-2xl p-4 shadow-sm relative overflow-hidden">
-             {/* Chart Placeholder matching the SVG design */}
-             <div className="grid grid-cols-2 gap-4 mb-4">
-               <div>
-                 <span className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1">Period Growth</span>
-                 <div className="flex items-center gap-2">
-                   <span className="text-2xl font-extrabold text-slate-900 dark:text-white tabular-nums">+18.2%</span>
-                 </div>
-               </div>
-               <div>
-                 <span className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1">Max Drawdown</span>
-                 <span className="text-2xl font-extrabold text-slate-900 dark:text-white tabular-nums">-4.1%</span>
-               </div>
-             </div>
-             <div className="h-28 w-full relative mt-2">
-                <svg className="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 100">
-                  <defs>
-                    <linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0%" stopColor="#13ec5b" stopOpacity="0.15"></stop>
-                      <stop offset="100%" stopColor="#13ec5b" stopOpacity="0"></stop>
-                    </linearGradient>
-                  </defs>
-                  <path d="M0,85 C15,80 25,65 40,70 C55,75 65,45 80,40 C90,37 95,20 100,10 L100,100 L0,100 Z" fill="url(#chartGradient)"></path>
-                  <path d="M0,85 C15,80 25,65 40,70 C55,75 65,45 80,40 C90,37 95,20 100,10" fill="none" stroke="#13ec5b" strokeLinecap="round" strokeWidth="2.5" vectorEffect="non-scaling-stroke"></path>
-                </svg>
-             </div>
-             <div className="flex justify-between mt-2 pt-2 border-t border-gray-100 dark:border-white/5 text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-               <span>Nov '23</span>
-               <span>Mar</span>
-               <span>Jul</span>
-               <span>Nov '24</span>
-             </div>
-          </div>
+            <div className="bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-white/5 rounded-2xl p-4 shadow-sm relative overflow-hidden">
+               <PerformanceChart
+                  data={chartData?.data || []}
+                  growth={chartData?.growth || 0}
+                  maxDrawdown={chartData?.maxDrawdown || 0}
+                  isLoading={historyLoading}
+               />
+            </div>
         </div>
 
         {/* Allocation Section */}

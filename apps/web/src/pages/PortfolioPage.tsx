@@ -202,7 +202,7 @@ const PortfolioPage: React.FC = () => {
                       </div>
                       <div className="text-right">
                         <div className="font-bold text-lg text-gray-900 dark:text-white">
-                          {category.value.toLocaleString(undefined, { style: 'currency', currency: displayCurrency, maximumFractionDigits: 0 })}
+                          {formatCurrency(category.value, displayCurrency)}
                         </div>
                         <span className="text-xs text-gray-400">{category.currentAllocation.toFixed(0)}% of Portfolio</span>
                       </div>
@@ -240,7 +240,7 @@ const PortfolioPage: React.FC = () => {
                           </div>
                           <div className="text-right">
                             <span className="block text-sm font-bold text-gray-900 dark:text-white">
-                              {asset.value.toLocaleString(undefined, { style: 'currency', currency: displayCurrency, maximumFractionDigits: 0 })}
+                              {formatCurrency(asset.value, displayCurrency)}
                             </span>
                             <span className="text-xs text-gray-400">
                               {(allocationData.totalValue > 0 ? (asset.value / allocationData.totalValue * 100) : 0).toFixed(1)}%

@@ -3,20 +3,34 @@
  */
 
 export const formatNumber = (value: number, locale: string = 'en-US', options: Intl.NumberFormatOptions = {}): string => {
-  return new Intl.NumberFormat(locale, {
+  const defaultOptions: Intl.NumberFormatOptions = {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-    ...options,
-  }).format(value);
+  };
+
+  const finalOptions = { ...defaultOptions, ...options };
+
+  // Ensure minimumFractionDigits does not exceed maximumFractionDigits to avoid RangeError
+  if (finalOptions.maximumFractionDigits !== undefined && finalOptions.minimumFractionDigits !== undefined) {
+    if (finalOptions.minimumFractionDigits > finalOptions.maximumFractionDigits) {
+      finalOptions.minimumFractionDigits = finalOptions.maximumFractionDigits;
+    }
+  }
+
+  return new Intl.NumberFormat(locale, finalOptions).format(value);
 };
 
 export const formatCurrency = (value: number, currency: string = 'USD', locale: string = 'en-US'): string => {
-  return new Intl.NumberFormat(locale, {
+  const formatted = new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: currency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value);
+
+  // Remove "CN" prefix if present (e.g., "CN¥" -> "¥", "-CN¥" -> "-¥")
+  // We remove it from the start of the string or immediately after a negative sign
+  return formatted.replace(/(^|-)CN/, '$1');
 };
 
 export const formatPercentage = (value: number, locale: string = 'en-US'): string => {

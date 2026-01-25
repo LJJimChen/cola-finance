@@ -4,6 +4,7 @@ import { useI18n } from '../lib/i18n';
 import { useHistoricalPerformance } from '../hooks/useHistoricalPerformance';
 import Skeleton from '../components/Skeleton';
 import { useCurrentPortfolio } from '../hooks/useCurrentPortfolio';
+import { formatCurrency } from '../utils/formatting';
 
 const AnalysisPage: React.FC = () => {
   const { t } = useI18n();
@@ -141,7 +142,7 @@ const AnalysisPage: React.FC = () => {
                 {growth >= 0 ? 'trending_up' : 'trending_down'}
               </span>
               <h2 className={`text-base font-semibold leading-tight tracking-tight ${growth >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                {isLoading ? <Skeleton width={100} height={20} /> : `${growth >= 0 ? '+' : ''}${growth.toLocaleString(undefined, { style: 'currency', currency: displayCurrency })} (${growthPercent.toFixed(1)}%)`}
+                {isLoading ? <Skeleton width={100} height={20} /> : `${growth >= 0 ? '+' : ''}${formatCurrency(growth, displayCurrency)} (${growthPercent.toFixed(1)}%)`}
               </h2>
             </div>
           </div>
@@ -249,7 +250,7 @@ const AnalysisPage: React.FC = () => {
                    </div>
                  </div>
                  <span className="text-sm font-semibold tabular-nums">
-                   {isLoading ? <Skeleton width={80} height={20} /> : previousSnapshot?.totalValue?.toLocaleString(undefined, { style: 'currency', currency: displayCurrency })}
+                   {isLoading ? <Skeleton width={80} height={20} /> : formatCurrency(previousSnapshot?.totalValue || 0, displayCurrency)}
                  </span>
                </div>
             </div>

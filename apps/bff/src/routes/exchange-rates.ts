@@ -1,9 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { and, eq } from 'drizzle-orm';
-import { exchangeRates } from '../db/schema';
-import { fromRate8 } from '../lib/money';
+import { ExchangeRateService } from '../services/exchange-rate-service';
 
 const querySchema = z.object({
   baseCurrency: z.string().min(3).max(8).optional(),
@@ -22,22 +20,9 @@ exchangeRateRoutes.get('/', zValidator('query', querySchema), async (c) => {
   const baseCurrency = q.baseCurrency;
 
   const db = c.get('db');
-  const rows = baseCurrency
-    ? await db
-        .select()
-        .from(exchangeRates)
-        .where(and(eq(exchangeRates.sourceCurrency, baseCurrency), eq(exchangeRates.date, date)))
-    : await db.select().from(exchangeRates).where(eq(exchangeRates.date, date));
+  const exchangeRateService = new ExchangeRateService(db);
+  const rates = await exchangeRateService.getRates(date, baseCurrency);
 
-  return c.json(
-    rows.map((r) => ({
-      id: r.id,
-      sourceCurrency: r.sourceCurrency,
-      targetCurrency: r.targetCurrency,
-      exchangeRate: fromRate8(r.rate8),
-      date: r.date,
-      createdAt: r.createdAt,
-    })),
-  );
+  return c.json(rates);
 });
 

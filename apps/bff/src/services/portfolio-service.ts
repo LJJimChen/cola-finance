@@ -1,7 +1,7 @@
 import { db } from '../db';
 import { portfolios, assets, categories, portfolioHistories } from '../db/schema';
 import { eq, and, desc, sum, avg } from 'drizzle-orm';
-import { CurrencyConversionServiceImpl } from '../services/currency-conversion-service';
+import { ExchangeRateService } from '../services/exchange-rate-service';
 import type { 
   Portfolio, 
   Asset, 
@@ -22,10 +22,10 @@ export interface PortfolioService {
 }
 
 export class PortfolioServiceImpl implements PortfolioService {
-  private currencyService: CurrencyConversionServiceImpl;
+  private exchangeRateService: ExchangeRateService;
 
   constructor() {
-    this.currencyService = new CurrencyConversionServiceImpl();
+    this.exchangeRateService = new ExchangeRateService(db);
   }
 
   async getDashboardData(userId: string, portfolioId: string, displayCurrency: string = 'CNY'): Promise<DashboardData> {
@@ -61,10 +61,11 @@ export class PortfolioServiceImpl implements PortfolioService {
     // Convert values to display currency if needed
     let totalValue = totalValueCny;
     let dailyProfit = dailyProfitCny;
+    const today = new Date().toISOString().slice(0, 10);
 
     if (displayCurrency !== 'CNY') {
-      totalValue = await this.currencyService.convert('CNY', displayCurrency, totalValueCny);
-      dailyProfit = await this.currencyService.convert('CNY', displayCurrency, dailyProfitCny);
+      totalValue = await this.exchangeRateService.convertMoney(totalValueCny, 'CNY', displayCurrency, today);
+      dailyProfit = await this.exchangeRateService.convertMoney(dailyProfitCny, 'CNY', displayCurrency, today);
     }
 
     // Calculate annual return (simplified calculation)
@@ -124,8 +125,9 @@ export class PortfolioServiceImpl implements PortfolioService {
 
     // Convert to display currency if needed
     let displayTotalValue = totalValueCny;
+    const today = new Date().toISOString().slice(0, 10);
     if (displayCurrency !== 'CNY') {
-      displayTotalValue = await this.currencyService.convert('CNY', displayCurrency, totalValueCny);
+      displayTotalValue = await this.exchangeRateService.convertMoney(totalValueCny, 'CNY', displayCurrency, today);
     }
 
     // Group assets by category
@@ -155,8 +157,8 @@ export class PortfolioServiceImpl implements PortfolioService {
       let displayCategoryValue = categoryValueCny;
       let displayCategoryProfit = categoryProfitAmount;
       if (displayCurrency !== 'CNY') {
-        displayCategoryValue = await this.currencyService.convert('CNY', displayCurrency, categoryValueCny);
-        displayCategoryProfit = await this.currencyService.convert('CNY', displayCurrency, categoryProfitAmount);
+        displayCategoryValue = await this.exchangeRateService.convertMoney(categoryValueCny, 'CNY', displayCurrency, today);
+        displayCategoryProfit = await this.exchangeRateService.convertMoney(categoryProfitAmount, 'CNY', displayCurrency, today);
       }
 
       // Calculate allocation percentage
@@ -176,8 +178,8 @@ export class PortfolioServiceImpl implements PortfolioService {
         let displayAssetProfit = asset.dailyProfit;
         
         if (displayCurrency !== 'CNY') {
-          displayAssetValue = await this.currencyService.convert('CNY', displayCurrency, displayAssetValue);
-          displayAssetProfit = await this.currencyService.convert('CNY', displayCurrency, asset.dailyProfit);
+          displayAssetValue = await this.exchangeRateService.convertMoney(displayAssetValue, 'CNY', displayCurrency, today);
+          displayAssetProfit = await this.exchangeRateService.convertMoney(asset.dailyProfit, 'CNY', displayCurrency, today);
         }
 
         const assetYield = (asset.currentPrice * asset.quantity) > 0 
@@ -220,8 +222,8 @@ export class PortfolioServiceImpl implements PortfolioService {
       let displayUncategorizedValue = uncategorizedValueCny;
       let displayUncategorizedProfit = uncategorizedProfitAmount;
       if (displayCurrency !== 'CNY') {
-        displayUncategorizedValue = await this.currencyService.convert('CNY', displayCurrency, uncategorizedValueCny);
-        displayUncategorizedProfit = await this.currencyService.convert('CNY', displayCurrency, uncategorizedProfitAmount);
+        displayUncategorizedValue = await this.exchangeRateService.convertMoney(uncategorizedValueCny, 'CNY', displayCurrency, today);
+        displayUncategorizedProfit = await this.exchangeRateService.convertMoney(uncategorizedProfitAmount, 'CNY', displayCurrency, today);
       }
 
       const currentAllocation = totalValueCny > 0 
@@ -238,8 +240,8 @@ export class PortfolioServiceImpl implements PortfolioService {
         let displayAssetProfit = asset.dailyProfit;
         
         if (displayCurrency !== 'CNY') {
-          displayAssetValue = await this.currencyService.convert('CNY', displayCurrency, displayAssetValue);
-          displayAssetProfit = await this.currencyService.convert('CNY', displayCurrency, asset.dailyProfit);
+          displayAssetValue = await this.exchangeRateService.convertMoney(displayAssetValue, 'CNY', displayCurrency, today);
+          displayAssetProfit = await this.exchangeRateService.convertMoney(asset.dailyProfit, 'CNY', displayCurrency, today);
         }
 
         const assetYield = (asset.currentPrice * asset.quantity) > 0 
@@ -355,12 +357,13 @@ export class PortfolioServiceImpl implements PortfolioService {
 
     // Calculate percentages and convert to display currency
     const result = [];
+    const today = new Date().toISOString().slice(0, 10);
     for (const [categoryId, data] of allocationByCategory) {
       const percentage = totalValueCny > 0 ? (data.valueCny / totalValueCny) * 100 : 0;
       
       let displayValue = data.valueCny;
       if (displayCurrency !== 'CNY') {
-        displayValue = await this.currencyService.convert('CNY', displayCurrency, data.valueCny);
+        displayValue = await this.exchangeRateService.convertMoney(data.valueCny, 'CNY', displayCurrency, today);
       }
 
       result.push({

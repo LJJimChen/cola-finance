@@ -59,10 +59,30 @@ historicalPerformanceRoutes.get('/:portfolioId', requireAuth(), zValidator('quer
 
   const days = [...byDay.keys()].sort();
   const fx = new ExchangeRateService(db);
+  
+  // Optimization: Pre-fetch exchange rates to avoid N+1 queries in the loop
+  let rates: { date: string; rate: number }[] = [];
+  if (displayCurrency !== 'CNY') {
+    rates = await fx.getRatesForCurrencyPair(displayCurrency, 'CNY');
+
+    if (rates.length === 0) {
+      return c.json({ 
+        error: { 
+          code: 'MISSING_EXCHANGE_RATE', 
+          message: `Missing exchange rate for ${displayCurrency}->CNY` 
+        } 
+      }, 422);
+    }
+  }
 
   const snapshots: HistoricalPerformance['snapshots'] = [];
   let cumulative = 1;
   const dailyReturns: number[] = [];
+
+  let rateIndex = 0;
+  let currentRate: number | null = null;
+  // Fallback to the absolute latest rate if no past rate is available (matching ExchangeRateService logic)
+  const absoluteLatestRate = rates.length > 0 ? rates[rates.length - 1].rate : null;
 
   for (let i = 0; i < days.length; i++) {
     const day = days[i];
@@ -79,13 +99,33 @@ historicalPerformanceRoutes.get('/:portfolioId', requireAuth(), zValidator('quer
     dailyReturns.push(dailyReturnRate);
     cumulative *= 1 + dailyReturnRate;
 
-    const totalValue = roundMoney4(await fx.convertMoney(totalValueCny, 'CNY', displayCurrency, day));
-    const dailyProfit = roundMoney4(await fx.convertMoney(dailyProfitCny, 'CNY', displayCurrency, day));
+    // Convert currency
+    let totalValue = totalValueCny;
+    let dailyProfit = dailyProfitCny;
+
+    if (displayCurrency !== 'CNY') {
+      // Update current rate based on day
+      // Since days are sorted ascending, we can advance the rate index
+      while (rateIndex < rates.length && rates[rateIndex].date <= day) {
+        currentRate = rates[rateIndex].rate;
+        rateIndex++;
+      }
+
+      const effectiveRate = currentRate ?? absoluteLatestRate;
+      
+      if (effectiveRate) {
+        // Convert CNY -> DisplayCurrency (e.g. USD)
+        // Rate is Source(USD) -> Target(CNY)
+        // So 1 USD = Rate CNY => 1 CNY = 1/Rate USD
+        totalValue = totalValueCny / effectiveRate;
+        dailyProfit = dailyProfitCny / effectiveRate;
+      }
+    }
 
     snapshots.push({
       date: day,
-      totalValue,
-      dailyProfit,
+      totalValue: roundMoney4(totalValue),
+      dailyProfit: roundMoney4(dailyProfit),
       cumulativeReturn: roundMoney4((cumulative - 1) * 100),
     });
   }
