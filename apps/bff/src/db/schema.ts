@@ -11,7 +11,6 @@ export const user = sqliteTable("user", {
   languagePreference: text('language_preference').default('zh'),
   themeSettings: text('theme_settings').default('auto'),
   displayCurrency: text('display_currency').default('CNY'),
-  timeZone: text('time_zone').default('Asia/Shanghai'),
 });
 
 export const session = sqliteTable("session", {

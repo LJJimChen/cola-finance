@@ -32,10 +32,14 @@ class ApiClient {
   constructor(options: ApiClientOptions = {}) {
     const baseUrl = options.baseUrl || API_BASE_URL;
     
+    // Get browser timezone
+    const timeZone = typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'UTC';
+
     this.client = ky.create({
       prefixUrl: baseUrl,
       headers: {
         'Content-Type': 'application/json',
+        'X-Timezone': timeZone,
         ...options.headers,
       },
       hooks: {

@@ -15,6 +15,13 @@
       "when": 1769324304316,
       "tag": "0001_smart_phil_sheldon",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1769352203194,
+      "tag": "0002_wild_terrax",
+      "breakpoints": true
     }
   ]
 }

@@ -28,6 +28,8 @@ historicalPerformanceRoutes.get('/:portfolioId', requireAuth(), zValidator('quer
   const q = c.req.valid('query');
 
   const displayCurrency = q.displayCurrency ?? 'CNY';
+  // Read timezone from header, fallback to UTC
+  const timeZone = c.req.header('X-Timezone') ?? 'UTC';
 
   const db = c.get('db');
   const owned = await db
@@ -39,16 +41,17 @@ historicalPerformanceRoutes.get('/:portfolioId', requireAuth(), zValidator('quer
     return c.json({ error: { code: 'NOT_FOUND', message: 'Portfolio not found' } }, 404);
   }
 
-  const userRows = await db.select().from(user).where(eq(user.id, userId)).limit(1);
-  const timeZone = userRows[0]?.timeZone ?? 'UTC';
-
   const startIso = new Date(`${q.startDate}T00:00:00.000Z`).toISOString();
   const endIso = new Date(`${q.endDate}T23:59:59.999Z`).toISOString();
+
+  // Extend query range by 24h to cover all timezones (e.g. UTC-12 to UTC+14)
+  const queryStart = new Date(new Date(startIso).getTime() - 24 * 60 * 60 * 1000).toISOString();
+  const queryEnd = new Date(new Date(endIso).getTime() + 24 * 60 * 60 * 1000).toISOString();
 
   const rows = await db
     .select()
     .from(portfolioHistories)
-    .where(and(eq(portfolioHistories.portfolioId, portfolioId), gte(portfolioHistories.timestampUtc, startIso), lte(portfolioHistories.timestampUtc, endIso)))
+    .where(and(eq(portfolioHistories.portfolioId, portfolioId), gte(portfolioHistories.timestampUtc, queryStart), lte(portfolioHistories.timestampUtc, queryEnd)))
     .orderBy(asc(portfolioHistories.timestampUtc));
 
   const byDay = new Map<string, typeof rows[number]>();
@@ -57,7 +60,7 @@ historicalPerformanceRoutes.get('/:portfolioId', requireAuth(), zValidator('quer
     byDay.set(day, r);
   }
 
-  const days = [...byDay.keys()].sort();
+  const days = [...byDay.keys()].sort().filter((d) => d >= q.startDate && d <= q.endDate);
   const fx = new ExchangeRateService(db);
   
   // Optimization: Pre-fetch exchange rates to avoid N+1 queries in the loop
@@ -92,10 +95,12 @@ historicalPerformanceRoutes.get('/:portfolioId', requireAuth(), zValidator('quer
     const totalValueCny = fromMoney4(r.totalValueCny4);
     const dailyProfitCny = fromMoney4(r.dailyProfitCny4);
 
-    const prev = i > 0 ? byDay.get(days[i - 1]) : undefined;
-    const prevTotalValueCny = prev ? fromMoney4(prev.totalValueCny4) : totalValueCny;
+    // Calculate basis: Start Value = End Value - Profit
+    // This correctly handles the case where there is no previous day (first day)
+    // and also handles deposits/withdrawals correctly (assuming profit is strictly PnL)
+    const basisCny = totalValueCny - dailyProfitCny;
 
-    const dailyReturnRate = prevTotalValueCny > 0 ? dailyProfitCny / prevTotalValueCny : 0;
+    const dailyReturnRate = basisCny > 0 ? dailyProfitCny / basisCny : 0;
     dailyReturns.push(dailyReturnRate);
     cumulative *= 1 + dailyReturnRate;
 

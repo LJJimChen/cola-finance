@@ -39,7 +39,6 @@ export function createAuth(dbOrD1: D1Database | AppDb, baseURL?: string, trusted
         languagePreference: { type: "string", required: false, defaultValue: "en" },
         themeSettings: { type: "string", defaultValue: "auto" },
         displayCurrency: { type: "string", defaultValue: "CNY" },
-        timeZone: { type: "string", defaultValue: "Asia/Shanghai" },
       }
     },
     databaseHooks: {
