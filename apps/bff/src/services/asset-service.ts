@@ -1,8 +1,8 @@
-import { db } from '../db';
 import { assets, portfolios } from '../db/schema';
 import { eq, and, asc } from 'drizzle-orm';
 import type { Asset, CreateAssetRequest } from '@repo/shared-types';
 import { toMoney4 } from '../lib/money';
+import type { AppDb } from '../db';
 
 export interface AssetService {
   getAssetsByPortfolio(userId: string, portfolioId: string): Promise<Asset[]>;
@@ -10,12 +10,15 @@ export interface AssetService {
   updateAsset(userId: string, assetId: string, data: Partial<Asset>): Promise<Asset>;
   deleteAsset(userId: string, assetId: string): Promise<boolean>;
   getAssetById(userId: string, assetId: string): Promise<Asset | null>;
+  getAssetsByUser(userId: string): Promise<Asset[]>;
 }
 
 export class AssetServiceImpl implements AssetService {
+  constructor(private db: AppDb) {}
+
   async getAssetsByPortfolio(userId: string, portfolioId: string): Promise<Asset[]> {
     // Verify user owns the portfolio
-    const portfolioResult = await db
+    const portfolioResult = await this.db
       .select()
       .from(portfolios)
       .where(and(eq(portfolios.id, portfolioId), eq(portfolios.userId, userId)))
@@ -25,7 +28,7 @@ export class AssetServiceImpl implements AssetService {
       throw new Error('Portfolio not found or access denied');
     }
 
-    const assetsResult = await db
+    const assetsResult = await this.db
       .select()
       .from(assets)
       .where(eq(assets.portfolioId, portfolioId))
@@ -35,7 +38,7 @@ export class AssetServiceImpl implements AssetService {
   }
 
   async getAssetsByUser(userId: string): Promise<Asset[]> {
-    const assetsResult = await db
+    const assetsResult = await this.db
       .select({ asset: assets })
       .from(assets)
       .innerJoin(portfolios, eq(assets.portfolioId, portfolios.id))
@@ -47,7 +50,7 @@ export class AssetServiceImpl implements AssetService {
 
   async createAsset(userId: string, portfolioId: string, data: CreateAssetRequest): Promise<Asset> {
     // Verify user owns the portfolio
-    const portfolioResult = await db
+    const portfolioResult = await this.db
       .select()
       .from(portfolios)
       .where(and(eq(portfolios.id, portfolioId), eq(portfolios.userId, userId)))
@@ -57,9 +60,10 @@ export class AssetServiceImpl implements AssetService {
       throw new Error('Portfolio not found or access denied');
     }
 
-    const [newAsset] = await db
+    const [newAsset] = await this.db
       .insert(assets)
       .values({
+        id: crypto.randomUUID(),
         portfolioId,
         symbol: data.symbol,
         name: data.name,
@@ -71,6 +75,8 @@ export class AssetServiceImpl implements AssetService {
         brokerSource: data.brokerSource,
         brokerAccount: data.brokerAccount,
         categoryId: data.categoryId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       })
       .returning();
 
@@ -79,7 +85,7 @@ export class AssetServiceImpl implements AssetService {
 
   async updateAsset(userId: string, assetId: string, data: Partial<Asset>): Promise<Asset> {
     // Verify user owns the asset via portfolio
-    const assetResult = await db
+    const assetResult = await this.db
       .select({ asset: assets })
       .from(assets)
       .innerJoin(portfolios, eq(assets.portfolioId, portfolios.id))
@@ -90,7 +96,7 @@ export class AssetServiceImpl implements AssetService {
       throw new Error('Asset not found or access denied');
     }
 
-    const [updatedAsset] = await db
+    const [updatedAsset] = await this.db
       .update(assets)
       .set({
         ...data,
@@ -104,8 +110,8 @@ export class AssetServiceImpl implements AssetService {
 
   async deleteAsset(userId: string, assetId: string): Promise<boolean> {
     // Verify user owns the asset via portfolio
-    const assetResult = await db
-      .select({ id: assets.id })
+    const assetResult = await this.db
+      .select({ asset: assets })
       .from(assets)
       .innerJoin(portfolios, eq(assets.portfolioId, portfolios.id))
       .where(and(eq(assets.id, assetId), eq(portfolios.userId, userId)))
@@ -115,24 +121,22 @@ export class AssetServiceImpl implements AssetService {
       throw new Error('Asset not found or access denied');
     }
 
-    await db.delete(assets).where(eq(assets.id, assetId));
+    await this.db.delete(assets).where(eq(assets.id, assetId));
 
     return true;
   }
 
   async getAssetById(userId: string, assetId: string): Promise<Asset | null> {
-    const result = await db
+    const assetResult = await this.db
       .select({ asset: assets })
       .from(assets)
       .innerJoin(portfolios, eq(assets.portfolioId, portfolios.id))
       .where(and(eq(assets.id, assetId), eq(portfolios.userId, userId)))
       .limit(1);
 
-    return result.length > 0 ? (result[0].asset as unknown as Asset) : null;
+    return assetResult.length > 0 ? (assetResult[0].asset as unknown as Asset) : null;
   }
 }
 
-// Create a singleton instance
-const assetService = new AssetServiceImpl();
-
-export { assetService };
+// const assetService = new AssetServiceImpl();
+// export { assetService };

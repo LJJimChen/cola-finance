@@ -1,9 +1,10 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { portfolioService } from '../services/portfolio-service';
+import { PortfolioServiceImpl } from '../services/portfolio-service';
+import type { AppDb } from '../db';
 
-const app = new Hono();
+const app = new Hono<{ Variables: { db: AppDb } }>();
 
 // GET /portfolios/:portfolioId/allocation
 app.get('/:portfolioId/allocation', async (c) => {
@@ -16,9 +17,10 @@ app.get('/:portfolioId/allocation', async (c) => {
       return c.json({ error: 'User not authenticated' }, 401);
     }
 
+    const portfolioService = new PortfolioServiceImpl(c.get('db'));
     const allocationData = await portfolioService.getAllocationData(
-      userId, 
-      portfolioId, 
+      userId,
+      portfolioId,
       displayCurrency
     );
 

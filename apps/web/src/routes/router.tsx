@@ -2,6 +2,8 @@ import React from 'react';
 import { createRootRoute, createRoute, createRouter, Outlet, redirect } from '@tanstack/react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ErrorBoundary from '../components/ErrorBoundary';
+import { Loading } from '../components/Loading';
+import { IndexRedirect } from './IndexRedirect';
 
 // Create a query client
 const queryClient = new QueryClient({
@@ -34,19 +36,12 @@ const SignUpPageLazy = React.lazy(() => import('../pages/SignUpPage'));
 // Placeholder for SettingsPage which will be implemented later
 const SettingsPageLazy = React.lazy(() => import('../pages/SettingsPage'));
 
-// Loading component for lazy-loaded routes
-const LoadingComponent = () => (
-  <div className="flex justify-center items-center h-screen">
-    <p>Loading...</p>
-  </div>
-);
-
 // Define routes with lazy loading
 const rootRoute = createRootRoute({
   component: () => (
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
-        <React.Suspense fallback={<LoadingComponent />}>
+        <React.Suspense fallback={<Loading />}>
           <Outlet />
         </React.Suspense>
       </ErrorBoundary>
@@ -74,28 +69,10 @@ const welcomeRoute = createRoute({
   component: WelcomePageLazy,
 });
 
-function IndexComponent() {
-    const navigate = React.useCallback(() => {
-         // Check if user is logged in (mock check for now)
-         const token = window.localStorage.getItem('cola.finance.authToken');
-         if (token) {
-             router.navigate({ to: '/dashboard' });
-         } else {
-             router.navigate({ to: '/welcome' });
-         }
-    }, []);
-    
-    React.useEffect(() => {
-        navigate();
-    }, [navigate]);
-
-    return <LoadingComponent />;
-}
-
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  component: IndexComponent,
+  component: IndexRedirect,
 });
 
 const dashboardRoute = createRoute({

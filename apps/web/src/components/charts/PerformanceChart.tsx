@@ -5,8 +5,10 @@ import {
   ResponsiveContainer,
   Tooltip,
   XAxis,
-  YAxis
+  YAxis,
+  type TooltipContentProps
 } from 'recharts';
+import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
 import { formatCurrency } from '../../utils/formatting';
 
 interface PerformanceChartProps {
@@ -20,13 +22,14 @@ interface PerformanceChartProps {
   isLoading?: boolean;
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
+const CustomTooltip = ({ active, payload, label }: TooltipContentProps<ValueType, NameType>) => {
+  const value = payload?.[0]?.value;
+  if (active && value !== undefined) {
     return (
       <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 p-2 rounded shadow-lg text-xs">
         <p className="text-gray-500 dark:text-gray-400 mb-1">{label}</p>
         <p className="font-bold text-slate-900 dark:text-white">
-          {formatCurrency(payload[0].value, 'CNY')}
+          {formatCurrency(Number(value), 'CNY')}
         </p>
       </div>
     );
@@ -107,7 +110,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
               hide={true} 
               domain={['auto', 'auto']} 
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={CustomTooltip} />
             <Area
               type="monotone"
               dataKey="value"

@@ -1,7 +1,7 @@
-import { db } from '../db';
 import { categories, portfolios } from '../db/schema';
 import { eq, and, asc } from 'drizzle-orm';
 import type { Category, CreateCategoryRequest, UpdateCategoryRequest } from '@repo/shared-types';
+import type { AppDb } from '../db';
 
 export interface CategoryService {
   getCategoriesByPortfolio(userId: string, portfolioId: string): Promise<Category[]>;
@@ -25,8 +25,10 @@ function mapCategory(row: typeof categories.$inferSelect): Category {
 }
 
 export class CategoryServiceImpl implements CategoryService {
+  constructor(private db: AppDb) {}
+
   async getCategoriesByPortfolio(userId: string, portfolioId: string): Promise<Category[]> {
-    const result = await db
+    const result = await this.db
       .select({
         category: categories
       })
@@ -40,7 +42,7 @@ export class CategoryServiceImpl implements CategoryService {
 
   async createCategory(userId: string, portfolioId: string, data: CreateCategoryRequest): Promise<Category> {
     // Verify portfolio belongs to user
-    const portfolio = await db.query.portfolios.findFirst({
+    const portfolio = await this.db.query.portfolios.findFirst({
         where: and(eq(portfolios.id, portfolioId), eq(portfolios.userId, userId))
     });
 
@@ -49,7 +51,7 @@ export class CategoryServiceImpl implements CategoryService {
     }
 
     // Check for duplicate name
-    const existing = await db
+    const existing = await this.db
       .select()
       .from(categories)
       .where(and(eq(categories.portfolioId, portfolioId), eq(categories.name, data.name)))
@@ -59,9 +61,10 @@ export class CategoryServiceImpl implements CategoryService {
       throw new Error(`Category with name "${data.name}" already exists in this portfolio`);
     }
 
-    const [newCategory] = await db
+    const [newCategory] = await this.db
       .insert(categories)
       .values({
+        id: crypto.randomUUID(),
         portfolioId,
         name: data.name,
         targetAllocationBps: Math.round((data.targetAllocation ?? 0) * 100),
@@ -76,7 +79,7 @@ export class CategoryServiceImpl implements CategoryService {
 
   async updateCategory(userId: string, categoryId: string, data: UpdateCategoryRequest): Promise<Category> {
     // Verify user owns the category via portfolio
-    const result = await db
+    const result = await this.db
       .select({ category: categories })
       .from(categories)
       .innerJoin(portfolios, eq(categories.portfolioId, portfolios.id))
@@ -91,7 +94,7 @@ export class CategoryServiceImpl implements CategoryService {
 
     // Check for duplicate name if name is changing
     if (data.name && data.name !== currentCategory.name) {
-      const existing = await db
+      const existing = await this.db
         .select()
         .from(categories)
         .where(and(
@@ -105,7 +108,7 @@ export class CategoryServiceImpl implements CategoryService {
       }
     }
 
-    const [updatedCategory] = await db
+    const [updatedCategory] = await this.db
       .update(categories)
       .set({
         ...(data.name ? { name: data.name } : {}),
@@ -120,7 +123,7 @@ export class CategoryServiceImpl implements CategoryService {
 
   async deleteCategory(userId: string, categoryId: string): Promise<boolean> {
     // Verify user owns the category via portfolio
-    const result = await db
+    const result = await this.db
       .select({ category: categories })
       .from(categories)
       .innerJoin(portfolios, eq(categories.portfolioId, portfolios.id))
@@ -131,13 +134,13 @@ export class CategoryServiceImpl implements CategoryService {
       throw new Error('Category not found or access denied');
     }
 
-    await db.delete(categories).where(eq(categories.id, categoryId));
+    await this.db.delete(categories).where(eq(categories.id, categoryId));
 
     return true;
   }
 
   async getCategoryById(userId: string, categoryId: string): Promise<Category | null> {
-    const result = await db
+    const result = await this.db
       .select({ category: categories })
       .from(categories)
       .innerJoin(portfolios, eq(categories.portfolioId, portfolios.id))
@@ -149,6 +152,6 @@ export class CategoryServiceImpl implements CategoryService {
 }
 
 // Create a singleton instance
-const categoryService = new CategoryServiceImpl();
+// const categoryService = new CategoryServiceImpl();
 
-export { categoryService };
+// export { categoryService };

@@ -10,9 +10,9 @@ import type {
 } from '@repo/shared-types';
 
 export interface PortfolioService {
-  getDashboardData(db: AppDb, userId: string, portfolioId: string, displayCurrency?: string): Promise<DashboardData>;
-  getAllocationData(db: AppDb, userId: string, portfolioId: string, displayCurrency?: string): Promise<AllocationData>;
-  calculatePortfolioMetrics(db: AppDb, portfolioId: string): Promise<{
+  getDashboardData(userId: string, portfolioId: string, displayCurrency?: string): Promise<DashboardData>;
+  getAllocationData(userId: string, portfolioId: string, displayCurrency?: string): Promise<AllocationData>;
+  calculatePortfolioMetrics(portfolioId: string): Promise<{
     totalValueCny: number;
     dailyProfitCny: number;
     currentTotalProfitCny: number;
@@ -21,12 +21,13 @@ export interface PortfolioService {
 }
 
 export class PortfolioServiceImpl implements PortfolioService {
+  constructor(private db: AppDb) {}
   
-  async getDashboardData(db: AppDb, userId: string, portfolioId: string, displayCurrency: string = 'CNY'): Promise<DashboardData> {
-    const exchangeRateService = new ExchangeRateService(db);
+  async getDashboardData(userId: string, portfolioId: string, displayCurrency: string = 'CNY'): Promise<DashboardData> {
+    const exchangeRateService = new ExchangeRateService(this.db);
     
     // Verify user owns this portfolio
-    const portfolioResult = await db
+    const portfolioResult = await this.db
       .select()
       .from(portfolios)
       .where(and(eq(portfolios.id, portfolioId), eq(portfolios.userId, userId)))
@@ -37,13 +38,13 @@ export class PortfolioServiceImpl implements PortfolioService {
     }
 
     // Get all assets in the portfolio
-    const assetsResult = await db
+    const assetsResult = await this.db
       .select()
       .from(assets)
       .where(eq(assets.portfolioId, portfolioId));
 
     // Get all categories for this portfolio (to avoid N+1 in allocation calc)
-    const categoriesResult = await db
+    const categoriesResult = await this.db
       .select()
       .from(categories)
       .where(eq(categories.portfolioId, portfolioId));
@@ -55,7 +56,7 @@ export class PortfolioServiceImpl implements PortfolioService {
 
     // Calculate metrics
     const { totalValueCny, dailyProfitCny, currentTotalProfitCny, totalCostCny } = 
-      await this.calculatePortfolioMetrics(db, portfolioId);
+      await this.calculatePortfolioMetrics(portfolioId);
 
     // Convert values to display currency if needed
     let totalValue = totalValueCny;
@@ -99,11 +100,11 @@ export class PortfolioServiceImpl implements PortfolioService {
     };
   }
 
-  async getAllocationData(db: AppDb, userId: string, portfolioId: string, displayCurrency: string = 'CNY'): Promise<AllocationData> {
-    const exchangeRateService = new ExchangeRateService(db);
+  async getAllocationData(userId: string, portfolioId: string, displayCurrency: string = 'CNY'): Promise<AllocationData> {
+    const exchangeRateService = new ExchangeRateService(this.db);
 
     // Verify user owns this portfolio
-    const portfolioResult = await db
+    const portfolioResult = await this.db
       .select()
       .from(portfolios)
       .where(and(eq(portfolios.id, portfolioId), eq(portfolios.userId, userId)))
@@ -114,19 +115,19 @@ export class PortfolioServiceImpl implements PortfolioService {
     }
 
     // Get all assets in the portfolio
-    const assetsResult = await db
+    const assetsResult = await this.db
       .select()
       .from(assets)
       .where(eq(assets.portfolioId, portfolioId));
 
     // Get all categories in the portfolio
-    const categoriesResult = await db
+    const categoriesResult = await this.db
       .select()
       .from(categories)
       .where(eq(categories.portfolioId, portfolioId));
 
     // Calculate total value in CNY
-    const { totalValueCny } = await this.calculatePortfolioMetrics(db, portfolioId);
+    const { totalValueCny } = await this.calculatePortfolioMetrics(portfolioId);
 
     // Convert to display currency if needed
     let displayTotalValue = totalValueCny;
@@ -309,14 +310,14 @@ export class PortfolioServiceImpl implements PortfolioService {
     };
   }
 
-  async calculatePortfolioMetrics(db: AppDb, portfolioId: string): Promise<{
+  async calculatePortfolioMetrics(portfolioId: string): Promise<{
     totalValueCny: number;
     dailyProfitCny: number;
     currentTotalProfitCny: number;
     totalCostCny: number;
   }> {
     // Get all assets in the portfolio
-    const assetsResult = await db
+    const assetsResult = await this.db
       .select()
       .from(assets)
       .where(eq(assets.portfolioId, portfolioId));
@@ -404,6 +405,6 @@ export class PortfolioServiceImpl implements PortfolioService {
 }
 
 // Create a singleton instance
-const portfolioService = new PortfolioServiceImpl();
+// const portfolioService = new PortfolioServiceImpl();
 
-export { portfolioService };
+// export { portfolioService };

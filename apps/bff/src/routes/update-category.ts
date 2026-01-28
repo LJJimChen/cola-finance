@@ -1,9 +1,10 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { rebalancingService } from '../services/rebalancing-service';
+import { RebalancingServiceImpl } from '../services/rebalancing-service';
+import type { AppDb } from '../db';
 
-const app = new Hono();
+const app = new Hono<{ Variables: { db: AppDb } }>();
 
 // Schema for request validation
 const updateCategorySchema = z.object({
@@ -25,6 +26,9 @@ app.put('/:categoryId', zValidator('json', updateCategorySchema), async (c) => {
     if (targetAllocation === undefined) {
       return c.json({ error: 'targetAllocation is required' }, 400);
     }
+
+    const db = c.get('db');
+    const rebalancingService = new RebalancingServiceImpl(db);
 
     const updatedCategory = await rebalancingService.updateCategoryTargetAllocation(
       userId, 

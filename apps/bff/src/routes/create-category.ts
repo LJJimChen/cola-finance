@@ -1,9 +1,10 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { categoryService } from '../services/category-service';
+import { CategoryServiceImpl } from '../services/category-service';
+import type { AppDb } from '../db';
 
-const app = new Hono();
+const app = new Hono<{ Variables: { db: AppDb } }>();
 
 // Schema for request validation
 const createCategorySchema = z.object({
@@ -24,6 +25,7 @@ app.post('/:portfolioId/categories', zValidator('json', createCategorySchema), a
 
     // In a real implementation, we might want to associate the category with the portfolio
     // For now, we'll just create the category for the user
+    const categoryService = new CategoryServiceImpl(c.get('db'));
     const newCategory = await categoryService.createCategory(userId, portfolioId, {
       name,
       targetAllocation,

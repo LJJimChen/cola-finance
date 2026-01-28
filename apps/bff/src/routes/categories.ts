@@ -1,9 +1,10 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { categoryService } from '../services/category-service';
+import { CategoryServiceImpl } from '../services/category-service';
+import type { AppDb } from '../db';
 
-const app = new Hono();
+const app = new Hono<{ Variables: { db: AppDb } }>();
 
 // GET /portfolios/:portfolioId/categories
 app.get('/:portfolioId/categories', async (c) => {
@@ -17,6 +18,7 @@ app.get('/:portfolioId/categories', async (c) => {
 
     // For now, we'll return all categories for the user
     // In a real implementation, we might want to filter based on portfolio
+    const categoryService = new CategoryServiceImpl(c.get('db'));
     const categories = await categoryService.getCategoriesByPortfolio(userId, portfolioId);
 
     return c.json(categories);

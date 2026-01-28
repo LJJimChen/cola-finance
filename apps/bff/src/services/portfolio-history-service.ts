@@ -1,4 +1,4 @@
-import { db } from '../db';
+import type { AppDb } from '../db';
 import { portfolioHistories } from '../db/schema';
 import { eq, desc, and } from 'drizzle-orm';
 import type { PortfolioHistory } from '@repo/shared-types';
@@ -10,8 +10,10 @@ export interface PortfolioHistoryService {
 }
 
 export class PortfolioHistoryServiceImpl implements PortfolioHistoryService {
+  constructor(private db: AppDb) {}
+
   async getLatestSnapshot(portfolioId: string): Promise<PortfolioHistory | null> {
-    const result = await db
+    const result = await this.db
       .select()
       .from(portfolioHistories)
       .where(eq(portfolioHistories.portfolioId, portfolioId))
@@ -22,20 +24,20 @@ export class PortfolioHistoryServiceImpl implements PortfolioHistoryService {
   }
 
   async getSnapshots(portfolioId: string, startDate?: Date, endDate?: Date): Promise<PortfolioHistory[]> {
-    let query = db
+    let query = this.db
       .select()
       .from(portfolioHistories)
       .where(eq(portfolioHistories.portfolioId, portfolioId));
 
     if (startDate) {
       query = query.where(and(
-        db.schema.portfolioHistories.timestamp >= startDate.toISOString()
+        this.db.schema.portfolioHistories.timestamp >= startDate.toISOString()
       ));
     }
 
     if (endDate) {
       query = query.where(and(
-        db.schema.portfolioHistories.timestamp <= endDate.toISOString()
+        this.db.schema.portfolioHistories.timestamp <= endDate.toISOString()
       ));
     }
 
@@ -44,7 +46,7 @@ export class PortfolioHistoryServiceImpl implements PortfolioHistoryService {
   }
 
   async createSnapshot(portfolioId: string, data: Omit<PortfolioHistory, 'id'>): Promise<PortfolioHistory> {
-    const [result] = await db
+    const [result] = await this.db
       .insert(portfolioHistories)
       .values({
         ...data,
@@ -57,6 +59,6 @@ export class PortfolioHistoryServiceImpl implements PortfolioHistoryService {
 }
 
 // Create a singleton instance
-const portfolioHistoryService = new PortfolioHistoryServiceImpl();
+// const portfolioHistoryService = new PortfolioHistoryServiceImpl();
 
-export { portfolioHistoryService };
+// export { portfolioHistoryService };

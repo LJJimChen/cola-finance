@@ -34,7 +34,10 @@ const AllocationChart: React.FC<AllocationChartProps> = ({ data, title }) => {
   // r = 15.91549430918954 (for circumference of 100)
   const r = 15.91549430918954;
   
-  let accumulatedPercentage = 0;
+  const offsets = data.reduce<number[]>((acc, item) => {
+    const previous = acc.length > 0 ? acc[acc.length - 1] : 0;
+    return [...acc, previous + item.percentage];
+  }, []);
 
   return (
     <div className="w-full">
@@ -54,8 +57,7 @@ const AllocationChart: React.FC<AllocationChartProps> = ({ data, title }) => {
             ></circle>
             {data.map((item, index) => {
               const dashArray = `${item.percentage} ${100 - item.percentage}`;
-              const dashOffset = -accumulatedPercentage;
-              accumulatedPercentage += item.percentage;
+              const dashOffset = -(index === 0 ? 0 : offsets[index - 1]);
               
               return (
                 <circle

@@ -13,7 +13,7 @@ export interface LogEntry {
   timestamp: Date;
   level: LogLevel;
   message: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
   error?: Error;
 }
 
@@ -37,7 +37,7 @@ class Logger {
   }
 
   // Log a message
-  private log(level: LogLevel, message: string, context?: Record<string, any>, error?: Error): void {
+  private log(level: LogLevel, message: string, context?: Record<string, unknown>, error?: Error): void {
     // Only log if the level is greater than or equal to the current log level
     if (this.getLogLevelValue(level) < this.getLogLevelValue(this.logLevel)) {
       return;
@@ -99,19 +99,19 @@ class Logger {
   }
 
   // Public logging methods
-  public debug(message: string, context?: Record<string, any>): void {
+  public debug(message: string, context?: Record<string, unknown>): void {
     this.log(LogLevel.DEBUG, message, context);
   }
 
-  public info(message: string, context?: Record<string, any>): void {
+  public info(message: string, context?: Record<string, unknown>): void {
     this.log(LogLevel.INFO, message, context);
   }
 
-  public warn(message: string, context?: Record<string, any>): void {
+  public warn(message: string, context?: Record<string, unknown>): void {
     this.log(LogLevel.WARN, message, context);
   }
 
-  public error(message: string, context?: Record<string, any>, error?: Error): void {
+  public error(message: string, context?: Record<string, unknown>, error?: Error): void {
     this.log(LogLevel.ERROR, message, context, error);
   }
 
@@ -137,7 +137,7 @@ class Logger {
 export const logger = Logger.getInstance();
 
 // Create convenience functions
-export const logDebug = (message: string, context?: Record<string, any>) => logger.debug(message, context);
-export const logInfo = (message: string, context?: Record<string, any>) => logger.info(message, context);
-export const logWarn = (message: string, context?: Record<string, any>) => logger.warn(message, context);
-export const logError = (message: string, context?: Record<string, any>, error?: Error) => logger.error(message, context, error);
+export const logDebug = (message: string, context?: Record<string, unknown>) => logger.debug(message, context);
+export const logInfo = (message: string, context?: Record<string, unknown>) => logger.info(message, context);
+export const logWarn = (message: string, context?: Record<string, unknown>) => logger.warn(message, context);
+export const logError = (message: string, context?: Record<string, unknown>, error?: Error) => logger.error(message, context, error);

@@ -30,11 +30,11 @@ const useLanguageStore = create<LanguageState>((set) => ({
 // Memoized translation function helper
 const getTranslation = (currentLanguage: Language, key: string): string => {
   const keys = key.split('.');
-  let translation: any = translationsMap[currentLanguage];
+  let translation: TranslationResources | string | undefined = translationsMap[currentLanguage];
 
   for (const k of keys) {
     if (translation && typeof translation === 'object') {
-      translation = translation[k];
+      translation = (translation as TranslationResources)[k];
     } else {
       return key; // Return the key if translation is not found
     }

@@ -1,4 +1,4 @@
-import { db } from '../db';
+import type { AppDb } from '../db';
 import { categories, assets, portfolios } from '../db/schema';
 import { eq, and, desc, asc, inArray } from 'drizzle-orm';
 import type { 
@@ -15,9 +15,11 @@ export interface RebalancingService {
 }
 
 export class RebalancingServiceImpl implements RebalancingService {
+  constructor(private db: AppDb) {}
+
   async getRebalanceRecommendations(userId: string, portfolioId: string): Promise<RebalanceRecommendations> {
     // Verify user owns the portfolio
-    const portfolioResult = await db
+    const portfolioResult = await this.db
       .select()
       .from(portfolios)
       .where(and(eq(portfolios.id, portfolioId), eq(portfolios.userId, userId)))
@@ -32,13 +34,13 @@ export class RebalancingServiceImpl implements RebalancingService {
 
   async calculateRebalancingRecommendations(userId: string, portfolioId: string): Promise<RebalanceRecommendations> {
     // Get all assets in the portfolio
-    const assetsResult = await db
+    const assetsResult = await this.db
       .select()
       .from(assets)
       .where(eq(assets.portfolioId, portfolioId));
 
     // Get all categories for the user
-    const categoriesResult = await db
+    const categoriesResult = await this.db
       .select()
       .from(categories)
       .where(eq(categories.userId, userId));
@@ -138,7 +140,7 @@ export class RebalancingServiceImpl implements RebalancingService {
 
   async updateCategoryTargetAllocation(userId: string, categoryId: string, targetAllocation: number): Promise<Category> {
     // Verify user owns the category via portfolio
-    const result = await db
+    const result = await this.db
       .select({ category: categories })
       .from(categories)
       .innerJoin(portfolios, eq(categories.portfolioId, portfolios.id))
@@ -149,7 +151,7 @@ export class RebalancingServiceImpl implements RebalancingService {
       throw new Error('Category not found or access denied');
     }
 
-    const [updatedCategory] = await db
+    const [updatedCategory] = await this.db
       .update(categories)
       .set({ 
         targetAllocationBps: Math.round(targetAllocation * 100),
@@ -167,6 +169,6 @@ export class RebalancingServiceImpl implements RebalancingService {
 }
 
 // Create a singleton instance
-const rebalancingService = new RebalancingServiceImpl();
+// const rebalancingService = new RebalancingServiceImpl();
 
-export { rebalancingService };
+// export { rebalancingService };

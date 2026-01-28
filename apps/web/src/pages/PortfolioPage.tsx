@@ -4,6 +4,7 @@ import { useI18n } from '../lib/i18n';
 import Layout from '../components/Layout';
 import Skeleton from '../components/Skeleton';
 import { useCurrentPortfolio } from '../hooks/useCurrentPortfolio';
+import { formatCurrency } from '../utils/formatting';
 
 const PortfolioPage: React.FC = () => {
   const { t } = useI18n();
