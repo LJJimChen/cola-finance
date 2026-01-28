@@ -4,6 +4,8 @@ export const en = {
     dashboard: 'Dashboard',
     portfolio: 'Portfolio',
     rebalance: 'Rebalance',
+    analysis: 'Analysis',
+    notifications: 'Notifications',
     settings: 'Settings',
     login: 'Login',
     logout: 'Logout',
