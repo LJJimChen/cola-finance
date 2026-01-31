@@ -15,9 +15,13 @@ import type {
   HistoricalPerformance
 } from './index';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const win = (typeof globalThis !== 'undefined' ? (globalThis as any).window : undefined);
+
 const API_BASE_URL =
-  typeof window !== 'undefined'
-    ? (import.meta.env?.VITE_API_BASE_URL ?? '/api')
+  win
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ? ((import.meta as any).env?.VITE_API_BASE_URL ?? '/api')
     : (process.env.API_BASE_URL ?? 'http://localhost:8787/api');
 
 export interface ApiClientOptions {
@@ -57,8 +61,8 @@ class ApiClient {
             // Auto-logout on 401 Unauthorized
             if (error.response?.status === 401) {
               this.setAuthToken(null);
-              if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
-                window.location.href = '/login';
+              if (win && !win.location.pathname.includes('/login')) {
+                win.location.href = '/login';
               }
             }
             
@@ -68,8 +72,8 @@ class ApiClient {
       }
     });
 
-    if (typeof window !== 'undefined') {
-      const saved = window.localStorage.getItem('cola.finance.authToken');
+    if (win) {
+      const saved = win.localStorage.getItem('cola.finance.authToken');
       if (saved) {
         this.authToken = saved;
       }
@@ -113,11 +117,11 @@ class ApiClient {
 
   setAuthToken(token: string | null): void {
     this.authToken = token;
-    if (typeof window !== 'undefined') {
+    if (win) {
       if (token) {
-        window.localStorage.setItem('cola.finance.authToken', token);
+        win.localStorage.setItem('cola.finance.authToken', token);
       } else {
-        window.localStorage.removeItem('cola.finance.authToken');
+        win.localStorage.removeItem('cola.finance.authToken');
       }
     }
   }

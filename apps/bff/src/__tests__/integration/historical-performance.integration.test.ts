@@ -6,6 +6,7 @@ import { createTestDb } from '../../db/testing';
 import { portfolioHistories, exchangeRates, portfolios } from '../../db/schema';
 import { toMoney4, toRate8 } from '../../lib/money';
 import { toAppError } from '../../lib/errors';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { createAuth } from '../../lib/auth';
 
 describe('Historical Performance API', () => {
@@ -121,7 +122,8 @@ describe('Historical Performance API', () => {
     );
 
     expect(res.status).toBe(200);
-    const data = await res.json();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data = await res.json() as any;
     
     expect(data.snapshots).toHaveLength(3);
     

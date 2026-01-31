@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import { createDb, type AppDb } from './db';
 import { apiRoutes } from './routes';
 import { toAppError } from './lib/errors';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 
 type Bindings = {
   DB: D1Database;
@@ -47,7 +48,7 @@ app.onError((err, c) => {
         ...(e.details ? { details: e.details } : {}),
       },
     },
-    e.status,
+    e.status as ContentfulStatusCode,
   );
 });
 

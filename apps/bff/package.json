@@ -8,7 +8,7 @@
     "build": "wrangler build",
     "deploy": "wrangler deploy --minify",
     "generate-types": "wrangler types",
-    "type-check": "pnpm generate-types && tsc",
+    "type-check": "pnpm generate-types && tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",

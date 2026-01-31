@@ -9,7 +9,7 @@ export type AuthContext = {
 };
 
 export function requireAuth(): MiddlewareHandler<{
-  Bindings: CloudflareBindings;
+  Bindings: Env;
   Variables: {
     auth: AuthContext;
     db?: AppDb;

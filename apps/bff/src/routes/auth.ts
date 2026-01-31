@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { createAuth } from '../lib/auth';
 
 export const authRoutes = new Hono<{
-  Bindings: CloudflareBindings;
+  Bindings: Env;
 }>();
 
 authRoutes.all('/*', async (c) => {
