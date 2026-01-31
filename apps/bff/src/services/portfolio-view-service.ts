@@ -8,7 +8,7 @@ import type {
 import type { AppDb } from '../db';
 import { assets, categories, portfolios } from '../db/schema';
 import { AppError } from '../lib/errors';
-import { fromMoney4, roundMoney4 } from '../lib/money';
+import { fromMoney4, fromQuantity8, roundMoney4 } from '../lib/money';
 import { ExchangeRateService } from './exchange-rate-service';
 import { PortfolioMetricsService } from './portfolio-metrics-service';
 
@@ -20,7 +20,7 @@ function assetRowToApi(row: typeof assets.$inferSelect): Asset {
     categoryId: row.categoryId ?? undefined,
     symbol: row.symbol,
     name: row.name,
-    quantity: row.quantity,
+    quantity: fromQuantity8(row.quantity8),
     costBasis: fromMoney4(row.costBasis4),
     dailyProfit: fromMoney4(row.dailyProfit4),
     currentPrice: fromMoney4(row.currentPrice4),
@@ -44,7 +44,8 @@ export class PortfolioViewService {
   }
 
   async getDashboard(userId: string, portfolioId: string, displayCurrency: string): Promise<DashboardData> {
-    const totals = await this.#metrics.recomputeAndPersist(userId, portfolioId);
+    // Use cached metrics (read-only, no recompute on read)
+    const totals = await this.#metrics.getMetrics(userId, portfolioId);
     const asOfDate = totals.asOfUtc.slice(0, 10);
 
     const portfolio = await this.#db
@@ -77,7 +78,7 @@ export class PortfolioViewService {
     const valueByCategoryId = new Map<string, number>();
     for (const a of assetRows) {
       const rateToCny = await this.#fx.getRateToCny(a.currency, asOfDate);
-      const value = fromMoney4(a.currentPrice4) * a.quantity * rateToCny;
+      const value = fromMoney4(a.currentPrice4) * fromQuantity8(a.quantity8) * rateToCny;
       const categoryId = a.categoryId ?? 'uncategorized';
       valueByCategoryId.set(categoryId, (valueByCategoryId.get(categoryId) ?? 0) + value);
     }
@@ -101,14 +102,14 @@ export class PortfolioViewService {
       annualReturn,
       totalProfit,
       currency: displayCurrency,
-      lastUpdated: totals.asOfUtc,
+      lastUpdated: new Date(totals.asOfUtc),
       allocationByCategory,
       topPerformingAssets,
     };
   }
 
   async getAllocation(userId: string, portfolioId: string, displayCurrency: string): Promise<AllocationData> {
-    const totals = await this.#metrics.recomputeAndPersist(userId, portfolioId);
+    const totals = await this.#metrics.getMetrics(userId, portfolioId);
     const asOfDate = totals.asOfUtc.slice(0, 10);
 
     const cats = await this.#db
@@ -151,7 +152,7 @@ export class PortfolioViewService {
   }
 
   async getRebalance(userId: string, portfolioId: string): Promise<RebalanceRecommendations> {
-    const totals = await this.#metrics.recomputeAndPersist(userId, portfolioId);
+    const totals = await this.#metrics.getMetrics(userId, portfolioId);
     const asOfDate = totals.asOfUtc.slice(0, 10);
 
     const cats = await this.#db
@@ -165,7 +166,7 @@ export class PortfolioViewService {
     const valueByCategoryId = new Map<string, number>();
     for (const a of assetRows) {
       const rateToCny = await this.#fx.getRateToCny(a.currency, asOfDate);
-      const value = fromMoney4(a.currentPrice4) * a.quantity * rateToCny;
+      const value = fromMoney4(a.currentPrice4) * fromQuantity8(a.quantity8) * rateToCny;
       const categoryId = a.categoryId ?? 'uncategorized';
       valueByCategoryId.set(categoryId, (valueByCategoryId.get(categoryId) ?? 0) + value);
     }
@@ -224,7 +225,7 @@ export class PortfolioViewService {
 
     for (const a of group) {
       const rateToCny = await this.#fx.getRateToCny(a.currency, asOfDate);
-      valueCny += fromMoney4(a.currentPrice4) * a.quantity * rateToCny;
+      valueCny += fromMoney4(a.currentPrice4) * fromQuantity8(a.quantity8) * rateToCny;
       profitCny += fromMoney4(a.dailyProfit4) * rateToCny;
     }
 
@@ -237,7 +238,7 @@ export class PortfolioViewService {
     const assetDtos = await Promise.all(
       group.map(async (a) => {
         const rateToCny = await this.#fx.getRateToCny(a.currency, asOfDate);
-        const vCny = fromMoney4(a.currentPrice4) * a.quantity * rateToCny;
+        const vCny = fromMoney4(a.currentPrice4) * fromQuantity8(a.quantity8) * rateToCny;
         const pCny = fromMoney4(a.dailyProfit4) * rateToCny;
         const v = roundMoney4(await this.#fx.convertMoney(vCny, 'CNY', displayCurrency, asOfDate));
         const p = roundMoney4(await this.#fx.convertMoney(pCny, 'CNY', displayCurrency, asOfDate));
@@ -247,7 +248,7 @@ export class PortfolioViewService {
           id: a.id,
           symbol: a.symbol,
           name: a.name,
-          quantity: a.quantity,
+          quantity: fromQuantity8(a.quantity8),
           value: v,
           profitAmount: p,
           yield: roundMoney4(y),

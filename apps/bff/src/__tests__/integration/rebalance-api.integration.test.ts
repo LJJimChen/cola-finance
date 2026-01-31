@@ -4,17 +4,18 @@ import { apiRoutes } from '../../routes';
 import type { AppDb } from '../../db';
 import { createTestDb } from '../../db/testing';
 import { assets, categories, exchangeRates, portfolios, session, user } from '../../db/schema';
-import { toMoney4, toRate8 } from '../../lib/money';
+import { toMoney4, toRate8, toQuantity8 } from '../../lib/money';
 import { toAppError } from '../../lib/errors';
 import type { RebalanceRecommendations } from '@repo/shared-types';
 import { createAuth } from '../../lib/auth';
 import { ContentfulStatusCode } from 'hono/utils/http-status';
+import { PortfolioMetricsService } from '../../services/portfolio-metrics-service';
 
 describe('Rebalance API', () => {
   it('returns rebalance recommendations for authorized user', async () => {
     const { db } = await createTestDb();
     const now = new Date().toISOString();
-    const today = now.slice(0, 10);
+    const today = new Date(now.slice(0, 10));
     
     // Setup user and session via better-auth
     const auth = createAuth(db);
@@ -49,67 +50,75 @@ describe('Rebalance API', () => {
       userId,
       name: 'P',
       description: null,
-      totalValueCny4: 0,
-      dailyProfitCny4: 0,
-      currentTotalProfitCny4: 0,
-      createdAt: now,
-      updatedAt: now,
+      totalValueCny4: toMoney4(0),
+      dailyProfitCny4: toMoney4(0),
+      currentTotalProfitCny4: toMoney4(0),
+      createdAt: new Date(now),
+      updatedAt: new Date(now),
     });
 
     // Setup categories
     // Category 1: Target 60%, but will have 100% (Overweight)
     await db.insert(categories).values({
       id: categoryId1,
-      userId,
+      // userId, // Removed from schema
       portfolioId,
       name: 'US equities',
       targetAllocationBps: 6000, // 60%
       currentAllocationBps: 0,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: new Date(now),
+      updatedAt: new Date(now),
     });
 
     // Category 2: Target 40%, but will have 0% (Underweight)
     await db.insert(categories).values({
       id: categoryId2,
-      userId,
+      // userId, // Removed from schema
       portfolioId,
       name: 'Bonds',
       targetAllocationBps: 4000, // 40%
       currentAllocationBps: 0,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: new Date(now),
+      updatedAt: new Date(now),
     });
 
     // Setup exchange rate
+    // Note: seedNewUser (triggered by signUpEmail) already inserts rates for today.
+    // We skip manual insertion to avoid unique constraint violation.
+    /*
     await db.insert(exchangeRates).values({
       id: 'fx-usd',
       sourceCurrency: 'USD',
       targetCurrency: 'CNY',
       rate8: toRate8(7.2),
       date: today,
-      createdAt: now,
+      createdAt: new Date(now),
     });
+    */
 
     // Setup assets
     // Asset in Category 1 worth $1000 (approx 7200 CNY)
     await db.insert(assets).values({
       id: 'asset-1',
-      userId,
+      // userId, // Removed from schema
       portfolioId,
       categoryId: categoryId1,
       symbol: 'AAPL',
       name: 'Apple',
-      quantity: 10,
+      quantity8: toQuantity8(10),
       costBasis4: toMoney4(100),
-      currentPrice4: toMoney4(100), // $100 * 10 = $1000
+      currentPrice4: toMoney4(100),
       dailyProfit4: toMoney4(0),
       currency: 'USD',
       brokerSource: 'mock',
       brokerAccount: 'test-account',
-      createdAt: now,
-      updatedAt: now,
+      createdAt: new Date(now),
+      updatedAt: new Date(now),
     });
+
+    // Recompute metrics since we bypassed the service layer
+    const metrics = new PortfolioMetricsService(db);
+    await metrics.recomputeAndPersist(userId, portfolioId);
 
     const app = new Hono<{ Variables: { db: AppDb } }>();
     app.use('*', async (c, next) => {

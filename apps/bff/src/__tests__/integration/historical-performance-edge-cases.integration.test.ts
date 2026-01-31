@@ -38,11 +38,11 @@ describe('Historical Performance Edge Cases', () => {
       id: portfolioId,
       userId,
       name: 'P',
-      totalValueCny4: 0,
-      dailyProfitCny4: 0,
-      currentTotalProfitCny4: 0,
-      createdAt: now,
-      updatedAt: now,
+      totalValueCny4: toMoney4(0),
+      dailyProfitCny4: toMoney4(0),
+      currentTotalProfitCny4: toMoney4(0),
+      createdAt: new Date(now),
+      updatedAt: new Date(now),
     });
 
     // Record at 2024-01-01 11:00:00 UTC
@@ -51,7 +51,7 @@ describe('Historical Performance Edge Cases', () => {
     await db.insert(portfolioHistories).values({
       id: 'h1',
       portfolioId,
-      timestampUtc: '2024-01-01T11:00:00Z',
+      timestamp: new Date('2024-01-01T11:00:00Z'),
       totalValueCny4: toMoney4(100),
       dailyProfitCny4: toMoney4(0),
       currentTotalProfitCny4: toMoney4(0),
@@ -110,11 +110,11 @@ describe('Historical Performance Edge Cases', () => {
       id: portfolioId,
       userId,
       name: 'P',
-      totalValueCny4: 0,
-      dailyProfitCny4: 0,
-      currentTotalProfitCny4: 0,
-      createdAt: now,
-      updatedAt: now,
+      totalValueCny4: toMoney4(0),
+      dailyProfitCny4: toMoney4(0),
+      currentTotalProfitCny4: toMoney4(0),
+      createdAt: new Date(now),
+      updatedAt: new Date(now),
     });
 
     // Day 1: End Value 110, Profit 10.
@@ -123,7 +123,7 @@ describe('Historical Performance Edge Cases', () => {
     await db.insert(portfolioHistories).values({
       id: 'h1',
       portfolioId,
-      timestampUtc: '2024-01-01T12:00:00Z',
+      timestamp: new Date('2024-01-01T12:00:00Z'),
       totalValueCny4: toMoney4(110),
       dailyProfitCny4: toMoney4(10),
       currentTotalProfitCny4: toMoney4(10),
@@ -185,11 +185,11 @@ describe('Historical Performance Edge Cases', () => {
       id: portfolioId,
       userId,
       name: 'P',
-      totalValueCny4: 0,
-      dailyProfitCny4: 0,
-      currentTotalProfitCny4: 0,
-      createdAt: now,
-      updatedAt: now,
+      totalValueCny4: toMoney4(0),
+      dailyProfitCny4: toMoney4(0),
+      currentTotalProfitCny4: toMoney4(0),
+      createdAt: new Date(now),
+      updatedAt: new Date(now),
     });
 
     // Record at 2024-01-01 23:00:00 UTC
@@ -198,7 +198,7 @@ describe('Historical Performance Edge Cases', () => {
     await db.insert(portfolioHistories).values({
       id: 'h1',
       portfolioId,
-      timestampUtc: '2024-01-01T23:00:00Z',
+      timestamp: new Date('2024-01-01T23:00:00Z'),
       totalValueCny4: toMoney4(100),
       dailyProfitCny4: toMoney4(0),
       currentTotalProfitCny4: toMoney4(0),

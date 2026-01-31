@@ -2,7 +2,7 @@ import { and, desc, eq } from 'drizzle-orm';
 import type { AppDb } from '../db';
 import { assets, categories, portfolios, portfolioHistories } from '../db/schema';
 import { AppError } from '../lib/errors';
-import { fromMoney4, roundMoney4, toMoney4 } from '../lib/money';
+import { fromMoney4, fromQuantity8, roundMoney4, toMoney4 } from '../lib/money';
 import { nowIsoUtc } from '../lib/time';
 import { ExchangeRateService } from './exchange-rate-service';
 
@@ -20,6 +20,26 @@ export class PortfolioMetricsService {
   constructor(db: AppDb) {
     this.#db = db;
     this.#fx = new ExchangeRateService(db);
+  }
+
+  async getMetrics(userId: string, portfolioId: string): Promise<PortfolioTotals> {
+    const portfolio = await this.#db
+      .select()
+      .from(portfolios)
+      .where(and(eq(portfolios.id, portfolioId), eq(portfolios.userId, userId)))
+      .limit(1);
+
+    if (portfolio.length === 0) {
+      throw new AppError({ status: 404, code: 'NOT_FOUND', message: 'Portfolio not found' });
+    }
+
+    const p = portfolio[0];
+    return {
+      totalValueCny: fromMoney4(p.totalValueCny4),
+      dailyProfitCny: fromMoney4(p.dailyProfitCny4),
+      currentTotalProfitCny: fromMoney4(p.currentTotalProfitCny4),
+      asOfUtc: p.updatedAt.toISOString(),
+    };
   }
 
   async recomputeAndPersist(
@@ -48,9 +68,10 @@ export class PortfolioMetricsService {
 
     for (const a of rows) {
       const rateToCny = await this.#fx.getRateToCny(a.currency, date);
-      const value = fromMoney4(a.currentPrice4) * a.quantity * rateToCny;
+      const quantity = fromQuantity8(a.quantity8);
+      const value = fromMoney4(a.currentPrice4) * quantity * rateToCny;
       const daily = fromMoney4(a.dailyProfit4) * rateToCny;
-      const totalProfit = (fromMoney4(a.currentPrice4) - fromMoney4(a.costBasis4)) * a.quantity * rateToCny;
+      const totalProfit = (fromMoney4(a.currentPrice4) - fromMoney4(a.costBasis4)) * quantity * rateToCny;
 
       totalValueCny += value;
       dailyProfitCny += daily;
@@ -67,7 +88,7 @@ export class PortfolioMetricsService {
         totalValueCny4: toMoney4(totalValueCny),
         dailyProfitCny4: toMoney4(dailyProfitCny),
         currentTotalProfitCny4: toMoney4(currentTotalProfitCny),
-        updatedAt: asOfUtc,
+        updatedAt: new Date(asOfUtc),
       })
       .where(eq(portfolios.id, portfolioId));
 
@@ -86,11 +107,11 @@ export class PortfolioMetricsService {
       .select()
       .from(portfolioHistories)
       .where(eq(portfolioHistories.portfolioId, portfolioId))
-      .orderBy(desc(portfolioHistories.timestampUtc))
+      .orderBy(desc(portfolioHistories.timestamp))
       .limit(1);
 
     if (last.length > 0) {
-      const lastTs = Date.parse(last[0].timestampUtc);
+      const lastTs = last[0].timestamp.getTime();
       const nowTs = Date.parse(snapshot.asOfUtc);
       const oneHourMs = 60 * 60 * 1000;
       if (Number.isFinite(lastTs) && Number.isFinite(nowTs) && nowTs - lastTs < oneHourMs) {
@@ -101,7 +122,7 @@ export class PortfolioMetricsService {
     await this.#db.insert(portfolioHistories).values({
       id: crypto.randomUUID(),
       portfolioId,
-      timestampUtc: snapshot.asOfUtc,
+      timestamp: new Date(snapshot.asOfUtc),
       totalValueCny4: toMoney4(snapshot.totalValueCny),
       dailyProfitCny4: toMoney4(snapshot.dailyProfitCny),
       currentTotalProfitCny4: toMoney4(snapshot.currentTotalProfitCny),
@@ -125,7 +146,8 @@ export class PortfolioMetricsService {
     const valueByCategory = new Map<string, number>();
     for (const a of rows) {
       const rateToCny = await this.#fx.getRateToCny(a.currency, date);
-      const value = fromMoney4(a.currentPrice4) * a.quantity * rateToCny;
+      const quantity = fromQuantity8(a.quantity8);
+      const value = fromMoney4(a.currentPrice4) * quantity * rateToCny;
       const categoryId = a.categoryId ?? 'uncategorized';
       valueByCategory.set(categoryId, (valueByCategory.get(categoryId) ?? 0) + value);
     }
@@ -135,7 +157,7 @@ export class PortfolioMetricsService {
       const allocation = totalValueCny > 0 ? Math.round((value / totalValueCny) * 10_000) : 0;
       await this.#db
         .update(categories)
-        .set({ updatedAt: asOfUtc, currentAllocationBps: allocation })
+        .set({ updatedAt: new Date(asOfUtc), currentAllocationBps: allocation })
         .where(eq(categories.id, c.id));
     }
   }

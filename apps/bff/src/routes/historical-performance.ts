@@ -46,28 +46,28 @@ historicalPerformanceRoutes.get('/:portfolioId', requireAuth(), zValidator('quer
 
   // 2. Prepare Date Range for Query
   // We need to fetch a slightly wider range of UTC data to ensure we cover the full local days
-  const startIso = new Date(`${query.startDate}T00:00:00.000Z`).toISOString();
-  const endIso = new Date(`${query.endDate}T23:59:59.999Z`).toISOString();
+  const startIso = new Date(`${query.startDate}T00:00:00.000Z`);
+  const endIso = new Date(`${query.endDate}T23:59:59.999Z`);
 
   // Extend query range by 24h to cover all possible timezones (e.g. UTC-12 to UTC+14)
-  const queryStart = new Date(new Date(startIso).getTime() - 24 * 60 * 60 * 1000).toISOString();
-  const queryEnd = new Date(new Date(endIso).getTime() + 24 * 60 * 60 * 1000).toISOString();
+  const queryStart = new Date(startIso.getTime() - 24 * 60 * 60 * 1000);
+  const queryEnd = new Date(endIso.getTime() + 24 * 60 * 60 * 1000);
 
   // 3. Fetch History Rows
   const rows = await db
     .select()
     .from(portfolioHistories)
-    .where(and(eq(portfolioHistories.portfolioId, portfolioId), gte(portfolioHistories.timestampUtc, queryStart), lte(portfolioHistories.timestampUtc, queryEnd)))
-    .orderBy(asc(portfolioHistories.timestampUtc));
+    .where(and(eq(portfolioHistories.portfolioId, portfolioId), gte(portfolioHistories.timestamp, queryStart), lte(portfolioHistories.timestamp, queryEnd)))
+    .orderBy(asc(portfolioHistories.timestamp));
 
   // 4. Group by Day in User's Timezone
   // We use a Map to store one snapshot per day.
-  // Since rows are ordered by timestampUtc ASC, later snapshots for the same "local day" will overwrite earlier ones.
+  // Since rows are ordered by timestamp ASC, later snapshots for the same "local day" will overwrite earlier ones.
   // This effectively selects the "closing" snapshot for each day, which is the correct behavior for
   // tracking end-of-day value and accumulated daily profit.
   const byDay = new Map<string, typeof rows[number]>();
   for (const row of rows) {
-    const day = toIsoDateInTimeZone(row.timestampUtc, timeZone);
+    const day = toIsoDateInTimeZone(row.timestamp.toISOString(), timeZone);
     byDay.set(day, row);
   }
 
@@ -81,7 +81,13 @@ historicalPerformanceRoutes.get('/:portfolioId', requireAuth(), zValidator('quer
   // We fetch all rates for the requested currency pair
   let rates: { date: string; rate: number }[] = [];
   if (displayCurrency !== 'CNY') {
-    rates = await fx.getRatesForCurrencyPair(displayCurrency, 'CNY');
+    const rawRates = await fx.getRatesForCurrencyPair(displayCurrency, 'CNY');
+    
+    // Convert Date objects to strings (YYYY-MM-DD) for comparison with 'day'
+    rates = rawRates.map(r => ({
+      date: r.date.toISOString().slice(0, 10),
+      rate: r.rate
+    }));
 
     // Ensure rates are sorted by date ASC for the efficient lookup loop below
     rates.sort((a, b) => a.date.localeCompare(b.date));

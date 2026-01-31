@@ -3,6 +3,7 @@ import { createTestDb } from '../../db/testing';
 import { seedNewUser } from '../seed-service';
 import { portfolios, categories, assets, exchangeRates, portfolioHistories, user } from '../../db/schema';
 import { eq } from 'drizzle-orm';
+import { fromQuantity8 } from '../../lib/money';
 
 describe('Seed Service', () => {
   it('seeds default data for new user', async () => {
@@ -45,7 +46,7 @@ describe('Seed Service', () => {
     const aapl = allAssets.find(a => a.symbol === 'AAPL');
     expect(aapl).toBeDefined();
     // 5000 CNY max allocation / (175 USD * 7.2 Rate) = 3.96 -> 3
-    expect(aapl?.quantity).toBe(3);
+    expect(fromQuantity8(aapl?.quantity8 ?? 0)).toBe(3);
     expect(aapl?.brokerAccount).toBe('U1234567');
 
     // Verify Portfolio History

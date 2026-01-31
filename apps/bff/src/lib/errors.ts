@@ -18,6 +18,16 @@ export class AppError extends Error {
     this.code = args.code;
     this.details = args.details;
   }
+
+  toResponse() {
+    return {
+      error: {
+        code: this.code,
+        message: this.message,
+        details: this.details,
+      },
+    };
+  }
 }
 
 export function toAppError(error: unknown): AppError {

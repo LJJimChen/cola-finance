@@ -1,6 +1,6 @@
 import type { AppDb } from '../db';
 import { assets, categories, exchangeRates, portfolioHistories, portfolios } from '../db/schema';
-import { toMoney4, toRate8 } from '../lib/money';
+import { toMoney4, toRate8, toQuantity8 } from '../lib/money';
 import { AppError } from '../lib/errors';
 import { PortfolioMetricsService } from './portfolio-metrics-service';
 import { etfData } from './etf-data';
@@ -39,25 +39,26 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
       sourceCurrency: fx.source,
       targetCurrency: fx.target,
       rate8: toRate8(fx.rate),
-      date: today,
-      createdAt: args.now,
+      date: new Date(today),
+      createdAt: new Date(args.now),
     });
   }
 
   // 2. Define Main Portfolio
   const portfolioId = crypto.randomUUID();
   const now = args.now;
+  const nowDate = new Date(now);
 
   await db.insert(portfolios).values({
     id: portfolioId,
     userId: args.userId,
     name: 'Main Portfolio',
     description: 'Combined investments including ETFs',
-    totalValueCny4: 0,
-    dailyProfitCny4: 0,
-    currentTotalProfitCny4: 0,
-    createdAt: now,
-    updatedAt: now,
+    totalValueCny4: toMoney4(0),
+    dailyProfitCny4: toMoney4(0),
+    currentTotalProfitCny4: toMoney4(0),
+    createdAt: nowDate,
+    updatedAt: nowDate,
   });
 
   // 3. Define Categories
@@ -80,8 +81,8 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
       name: c.name,
       targetAllocationBps: c.target,
       currentAllocationBps: 0,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: nowDate,
+      updatedAt: nowDate,
     });
   }
 
@@ -140,15 +141,15 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
         categoryId,
         symbol: asset.symbol,
         name: asset.name,
-        quantity: quantity,
+        quantity8: toQuantity8(quantity),
         costBasis4: toMoney4(asset.cost),
         dailyProfit4: toMoney4(dailyProfit),
         currentPrice4: toMoney4(asset.price),
         currency: asset.currency,
         brokerSource: asset.brokerSource,
         brokerAccount: asset.brokerAccount,
-        createdAt: now,
-        updatedAt: now,
+        createdAt: nowDate,
+        updatedAt: nowDate,
       });
     }
   }
@@ -212,15 +213,15 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
       categoryId,
       symbol: symbol,
       name: data.name,
-      quantity: allocation.quantity,
+      quantity8: toQuantity8(allocation.quantity),
       costBasis4: toMoney4(allocation.costBasis),
       dailyProfit4: toMoney4(dailyProfit),
       currentPrice4: toMoney4(lastPoint.price),
       currency: 'CNY',
       brokerSource: 'Manual',
       brokerAccount: 'CSV-Import',
-      createdAt: now,
-      updatedAt: now,
+      createdAt: nowDate,
+      updatedAt: nowDate,
     });
 
     for (const point of data.history) {
@@ -238,15 +239,15 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
       categoryId: categoryIdsByName.get('Cash')!,
       symbol: 'CNY',
       name: 'Chinese Yuan',
-      quantity: remainingCash,
+      quantity8: toQuantity8(remainingCash),
       costBasis4: toMoney4(1),
       dailyProfit4: toMoney4(0),
       currentPrice4: toMoney4(1),
       currency: 'CNY',
       brokerSource: 'Bank',
       brokerAccount: 'Savings',
-      createdAt: now,
-      updatedAt: now,
+      createdAt: nowDate,
+      updatedAt: nowDate,
     });
   }
 
@@ -287,7 +288,7 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
     await db.insert(portfolioHistories).values({
       id: crypto.randomUUID(),
       portfolioId: portfolioId,
-      timestampUtc: new Date(date).toISOString(),
+      timestamp: new Date(date),
       totalValueCny4: toMoney4(totalValue),
       dailyProfitCny4: toMoney4(dailyProfit),
       currentTotalProfitCny4: toMoney4(currentTotalProfit),

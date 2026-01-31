@@ -43,11 +43,11 @@ describe('Historical Performance API', () => {
       userId,
       name: 'P',
       description: null,
-      totalValueCny4: 0,
-      dailyProfitCny4: 0,
-      currentTotalProfitCny4: 0,
-      createdAt: now,
-      updatedAt: now,
+      totalValueCny4: toMoney4(0),
+      dailyProfitCny4: toMoney4(0),
+      currentTotalProfitCny4: toMoney4(0),
+      createdAt: new Date(now),
+      updatedAt: new Date(now),
     });
 
     // Seed history
@@ -55,7 +55,7 @@ describe('Historical Performance API', () => {
     await db.insert(portfolioHistories).values({
       id: 'h1',
       portfolioId,
-      timestampUtc: '2024-01-01T10:00:00Z',
+      timestamp: new Date('2024-01-01T10:00:00Z'),
       totalValueCny4: toMoney4(7000),
       dailyProfitCny4: toMoney4(100),
       currentTotalProfitCny4: toMoney4(100),
@@ -64,7 +64,7 @@ describe('Historical Performance API', () => {
     await db.insert(portfolioHistories).values({
       id: 'h2',
       portfolioId,
-      timestampUtc: '2024-01-02T10:00:00Z',
+      timestamp: new Date('2024-01-02T10:00:00Z'),
       totalValueCny4: toMoney4(7100),
       dailyProfitCny4: toMoney4(100),
       currentTotalProfitCny4: toMoney4(200),
@@ -73,7 +73,7 @@ describe('Historical Performance API', () => {
     await db.insert(portfolioHistories).values({
       id: 'h3',
       portfolioId,
-      timestampUtc: '2024-01-03T10:00:00Z',
+      timestamp: new Date('2024-01-03T10:00:00Z'),
       totalValueCny4: toMoney4(7200),
       dailyProfitCny4: toMoney4(100),
       currentTotalProfitCny4: toMoney4(300),
@@ -86,8 +86,8 @@ describe('Historical Performance API', () => {
       sourceCurrency: 'USD',
       targetCurrency: 'CNY',
       rate8: toRate8(7.0),
-      date: '2024-01-01',
-      createdAt: now,
+      date: new Date('2024-01-01'),
+      createdAt: new Date(now),
     });
     // 2024-01-03: 1 USD = 7.2 CNY
     // Day 2 should use Day 1 rate (7.0)
@@ -96,8 +96,8 @@ describe('Historical Performance API', () => {
       sourceCurrency: 'USD',
       targetCurrency: 'CNY',
       rate8: toRate8(7.2),
-      date: '2024-01-03',
-      createdAt: now,
+      date: new Date('2024-01-03'),
+      createdAt: new Date(now),
     });
 
     const app = new Hono<{ Variables: { db: AppDb } }>();
@@ -167,11 +167,11 @@ describe('Historical Performance API', () => {
       id: portfolioId,
       userId,
       name: 'P',
-      totalValueCny4: 0,
-      dailyProfitCny4: 0,
-      currentTotalProfitCny4: 0,
-      createdAt: now,
-      updatedAt: now,
+      totalValueCny4: toMoney4(0),
+      dailyProfitCny4: toMoney4(0),
+      currentTotalProfitCny4: toMoney4(0),
+      createdAt: new Date(now),
+      updatedAt: new Date(now),
     });
 
     const app = new Hono<{ Variables: { db: AppDb } }>();

@@ -1,7 +1,7 @@
 import { portfolios, assets, categories } from '../db/schema';
 import { eq, and, type InferSelectModel } from 'drizzle-orm';
 import { ExchangeRateService } from '../services/exchange-rate-service';
-import { fromMoney4 } from '../lib/money';
+import { fromMoney4, fromQuantity8 } from '../lib/money';
 import type { AppDb } from '../db';
 import type { 
   DashboardData,
@@ -97,7 +97,7 @@ export class PortfolioServiceImpl implements PortfolioService {
       annualReturn,
       totalProfit,
       currency: displayCurrency,
-      lastUpdated: new Date().toISOString(),
+      lastUpdated: new Date(),
       allocationByCategory,
       topPerformingAssets: topPerformingAssets as unknown as Asset[],
     };
@@ -162,10 +162,11 @@ export class PortfolioServiceImpl implements PortfolioService {
       for (const asset of categoryAssets) {
         const currentPrice = fromMoney4(asset.currentPrice4);
         const costBasis = fromMoney4(asset.costBasis4);
+        const quantity = fromQuantity8(asset.quantity8);
         
-        categoryValueCny += currentPrice * asset.quantity;
-        categoryCostCny += costBasis * asset.quantity;
-        categoryTotalProfitCny += (currentPrice - costBasis) * asset.quantity;
+        categoryValueCny += currentPrice * quantity;
+        categoryCostCny += costBasis * quantity;
+        categoryTotalProfitCny += (currentPrice - costBasis) * quantity;
       }
 
       // Convert to display currency if needed
@@ -191,9 +192,10 @@ export class PortfolioServiceImpl implements PortfolioService {
       for (const asset of categoryAssets) {
         const currentPrice = fromMoney4(asset.currentPrice4);
         const costBasis = fromMoney4(asset.costBasis4);
+        const quantity = fromQuantity8(asset.quantity8);
         
-        const assetTotalProfitCny = (currentPrice - costBasis) * asset.quantity;
-        const assetValueCny = currentPrice * asset.quantity;
+        const assetTotalProfitCny = (currentPrice - costBasis) * quantity;
+        const assetValueCny = currentPrice * quantity;
         
         let displayAssetValue = assetValueCny;
         let displayAssetProfit = assetTotalProfitCny;
@@ -203,7 +205,7 @@ export class PortfolioServiceImpl implements PortfolioService {
           displayAssetProfit = await exchangeRateService.convertMoney(assetTotalProfitCny, 'CNY', displayCurrency, today);
         }
 
-        const assetCostCny = costBasis * asset.quantity;
+        const assetCostCny = costBasis * quantity;
         const assetYield = assetCostCny > 0 
           ? (assetTotalProfitCny / assetCostCny) * 100 
           : 0;
@@ -212,7 +214,7 @@ export class PortfolioServiceImpl implements PortfolioService {
           id: asset.id,
           symbol: asset.symbol,
           name: asset.name,
-          quantity: asset.quantity,
+          quantity: quantity,
           value: displayAssetValue,
           profitAmount: displayAssetProfit,
           yield: assetYield,
@@ -241,10 +243,11 @@ export class PortfolioServiceImpl implements PortfolioService {
       for (const asset of uncategorizedAssets) {
         const currentPrice = fromMoney4(asset.currentPrice4);
         const costBasis = fromMoney4(asset.costBasis4);
+        const quantity = fromQuantity8(asset.quantity8);
         
-        uncategorizedValueCny += currentPrice * asset.quantity;
-        uncategorizedCostCny += costBasis * asset.quantity;
-        uncategorizedTotalProfitCny += (currentPrice - costBasis) * asset.quantity;
+        uncategorizedValueCny += currentPrice * quantity;
+        uncategorizedCostCny += costBasis * quantity;
+        uncategorizedTotalProfitCny += (currentPrice - costBasis) * quantity;
       }
 
       let displayUncategorizedValue = uncategorizedValueCny;
@@ -266,9 +269,10 @@ export class PortfolioServiceImpl implements PortfolioService {
       for (const asset of uncategorizedAssets) {
         const currentPrice = fromMoney4(asset.currentPrice4);
         const costBasis = fromMoney4(asset.costBasis4);
+        const quantity = fromQuantity8(asset.quantity8);
         
-        const assetTotalProfitCny = (currentPrice - costBasis) * asset.quantity;
-        const assetValueCny = currentPrice * asset.quantity;
+        const assetTotalProfitCny = (currentPrice - costBasis) * quantity;
+        const assetValueCny = currentPrice * quantity;
         
         let displayAssetValue = assetValueCny;
         let displayAssetProfit = assetTotalProfitCny;
@@ -278,7 +282,7 @@ export class PortfolioServiceImpl implements PortfolioService {
           displayAssetProfit = await exchangeRateService.convertMoney(assetTotalProfitCny, 'CNY', displayCurrency, today);
         }
 
-        const assetCostCny = costBasis * asset.quantity;
+        const assetCostCny = costBasis * quantity;
         const assetYield = assetCostCny > 0 
           ? (assetTotalProfitCny / assetCostCny) * 100 
           : 0;
@@ -287,7 +291,7 @@ export class PortfolioServiceImpl implements PortfolioService {
           id: 'uncategorized',
           symbol: asset.symbol,
           name: asset.name,
-          quantity: asset.quantity,
+          quantity: quantity,
           value: displayAssetValue,
           profitAmount: displayAssetProfit,
           yield: assetYield,
@@ -335,11 +339,12 @@ export class PortfolioServiceImpl implements PortfolioService {
       const currentPrice = fromMoney4(asset.currentPrice4);
       const costBasis = fromMoney4(asset.costBasis4);
       const dailyProfit = fromMoney4(asset.dailyProfit4);
+      const quantity = fromQuantity8(asset.quantity8);
 
-      totalValueCny += currentPrice * asset.quantity;
+      totalValueCny += currentPrice * quantity;
       dailyProfitCny += dailyProfit;
-      totalCostCny += costBasis * asset.quantity;
-      currentTotalProfitCny += (currentPrice - costBasis) * asset.quantity;
+      totalCostCny += costBasis * quantity;
+      currentTotalProfitCny += (currentPrice - costBasis) * quantity;
     }
 
     return {
@@ -366,7 +371,7 @@ export class PortfolioServiceImpl implements PortfolioService {
     for (const asset of assetList) {
       const categoryId = asset.categoryId || 'uncategorized';
       const currentPrice = fromMoney4(asset.currentPrice4);
-      const assetValueCny = currentPrice * asset.quantity;
+      const assetValueCny = currentPrice * fromQuantity8(asset.quantity8);
 
       if (allocationByCategory.has(categoryId)) {
         const existing = allocationByCategory.get(categoryId)!;

@@ -8,8 +8,8 @@ export interface User {
   themeSettings: 'light' | 'dark' | 'auto';
   displayCurrency: string;
   timeZone: string;
-  createdAt: IsoDateTimeString;
-  updatedAt: IsoDateTimeString;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Portfolio {
@@ -20,8 +20,8 @@ export interface Portfolio {
   totalValueCny: number;
   dailyProfitCny: number;
   currentTotalProfitCny: number;
-  createdAt: IsoDateTimeString;
-  updatedAt: IsoDateTimeString;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface PortfolioWithAssets extends Portfolio {
@@ -42,8 +42,8 @@ export interface Asset {
   currency: string;
   brokerSource: string;
   brokerAccount: string;
-  createdAt: IsoDateTimeString;
-  updatedAt: IsoDateTimeString;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Category {
@@ -53,14 +53,14 @@ export interface Category {
   name: string;
   targetAllocation: number; // Percentage: 0.00 to 100.00
   currentAllocation: number; // Calculated percentage
-  createdAt: IsoDateTimeString;
-  updatedAt: IsoDateTimeString;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface PortfolioHistory {
   id: string;
   portfolioId: string;
-  timestamp: IsoDateTimeString;
+  timestamp: Date;
   totalValueCny: number;
   dailyProfitCny: number;
   currentTotalProfitCny: number;
@@ -71,8 +71,8 @@ export interface ExchangeRate {
   sourceCurrency: string; // Source currency code (e.g., USD)
   targetCurrency: string; // Target currency code (always CNY)
   exchangeRate: number; // Rate from source to target currency
-  date: IsoDateString; // Date of the exchange rate
-  createdAt: IsoDateTimeString;
+  date: Date; // Date of the exchange rate
+  createdAt: Date;
 }
 
 export interface CreatePortfolioRequest {
@@ -114,7 +114,7 @@ export interface DashboardData {
   annualReturn: number;
   totalProfit: number;
   currency: string;
-  lastUpdated: IsoDateTimeString;
+  lastUpdated: Date;
   allocationByCategory: Array<{
     categoryName: string;
     percentage: number;
@@ -161,11 +161,11 @@ export interface RebalanceRecommendations {
 
 export interface HistoricalPerformance {
   portfolioId: string;
-  startDate: IsoDateString;
-  endDate: IsoDateString;
+  startDate: Date;
+  endDate: Date;
   currency: string;
   snapshots: Array<{
-    date: IsoDateString;
+    date: Date;
     totalValue: number;
     dailyProfit: number;
     cumulativeReturn: number;

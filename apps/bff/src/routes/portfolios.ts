@@ -6,7 +6,8 @@ import type { Asset, Category, Portfolio } from '@repo/shared-types';
 import { requireAuth } from '../middleware/auth';
 import { assets, categories, portfolios, portfolioHistories } from '../db/schema';
 import { nowIsoUtc } from '../lib/time';
-import { fromMoney4, toMoney4 } from '../lib/money';
+import { fromMoney4, toMoney4, toQuantity8, fromQuantity8 } from '../lib/money';
+import { PortfolioMetricsService } from '../services/portfolio-metrics-service';
 import { PortfolioViewService } from '../services/portfolio-view-service';
 
 const createPortfolioSchema = z.object({
@@ -64,8 +65,8 @@ function categoryRowToApi(row: typeof categories.$inferSelect): Category {
     name: row.name,
     targetAllocation: row.targetAllocationBps / 100,
     currentAllocation: row.currentAllocationBps / 100,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
   } as unknown as Category;
 }
 
@@ -77,15 +78,15 @@ function assetRowToApi(row: typeof assets.$inferSelect): Asset {
     categoryId: row.categoryId ?? undefined,
     symbol: row.symbol,
     name: row.name,
-    quantity: row.quantity,
+    quantity: fromQuantity8(row.quantity8),
     costBasis: fromMoney4(row.costBasis4),
     dailyProfit: fromMoney4(row.dailyProfit4),
     currentPrice: fromMoney4(row.currentPrice4),
     currency: row.currency,
     brokerSource: row.brokerSource,
     brokerAccount: row.brokerAccount,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
   } as unknown as Asset;
 }
 
@@ -104,7 +105,6 @@ portfolioRoutes.get('/', async (c) => {
 
   // Lazy creation: If user has no portfolios, create a default one
   if (rows.length === 0) {
-    const now = nowIsoUtc();
     const defaultPortfolioId = crypto.randomUUID();
     
     const [newPortfolio] = await c
@@ -118,15 +118,15 @@ portfolioRoutes.get('/', async (c) => {
         totalValueCny4: 0,
         dailyProfitCny4: 0,
         currentTotalProfitCny4: 0,
-        createdAt: now,
-        updatedAt: now,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       })
       .returning();
 
     await c.get('db').insert(portfolioHistories).values({
       id: crypto.randomUUID(),
       portfolioId: defaultPortfolioId,
-      timestampUtc: now,
+      timestamp: new Date(),
       totalValueCny4: 0,
       dailyProfitCny4: 0,
       currentTotalProfitCny4: 0,
@@ -141,7 +141,6 @@ portfolioRoutes.get('/', async (c) => {
 portfolioRoutes.post('/', zValidator('json', createPortfolioSchema), async (c) => {
   const { userId } = c.get('auth');
   const input = c.req.valid('json');
-  const now = nowIsoUtc();
 
   const [row] = await c
     .get('db')
@@ -154,15 +153,15 @@ portfolioRoutes.post('/', zValidator('json', createPortfolioSchema), async (c) =
       totalValueCny4: 0,
       dailyProfitCny4: 0,
       currentTotalProfitCny4: 0,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     })
     .returning();
 
   await c.get('db').insert(portfolioHistories).values({
     id: crypto.randomUUID(),
     portfolioId: row.id,
-    timestampUtc: now,
+    timestamp: new Date(),
     totalValueCny4: 0,
     dailyProfitCny4: 0,
     currentTotalProfitCny4: 0,
@@ -191,12 +190,11 @@ portfolioRoutes.put('/:portfolioId', zValidator('json', updatePortfolioSchema), 
   const { userId } = c.get('auth');
   const portfolioId = c.req.param('portfolioId');
   const input = c.req.valid('json');
-  const now = nowIsoUtc();
 
   const updated = await c
     .get('db')
     .update(portfolios)
-    .set({ ...input, updatedAt: now })
+    .set({ ...input, updatedAt: new Date() })
     .where(and(eq(portfolios.id, portfolioId), eq(portfolios.userId, userId)))
     .returning();
 
@@ -279,17 +277,20 @@ portfolioRoutes.post('/:portfolioId/assets', zValidator('json', createAssetSchem
       categoryId: input.categoryId,
       symbol: input.symbol,
       name: input.name,
-      quantity: input.quantity,
+      quantity8: toQuantity8(input.quantity),
       costBasis4: toMoney4(input.costBasis),
       dailyProfit4: toMoney4(input.dailyProfit),
       currentPrice4: toMoney4(input.currentPrice),
       currency: input.currency,
       brokerSource: input.brokerSource,
       brokerAccount: input.brokerAccount,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     })
     .returning();
+
+  const metrics = new PortfolioMetricsService(c.get('db'));
+  await metrics.recomputeAndPersist(userId, portfolioId);
 
   return c.json(assetRowToApi(row));
 });
@@ -323,7 +324,6 @@ portfolioRoutes.post('/:portfolioId/categories', zValidator('json', createCatego
   const { userId } = c.get('auth');
   const portfolioId = c.req.param('portfolioId');
   const input = c.req.valid('json');
-  const now = nowIsoUtc();
 
   const owned = await c
     .get('db')
@@ -344,8 +344,8 @@ portfolioRoutes.post('/:portfolioId/categories', zValidator('json', createCatego
       name: input.name,
       targetAllocationBps: Math.round((input.targetAllocation ?? 0) * 100),
       currentAllocationBps: 0,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     })
     .returning();
 
@@ -391,7 +391,6 @@ categoryRoutes.put('/:categoryId', zValidator('json', updateCategorySchema), asy
   const { userId } = c.get('auth');
   const categoryId = c.req.param('categoryId');
   const input = c.req.valid('json');
-  const now = nowIsoUtc();
 
   const owned = await c
     .get('db')
@@ -411,7 +410,7 @@ categoryRoutes.put('/:categoryId', zValidator('json', updateCategorySchema), asy
     .set({
       ...(input.name ? { name: input.name } : {}),
       ...(typeof input.targetAllocation === 'number' ? { targetAllocationBps: Math.round(input.targetAllocation * 100) } : {}),
-      updatedAt: now,
+      updatedAt: new Date(),
     })
     .where(eq(categories.id, categoryId))
     .returning();
@@ -429,7 +428,7 @@ categoryRoutes.delete('/:categoryId', async (c) => {
 
   const owned = await c
     .get('db')
-    .select({ id: categories.id })
+    .select({ id: categories.id, portfolioId: categories.portfolioId })
     .from(categories)
     .innerJoin(portfolios, eq(categories.portfolioId, portfolios.id))
     .where(and(eq(categories.id, categoryId), eq(portfolios.userId, userId)))
@@ -438,8 +437,12 @@ categoryRoutes.delete('/:categoryId', async (c) => {
     return c.json({ error: { code: 'NOT_FOUND', message: 'Category not found' } }, 404);
   }
 
-  await c.get('db').update(assets).set({ categoryId: null, updatedAt: nowIsoUtc() }).where(eq(assets.categoryId, categoryId));
+  await c.get('db').update(assets).set({ categoryId: null, updatedAt: new Date() }).where(eq(assets.categoryId, categoryId));
   await c.get('db').delete(categories).where(eq(categories.id, categoryId));
+
+  const metrics = new PortfolioMetricsService(c.get('db'));
+  await metrics.recomputeAndPersist(userId, owned[0].portfolioId);
+
   return c.json({ success: true });
 });
 

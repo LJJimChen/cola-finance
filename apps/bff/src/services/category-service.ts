@@ -113,7 +113,7 @@ export class CategoryServiceImpl implements CategoryService {
       .set({
         ...(data.name ? { name: data.name } : {}),
         ...(data.targetAllocation !== undefined ? { targetAllocationBps: Math.round(data.targetAllocation * 100) } : {}),
-        updatedAt: new Date().toISOString(),
+        updatedAt: new Date(),
       })
       .where(eq(categories.id, categoryId))
       .returning();

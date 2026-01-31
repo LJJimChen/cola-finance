@@ -28,8 +28,8 @@ describe('ExchangeRateService', () => {
       sourceCurrency: 'USD',
       targetCurrency: 'CNY',
       rate8: toRate8(7.2),
-      date: '2024-01-01',
-      createdAt: new Date().toISOString(),
+      date: new Date('2024-01-01'),
+      createdAt: new Date(),
     });
 
     const rate = await service.getRateToCny('USD', '2024-01-01');
@@ -71,8 +71,8 @@ describe('ExchangeRateService', () => {
       sourceCurrency: 'USD',
       targetCurrency: 'CNY',
       rate8: toRate8(7.1),
-      date: '2024-01-01',
-      createdAt: new Date().toISOString(),
+      date: new Date('2024-01-01'),
+      createdAt: new Date(),
     });
 
     // Insert rate for day before yesterday
@@ -81,8 +81,8 @@ describe('ExchangeRateService', () => {
       sourceCurrency: 'USD',
       targetCurrency: 'CNY',
       rate8: toRate8(7.0),
-      date: '2023-12-31',
-      createdAt: new Date().toISOString(),
+      date: new Date('2023-12-31'),
+      createdAt: new Date(),
     });
 
     // Request for today (2024-01-02), should get 2024-01-01 rate (7.1)
@@ -100,8 +100,8 @@ describe('ExchangeRateService', () => {
       sourceCurrency: 'USD',
       targetCurrency: 'CNY',
       rate8: toRate8(7.3),
-      date: '2025-01-01',
-      createdAt: new Date().toISOString(),
+      date: new Date('2025-01-01'),
+      createdAt: new Date(),
     });
 
     // Request for past (2024-01-01), should get 2025-01-01 rate (7.3)

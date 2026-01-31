@@ -1,6 +1,6 @@
 import type { AppDb } from '../db';
 import { portfolioHistories } from '../db/schema';
-import { eq, desc, and } from 'drizzle-orm';
+import { eq, desc, and, gte, lte } from 'drizzle-orm';
 import type { PortfolioHistory } from '@repo/shared-types';
 
 export interface PortfolioHistoryService {
@@ -24,24 +24,22 @@ export class PortfolioHistoryServiceImpl implements PortfolioHistoryService {
   }
 
   async getSnapshots(portfolioId: string, startDate?: Date, endDate?: Date): Promise<PortfolioHistory[]> {
-    let query = this.db
-      .select()
-      .from(portfolioHistories)
-      .where(eq(portfolioHistories.portfolioId, portfolioId));
+    const conditions = [eq(portfolioHistories.portfolioId, portfolioId)];
 
     if (startDate) {
-      query = query.where(and(
-        this.db.schema.portfolioHistories.timestamp >= startDate.toISOString()
-      ));
+      conditions.push(gte(portfolioHistories.timestamp, startDate));
     }
 
     if (endDate) {
-      query = query.where(and(
-        this.db.schema.portfolioHistories.timestamp <= endDate.toISOString()
-      ));
+      conditions.push(lte(portfolioHistories.timestamp, endDate));
     }
 
-    const result = await query.orderBy(desc(portfolioHistories.timestamp));
+    const result = await this.db
+      .select()
+      .from(portfolioHistories)
+      .where(and(...conditions))
+      .orderBy(desc(portfolioHistories.timestamp));
+
     return result.map(item => item as unknown as PortfolioHistory);
   }
 

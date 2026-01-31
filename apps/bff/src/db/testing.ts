@@ -96,7 +96,7 @@ async function createTables(client: Client): Promise<void> {
     category_id TEXT,
     symbol TEXT NOT NULL,
     name TEXT NOT NULL,
-    quantity REAL NOT NULL,
+    quantity8 INTEGER NOT NULL,
     cost_basis4 INTEGER NOT NULL,
     daily_profit4 INTEGER NOT NULL,
     current_price4 INTEGER NOT NULL,
@@ -111,7 +111,7 @@ async function createTables(client: Client): Promise<void> {
   await client.execute(`CREATE TABLE portfolio_histories (
     id TEXT PRIMARY KEY,
     portfolio_id TEXT NOT NULL,
-    timestamp_utc TEXT NOT NULL,
+    timestamp INTEGER NOT NULL,
     total_value_cny4 INTEGER NOT NULL,
     daily_profit_cny4 INTEGER NOT NULL,
     current_total_profit_cny4 INTEGER NOT NULL,
@@ -123,7 +123,9 @@ async function createTables(client: Client): Promise<void> {
     source_currency TEXT NOT NULL,
     target_currency TEXT NOT NULL,
     rate8 INTEGER NOT NULL,
-    date TEXT NOT NULL,
+    date INTEGER NOT NULL,
     created_at INTEGER NOT NULL
   );`);
+
+  await client.execute(`CREATE UNIQUE INDEX exchange_rates_unique_idx ON exchange_rates (source_currency, target_currency, date);`);
 }

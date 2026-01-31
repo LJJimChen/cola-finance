@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { createTestDb } from '../../db/testing';
 import { assets, exchangeRates, portfolios, user } from '../../db/schema';
-import { toMoney4, toRate8 } from '../../lib/money';
+import { toMoney4, toRate8, toQuantity8 } from '../../lib/money';
 import { PortfolioMetricsService } from '../../services/portfolio-metrics-service';
 import { eq } from 'drizzle-orm';
 
 describe('PortfolioMetricsService', () => {
   it('recomputes totals using FX rates and persists to portfolios', async () => {
     const { db } = await createTestDb();
-    const now = '2026-01-18T00:00:00.000Z';
-    const today = '2026-01-18';
+    const now = new Date('2026-01-18T00:00:00.000Z');
+    const today = new Date('2026-01-18');
     const userId = 'user-1';
     const portfolioId = 'portfolio-1';
 
@@ -22,8 +22,8 @@ describe('PortfolioMetricsService', () => {
       themeSettings: 'auto',
       displayCurrency: 'CNY',
       timeZone: 'UTC',
-      createdAt: new Date(now),
-      updatedAt: new Date(now),
+      createdAt: now,
+      updatedAt: now,
     });
 
     await db.insert(portfolios).values({
@@ -31,9 +31,9 @@ describe('PortfolioMetricsService', () => {
       userId,
       name: 'P',
       description: null,
-      totalValueCny4: 0,
-      dailyProfitCny4: 0,
-      currentTotalProfitCny4: 0,
+      totalValueCny4: toMoney4(0),
+      dailyProfitCny4: toMoney4(0),
+      currentTotalProfitCny4: toMoney4(0),
       createdAt: now,
       updatedAt: now,
     });
@@ -49,12 +49,12 @@ describe('PortfolioMetricsService', () => {
 
     await db.insert(assets).values({
       id: 'asset-1',
-      userId,
+      // userId, // Removed from schema
       portfolioId,
       categoryId: null,
       symbol: 'AAPL',
       name: 'Apple',
-      quantity: 10,
+      quantity8: toQuantity8(10),
       costBasis4: toMoney4(170),
       currentPrice4: toMoney4(190),
       dailyProfit4: toMoney4(12),
@@ -66,7 +66,7 @@ describe('PortfolioMetricsService', () => {
     });
 
     const svc = new PortfolioMetricsService(db);
-    const totals = await svc.recomputeAndPersist(userId, portfolioId, { asOfUtc: now });
+    const totals = await svc.recomputeAndPersist(userId, portfolioId, { asOfUtc: now.toISOString() });
 
     expect(totals.totalValueCny).toBeCloseTo(190 * 10 * 7.2, 4);
     expect(totals.dailyProfitCny).toBeCloseTo(12 * 7.2, 4);

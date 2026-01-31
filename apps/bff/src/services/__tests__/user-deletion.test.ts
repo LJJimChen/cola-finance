@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { createTestDb } from '../../db/testing';
 import { account, assets, categories, portfolioHistories, portfolios, session, user } from '../../db/schema';
 import { eq } from 'drizzle-orm';
-import { toMoney4 } from '../../lib/money';
+import { toMoney4, toQuantity8 } from '../../lib/money';
 
 describe('User Deletion Cascade', () => {
   it('should delete all related data when user is deleted', async () => {
@@ -46,8 +46,8 @@ describe('User Deletion Cascade', () => {
       totalValueCny4: 0,
       dailyProfitCny4: 0,
       currentTotalProfitCny4: 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
 
     await db.insert(categories).values({
@@ -56,8 +56,8 @@ describe('User Deletion Cascade', () => {
       name: 'Cat 1',
       targetAllocationBps: 0,
       currentAllocationBps: 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
 
     await db.insert(assets).values({
@@ -65,21 +65,21 @@ describe('User Deletion Cascade', () => {
       portfolioId,
       symbol: 'AAPL',
       name: 'Apple',
-      quantity: 1,
+      quantity8: toQuantity8(1),
       costBasis4: 0,
       dailyProfit4: 0,
       currentPrice4: 0,
       currency: 'USD',
       brokerSource: 'manual',
       brokerAccount: 'manual',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
 
     await db.insert(portfolioHistories).values({
       id: 'hist-1',
       portfolioId,
-      timestampUtc: new Date().toISOString(),
+      timestamp: new Date(),
       totalValueCny4: 0,
       dailyProfitCny4: 0,
       currentTotalProfitCny4: 0,

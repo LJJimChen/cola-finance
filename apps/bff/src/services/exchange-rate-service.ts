@@ -22,7 +22,7 @@ export class ExchangeRateService {
    * Used for bulk processing, such as calculating historical performance over a date range.
    * Fetching all rates at once avoids the N+1 query problem that would occur if rates were fetched individually for each day in a loop.
    */
-  async getRatesForCurrencyPair(sourceCurrency: string, targetCurrency: string = 'CNY'): Promise<{ date: string; rate: number }[]> {
+  async getRatesForCurrencyPair(sourceCurrency: string, targetCurrency: string = 'CNY'): Promise<{ date: Date; rate: number }[]> {
     const rawRates = await this.#db
       .select({
         date: exchangeRates.date,
@@ -51,12 +51,13 @@ export class ExchangeRateService {
    * Primarily used by the `/exchange-rates` API endpoint to display available rates to the user or for administrative purposes.
    */
   async getRates(date: string, baseCurrency?: string) {
+    const dateObj = new Date(date);
     const query = baseCurrency
       ? and(
           eq(exchangeRates.sourceCurrency, baseCurrency),
-          eq(exchangeRates.date, date)
+          eq(exchangeRates.date, dateObj)
         )
-      : eq(exchangeRates.date, date);
+      : eq(exchangeRates.date, dateObj);
 
     const rows = await this.#db
       .select()
@@ -95,6 +96,8 @@ export class ExchangeRateService {
       return 1;
     }
 
+    const dateObj = new Date(date);
+
     let result = await this.#db
       .select()
       .from(exchangeRates)
@@ -102,7 +105,7 @@ export class ExchangeRateService {
         and(
           eq(exchangeRates.sourceCurrency, sourceCurrency),
           eq(exchangeRates.targetCurrency, 'CNY'),
-          eq(exchangeRates.date, date),
+          eq(exchangeRates.date, dateObj),
         ),
       )
       .limit(1);
@@ -127,7 +130,7 @@ export class ExchangeRateService {
           and(
             eq(exchangeRates.sourceCurrency, sourceCurrency),
             eq(exchangeRates.targetCurrency, 'CNY'),
-            lte(exchangeRates.date, date),
+            lte(exchangeRates.date, dateObj),
           ),
         )
         .orderBy(desc(exchangeRates.date))
@@ -218,8 +221,8 @@ export class ExchangeRateService {
           sourceCurrency,
           targetCurrency: 'CNY',
           rate8: toRate8(rate),
-          date,
-          createdAt: new Date().toISOString(),
+          date: new Date(date),
+          createdAt: new Date(),
         });
 
         return rate;

@@ -58,8 +58,8 @@ export const portfolios = sqliteTable('portfolios', {
   totalValueCny4: integer('total_value_cny4').notNull(),
   dailyProfitCny4: integer('daily_profit_cny4').notNull(),
   currentTotalProfitCny4: integer('current_total_profit_cny4').notNull(),
-  createdAt: text('created_at').notNull(),
-  updatedAt: text('updated_at').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 });
 
 export const categories = sqliteTable('categories', {
@@ -68,8 +68,8 @@ export const categories = sqliteTable('categories', {
   name: text('name').notNull(),
   targetAllocationBps: integer('target_allocation_bps').notNull(),
   currentAllocationBps: integer('current_allocation_bps').notNull(),
-  createdAt: text('created_at').notNull(),
-  updatedAt: text('updated_at').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 }, (t) => [
   uniqueIndex('categories_portfolio_id_name_unique').on(t.portfolioId, t.name),
 ]);
@@ -80,21 +80,21 @@ export const assets = sqliteTable('assets', {
   categoryId: text('category_id').references(() => categories.id, { onDelete: 'set null' }),
   symbol: text('symbol').notNull(),
   name: text('name').notNull(),
-  quantity: real('quantity').notNull(),
+  quantity8: integer('quantity8').notNull(),
   costBasis4: integer('cost_basis4').notNull(),
   dailyProfit4: integer('daily_profit4').notNull(),
   currentPrice4: integer('current_price4').notNull(),
   currency: text('currency').notNull(),
   brokerSource: text('broker_source').notNull(),
   brokerAccount: text('broker_account').notNull(),
-  createdAt: text('created_at').notNull(),
-  updatedAt: text('updated_at').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 });
 
 export const portfolioHistories = sqliteTable('portfolio_histories', {
   id: text('id').primaryKey(),
   portfolioId: text('portfolio_id').notNull().references(() => portfolios.id, { onDelete: 'cascade' }),
-  timestampUtc: text('timestamp_utc').notNull(),
+  timestamp: integer('timestamp', { mode: 'timestamp' }).notNull(),
   totalValueCny4: integer('total_value_cny4').notNull(),
   dailyProfitCny4: integer('daily_profit_cny4').notNull(),
   currentTotalProfitCny4: integer('current_total_profit_cny4').notNull(),
@@ -105,6 +105,8 @@ export const exchangeRates = sqliteTable('exchange_rates', {
   sourceCurrency: text('source_currency').notNull(),
   targetCurrency: text('target_currency').notNull(),
   rate8: integer('rate8').notNull(),
-  date: text('date').notNull(),
-  createdAt: text('created_at').notNull(),
-});
+  date: integer('date', { mode: 'timestamp' }).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, (t) => [
+  uniqueIndex('exchange_rates_unique').on(t.sourceCurrency, t.targetCurrency, t.date),
+]);
