@@ -5,15 +5,11 @@ import { apiRoutes } from './routes';
 import { toAppError } from './lib/errors';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 
-type Bindings = {
-  DB: D1Database;
-};
-
 type Variables = {
   db: AppDb;
 };
 
-const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
+const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 app.use(
   '/api/*',

@@ -3,6 +3,7 @@ import { categories, assets, exchangeRates, portfolioHistories, portfolios } fro
 import { toMoney4, toRate8, toQuantity8 } from '../lib/money';
 import { PortfolioMetricsService } from './portfolio-metrics-service';
 import { etfData } from './etf-data';
+import { randomUUID } from 'node:crypto';
 
 type SeedArgs = {
   userId: string;
@@ -34,7 +35,7 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
     // In a real app, this table shouldn't be user-scoped or seeded per user.
     // But following existing pattern for now.
     await db.insert(exchangeRates).values({
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       sourceCurrency: fx.source,
       targetCurrency: fx.target,
       rate8: toRate8(fx.rate),
@@ -44,7 +45,7 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
   }
 
   // 2. Define Main Portfolio
-  const portfolioId = crypto.randomUUID();
+  const portfolioId = randomUUID();
   const now = args.now;
   const nowDate = new Date(now);
 
@@ -72,7 +73,7 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
 
   const categoryIdsByName = new Map<string, string>();
   for (const c of categoriesList) {
-    const catId = crypto.randomUUID();
+    const catId = randomUUID();
     categoryIdsByName.set(c.name, catId);
     await db.insert(categories).values({
       id: catId,
@@ -135,7 +136,7 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
       const dailyProfit = (asset.price - asset.cost) * 0.1; 
 
       await db.insert(assets).values({
-        id: crypto.randomUUID(),
+        id: randomUUID(),
         portfolioId: portfolioId,
         categoryId,
         symbol: asset.symbol,
@@ -207,7 +208,7 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
     const categoryId = categoryIdsByName.get(categoryName)!;
 
     await db.insert(assets).values({
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       portfolioId: portfolioId,
       categoryId,
       symbol: symbol,
@@ -233,7 +234,7 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
   // 6. Seed Cash Asset
   if (remainingCash > 0) {
     await db.insert(assets).values({
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       portfolioId: portfolioId,
       categoryId: categoryIdsByName.get('Cash')!,
       symbol: 'CNY',
@@ -285,7 +286,7 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
     const currentTotalProfit = totalValue - INITIAL_CAPITAL;
 
     await db.insert(portfolioHistories).values({
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       portfolioId: portfolioId,
       timestamp: new Date(date),
       totalValueCny4: toMoney4(totalValue),

@@ -6,6 +6,7 @@ import { fromMoney4, roundMoney4, toMoney4 } from '../lib/money';
 import { toIsoDateInTimeZone } from '../lib/time';
 import { ExchangeRateService } from './exchange-rate-service';
 import { MissingExchangeRateError } from '../lib/errors';
+import { randomUUID } from 'node:crypto';
 
 export interface PortfolioHistoryService {
   getLatestSnapshot(portfolioId: string): Promise<PortfolioHistory | null>;
@@ -69,7 +70,7 @@ export class PortfolioHistoryServiceImpl implements PortfolioHistoryService {
     const [result] = await this.db
       .insert(portfolioHistories)
       .values({
-        id: crypto.randomUUID(),
+        id: randomUUID(),
         portfolioId,
         timestamp: data.timestamp,
         totalValueCny4: toMoney4(data.totalValueCny),

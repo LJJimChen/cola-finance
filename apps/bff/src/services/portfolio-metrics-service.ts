@@ -5,6 +5,7 @@ import { AppError } from '../lib/errors';
 import { fromMoney4, fromQuantity8, roundMoney4, toMoney4 } from '../lib/money';
 import { nowIsoUtc } from '../lib/time';
 import { ExchangeRateService } from './exchange-rate-service';
+import { randomUUID } from 'node:crypto';
 
 export type PortfolioTotals = {
   totalValueCny: number;
@@ -120,7 +121,7 @@ export class PortfolioMetricsService {
     }
 
     await this.#db.insert(portfolioHistories).values({
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       portfolioId,
       timestamp: new Date(snapshot.asOfUtc),
       totalValueCny4: toMoney4(snapshot.totalValueCny),

@@ -12,7 +12,7 @@ CREATE TABLE `account` (
 	`password` text,
 	`created_at` integer NOT NULL,
 	`updated_at` integer NOT NULL,
-	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action
+	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
 CREATE TABLE `assets` (
@@ -21,15 +21,15 @@ CREATE TABLE `assets` (
 	`category_id` text,
 	`symbol` text NOT NULL,
 	`name` text NOT NULL,
-	`quantity` real NOT NULL,
+	`quantity8` integer NOT NULL,
 	`cost_basis4` integer NOT NULL,
 	`daily_profit4` integer NOT NULL,
 	`current_price4` integer NOT NULL,
 	`currency` text NOT NULL,
 	`broker_source` text NOT NULL,
 	`broker_account` text NOT NULL,
-	`created_at` text NOT NULL,
-	`updated_at` text NOT NULL,
+	`created_at` integer NOT NULL,
+	`updated_at` integer NOT NULL,
 	FOREIGN KEY (`portfolio_id`) REFERENCES `portfolios`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`category_id`) REFERENCES `categories`(`id`) ON UPDATE no action ON DELETE set null
 );
@@ -40,8 +40,8 @@ CREATE TABLE `categories` (
 	`name` text NOT NULL,
 	`target_allocation_bps` integer NOT NULL,
 	`current_allocation_bps` integer NOT NULL,
-	`created_at` text NOT NULL,
-	`updated_at` text NOT NULL,
+	`created_at` integer NOT NULL,
+	`updated_at` integer NOT NULL,
 	FOREIGN KEY (`portfolio_id`) REFERENCES `portfolios`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
@@ -51,14 +51,15 @@ CREATE TABLE `exchange_rates` (
 	`source_currency` text NOT NULL,
 	`target_currency` text NOT NULL,
 	`rate8` integer NOT NULL,
-	`date` text NOT NULL,
-	`created_at` text NOT NULL
+	`date` integer NOT NULL,
+	`created_at` integer NOT NULL
 );
 --> statement-breakpoint
+CREATE UNIQUE INDEX `exchange_rates_unique` ON `exchange_rates` (`source_currency`,`target_currency`,`date`);--> statement-breakpoint
 CREATE TABLE `portfolio_histories` (
 	`id` text PRIMARY KEY NOT NULL,
 	`portfolio_id` text NOT NULL,
-	`timestamp_utc` text NOT NULL,
+	`timestamp` integer NOT NULL,
 	`total_value_cny4` integer NOT NULL,
 	`daily_profit_cny4` integer NOT NULL,
 	`current_total_profit_cny4` integer NOT NULL,
@@ -73,8 +74,8 @@ CREATE TABLE `portfolios` (
 	`total_value_cny4` integer NOT NULL,
 	`daily_profit_cny4` integer NOT NULL,
 	`current_total_profit_cny4` integer NOT NULL,
-	`created_at` text NOT NULL,
-	`updated_at` text NOT NULL,
+	`created_at` integer NOT NULL,
+	`updated_at` integer NOT NULL,
 	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
@@ -87,7 +88,7 @@ CREATE TABLE `session` (
 	`ip_address` text,
 	`user_agent` text,
 	`user_id` text NOT NULL,
-	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action
+	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `session_token_unique` ON `session` (`token`);--> statement-breakpoint
@@ -102,7 +103,7 @@ CREATE TABLE `user` (
 	`language_preference` text DEFAULT 'zh',
 	`theme_settings` text DEFAULT 'auto',
 	`display_currency` text DEFAULT 'CNY',
-	`time_zone` text DEFAULT 'Asia/Shanghai'
+	`time_zone` text DEFAULT 'UTC'
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `user_email_unique` ON `user` (`email`);--> statement-breakpoint

@@ -4,6 +4,7 @@ import type { Category, CreateCategoryRequest, UpdateCategoryRequest } from '@re
 import type { AppDb } from '../db';
 import { PortfolioMetricsService } from './portfolio-metrics-service';
 import { NotFoundError, ConflictError } from '../lib/errors';
+import { randomUUID } from 'node:crypto';
 
 export interface CategoryService {
   getCategoriesByPortfolio(userId: string, portfolioId: string): Promise<Category[]>;
@@ -66,7 +67,7 @@ export class CategoryServiceImpl implements CategoryService {
     const [newCategory] = await this.db
       .insert(categories)
       .values({
-        id: crypto.randomUUID(),
+        id: randomUUID(),
         portfolioId,
         name: data.name,
         targetAllocationBps: Math.round((data.targetAllocation ?? 0) * 100),

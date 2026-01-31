@@ -4,6 +4,7 @@ import { ExchangeRateService } from '../services/exchange-rate-service';
 import { fromMoney4, fromQuantity8 } from '../lib/money';
 import type { AppDb } from '../db';
 import { NotFoundError } from '../lib/errors';
+import { randomUUID } from 'node:crypto';
 import type { 
   DashboardData,
   AllocationData,
@@ -53,7 +54,7 @@ export class PortfolioServiceImpl implements PortfolioService {
 
     // Lazy creation: If user has no portfolios, create a default one
     if (rows.length === 0) {
-      const defaultPortfolioId = crypto.randomUUID();
+      const defaultPortfolioId = randomUUID();
       
       const [newPortfolio] = await this.db
         .insert(portfolios)
@@ -71,7 +72,7 @@ export class PortfolioServiceImpl implements PortfolioService {
         .returning();
 
       await this.db.insert(portfolioHistories).values({
-        id: crypto.randomUUID(),
+        id: randomUUID(),
         portfolioId: defaultPortfolioId,
         timestamp: new Date(),
         totalValueCny4: 0,
@@ -89,7 +90,7 @@ export class PortfolioServiceImpl implements PortfolioService {
     const [row] = await this.db
       .insert(portfolios)
       .values({
-        id: crypto.randomUUID(),
+        id: randomUUID(),
         userId,
         name: data.name,
         description: data.description,
@@ -102,9 +103,9 @@ export class PortfolioServiceImpl implements PortfolioService {
       .returning();
 
     await this.db.insert(portfolioHistories).values({
-      id: crypto.randomUUID(),
-      portfolioId: row.id,
-      timestamp: new Date(),
+        id: randomUUID(),
+        portfolioId: row.id,
+        timestamp: new Date(),
       totalValueCny4: 0,
       dailyProfitCny4: 0,
       currentTotalProfitCny4: 0,

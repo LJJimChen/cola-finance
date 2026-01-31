@@ -1,29 +1,16 @@
-import type { Config } from 'drizzle-kit';
-import fs from 'fs';
-import path from 'path';
+import 'dotenv/config';
+import { defineConfig } from 'drizzle-kit';
 
-function getLocalD1DB() {
-  try {
-    const basePath = path.resolve('.wrangler/state/v3/d1/miniflare-D1DatabaseObject');
-    const dbFile = fs
-      .readdirSync(basePath)
-      .find((f) => f.endsWith('.sqlite'));
-
-    if (!dbFile) {
-      throw new Error(`No D1 sqlite file found in ${basePath}`);
-    }
-    return path.join(basePath, dbFile);
-  } catch (e) {
-    console.warn(`Could not find local D1 DB: ${e}`);
-    return null;
-  }
-}
-
-export default {
-  schema: './src/db/schema.ts',
+export default defineConfig({
   out: './drizzle',
+  schema: './src/db/schema.ts',
   dialect: 'sqlite',
   dbCredentials: {
-    url: getLocalD1DB() ?? 'file:./local.db', // Fallback to avoid crash if file not found
+    url: '.wrangler/state/v3/d1/miniflare-D1DatabaseObject/672806d20961b9e5ac9ca7fe52199389689d6804dd2e0cf666b4623f16d4cc09.sqlite',
   },
-} satisfies Config;
+  // dbCredentials: {
+  //   accountId: process.env.CLOUDFLARE_ACCOUNT_ID!,
+  //   databaseId: process.env.CLOUDFLARE_DATABASE_ID!,
+  //   token: process.env.CLOUDFLARE_D1_TOKEN!,
+  // },
+});

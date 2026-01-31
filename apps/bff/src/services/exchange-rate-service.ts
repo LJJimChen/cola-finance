@@ -3,6 +3,7 @@ import type { AppDb } from '../db';
 import { exchangeRates } from '../db/schema';
 import { AppError } from '../lib/errors';
 import { fromRate8, toRate8 } from '../lib/money';
+import { randomUUID } from 'node:crypto';
 
 export class ExchangeRateService {
   readonly #db: AppDb;
@@ -217,7 +218,7 @@ export class ExchangeRateService {
         // Persist to DB for future use
         // Use the REQUESTED date to ensure subsequent "exact match" queries succeed
         await this.#db.insert(exchangeRates).values({
-          id: crypto.randomUUID(),
+          id: randomUUID(),
           sourceCurrency,
           targetCurrency: 'CNY',
           rate8: toRate8(rate),

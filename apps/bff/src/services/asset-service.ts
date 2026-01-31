@@ -5,6 +5,7 @@ import { toMoney4, toQuantity8, fromQuantity8, fromMoney4 } from '../lib/money';
 import type { AppDb } from '../db';
 import { PortfolioMetricsService } from './portfolio-metrics-service';
 import { NotFoundError } from '../lib/errors';
+import { randomUUID } from 'node:crypto';
 
 export interface AssetService {
   getAssetsByPortfolio(userId: string, portfolioId: string): Promise<Asset[]>;
@@ -77,7 +78,7 @@ export class AssetServiceImpl implements AssetService {
     const [newAsset] = await this.db
       .insert(assets)
       .values({
-        id: crypto.randomUUID(),
+        id: randomUUID(),
         portfolioId,
         symbol: data.symbol,
         name: data.name,
