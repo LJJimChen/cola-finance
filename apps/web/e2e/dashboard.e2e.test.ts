@@ -13,7 +13,7 @@ test.describe('Dashboard Page E2E Tests', () => {
     // Check that key metrics are displayed
     await expect(page.locator('text=Total Value')).toBeVisible();
     await expect(page.locator('text=Daily Profit')).toBeVisible();
-    await expect(page.locator('text=Annual Return')).toBeVisible();
+    await expect(page.locator('text=Cumulative Profit')).toBeVisible();
     
     // Verify that charts are rendered
     await expect(page.locator('[aria-label="Allocation chart"]')).toBeVisible();

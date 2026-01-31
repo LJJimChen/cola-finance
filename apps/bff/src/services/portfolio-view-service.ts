@@ -59,6 +59,9 @@ export class PortfolioViewService {
 
     const totalValue = roundMoney4(await this.#fx.convertMoney(totals.totalValueCny, 'CNY', displayCurrency, asOfDate));
     const dailyProfit = roundMoney4(await this.#fx.convertMoney(totals.dailyProfitCny, 'CNY', displayCurrency, asOfDate));
+    const totalProfit = roundMoney4(
+      await this.#fx.convertMoney(totals.currentTotalProfitCny, 'CNY', displayCurrency, asOfDate),
+    );
 
     const annualReturn =
       totals.totalValueCny > 0 ? roundMoney4((totals.currentTotalProfitCny / totals.totalValueCny) * 100) : 0;
@@ -96,6 +99,7 @@ export class PortfolioViewService {
       totalValue,
       dailyProfit,
       annualReturn,
+      totalProfit,
       currency: displayCurrency,
       lastUpdated: totals.asOfUtc,
       allocationByCategory,
@@ -260,4 +264,3 @@ export class PortfolioViewService {
     };
   }
 }
-

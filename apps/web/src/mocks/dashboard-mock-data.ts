@@ -4,6 +4,7 @@ export const mockDashboardData: DashboardData = {
   totalValue: 125000.50,
   dailyProfit: 1250.75,
   annualReturn: 12.5,
+  totalProfit: 24500.25,
   currency: 'USD',
   lastUpdated: new Date().toISOString(),
   allocationByCategory: [

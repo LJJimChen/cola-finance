@@ -171,15 +171,14 @@ const DashboardPage: React.FC = () => {
             </div>
           </div>
 
-          {/* YTD Return (Annual Return) */}
           <div className="bg-surface-light dark:bg-surface-dark p-3.5 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
               <span className="material-symbols-outlined text-4xl text-blue-500">calendar_month</span>
             </div>
-            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-1">{t('dashboard.annualReturn')}</span>
-            <div className={`flex items-baseline gap-1.5 ${dashboardData?.annualReturn && dashboardData.annualReturn >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`}>
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-1">{t('dashboard.totalProfit')}</span>
+            <div className={`flex items-baseline gap-1.5 ${dashboardData?.totalProfit && dashboardData.totalProfit >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`}>
               <span className="text-lg font-bold tabular-nums">
-                {isLoading ? <Skeleton width={60} height={24} /> : (dashboardData?.annualReturn && dashboardData.annualReturn > 0 ? '+' : '') + dashboardData?.annualReturn?.toFixed(1)}%
+                {isLoading ? <Skeleton width={80} height={24} /> : (dashboardData?.totalProfit && dashboardData.totalProfit > 0 ? '+' : '') + formatCurrency(dashboardData?.totalProfit || 0, displayCurrency)}
               </span>
             </div>
           </div>

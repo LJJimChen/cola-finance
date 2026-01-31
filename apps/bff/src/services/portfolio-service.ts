@@ -61,11 +61,13 @@ export class PortfolioServiceImpl implements PortfolioService {
     // Convert values to display currency if needed
     let totalValue = totalValueCny;
     let dailyProfit = dailyProfitCny;
+    let totalProfit = currentTotalProfitCny;
     const today = new Date().toISOString().slice(0, 10);
 
     if (displayCurrency !== 'CNY') {
       totalValue = await exchangeRateService.convertMoney(totalValueCny, 'CNY', displayCurrency, today);
       dailyProfit = await exchangeRateService.convertMoney(dailyProfitCny, 'CNY', displayCurrency, today);
+      totalProfit = await exchangeRateService.convertMoney(currentTotalProfitCny, 'CNY', displayCurrency, today);
     }
 
     // Calculate total return rate (ROI)
@@ -93,6 +95,7 @@ export class PortfolioServiceImpl implements PortfolioService {
       totalValue,
       dailyProfit,
       annualReturn,
+      totalProfit,
       currency: displayCurrency,
       lastUpdated: new Date().toISOString(),
       allocationByCategory,

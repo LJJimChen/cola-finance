@@ -31,6 +31,7 @@ export const en = {
     totalValue: 'Total Value',
     dailyProfit: 'Daily Profit',
     annualReturn: 'Annual Return',
+    totalProfit: 'Cumulative Profit',
     allocationChart: 'Allocation Chart',
     topPerformers: 'Top Performers',
   },

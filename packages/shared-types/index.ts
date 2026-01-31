@@ -112,6 +112,7 @@ export interface DashboardData {
   totalValue: number;
   dailyProfit: number;
   annualReturn: number;
+  totalProfit: number;
   currency: string;
   lastUpdated: IsoDateTimeString;
   allocationByCategory: Array<{

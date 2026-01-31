@@ -31,6 +31,7 @@ export const zh = {
     totalValue: '总价值',
     dailyProfit: '日收益',
     annualReturn: '年回报率',
+    totalProfit: '累计收益',
     allocationChart: '分配图表',
     topPerformers: '表现最佳',
   },
