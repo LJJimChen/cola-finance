@@ -23,13 +23,13 @@ devRoutes.post('/seed-me', requireAuth(), async (c) => {
       now: nowIsoUtc(),
     });
     return c.json({ success: true, message: 'User seeded successfully' });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Manual seed failed:', error);
     return c.json(
       { 
         success: false, 
         message: 'Failed to seed user', 
-        error: error.message 
+        error: (error as Error).message 
       }, 
       500
     );

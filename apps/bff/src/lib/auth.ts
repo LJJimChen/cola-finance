@@ -2,7 +2,6 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "../db/schema";
-import type { D1Database } from "@cloudflare/workers-types";
 import type { AppDb } from "../db";
 import { seedNewUser } from "../services/seed-service";
 import { nowIsoUtc } from "../lib/time";

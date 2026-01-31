@@ -227,7 +227,7 @@ export class ExchangeRateService {
 
         return rate;
       }
-    } catch (error) {
+    } catch {
       // console.warn('Error fetching external rate:', error);
       return null;
     }

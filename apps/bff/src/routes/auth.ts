@@ -1,6 +1,5 @@
 import { Hono } from 'hono';
 import { createAuth } from '../lib/auth';
-import type { D1Database } from '@cloudflare/workers-types';
 
 export const authRoutes = new Hono<{
   Bindings: CloudflareBindings;

@@ -4,6 +4,7 @@ import type { Asset, CreateAssetRequest } from '@repo/shared-types';
 import { toMoney4, toQuantity8, fromQuantity8, fromMoney4 } from '../lib/money';
 import type { AppDb } from '../db';
 import { PortfolioMetricsService } from './portfolio-metrics-service';
+import { NotFoundError } from '../lib/errors';
 
 export interface AssetService {
   getAssetsByPortfolio(userId: string, portfolioId: string): Promise<Asset[]>;
@@ -38,7 +39,7 @@ export class AssetServiceImpl implements AssetService {
       .limit(1);
 
     if (portfolioResult.length === 0) {
-      throw new Error('Portfolio not found or access denied');
+      throw new NotFoundError('Portfolio not found or access denied');
     }
 
     const assetsResult = await this.db
@@ -70,7 +71,7 @@ export class AssetServiceImpl implements AssetService {
       .limit(1);
 
     if (portfolioResult.length === 0) {
-      throw new Error('Portfolio not found or access denied');
+      throw new NotFoundError('Portfolio not found or access denied');
     }
 
     const [newAsset] = await this.db
@@ -110,13 +111,13 @@ export class AssetServiceImpl implements AssetService {
       .limit(1);
 
     if (assetResult.length === 0) {
-      throw new Error('Asset not found or access denied');
+      throw new NotFoundError('Asset not found or access denied');
     }
 
     const currentAsset = assetResult[0].asset;
 
     // Prepare update data
-    const updateData: any = {
+    const updateData: Partial<typeof assets.$inferInsert> = {
       updatedAt: new Date(),
     };
     if (data.name !== undefined) updateData.name = data.name;
@@ -153,7 +154,7 @@ export class AssetServiceImpl implements AssetService {
       .limit(1);
 
     if (assetResult.length === 0) {
-      throw new Error('Asset not found or access denied');
+      throw new NotFoundError('Asset not found or access denied');
     }
 
     const currentAsset = assetResult[0].asset;

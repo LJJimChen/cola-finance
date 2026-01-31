@@ -1,7 +1,6 @@
 import type { AppDb } from '../db';
-import { assets, categories, exchangeRates, portfolioHistories, portfolios } from '../db/schema';
+import { categories, assets, exchangeRates, portfolioHistories, portfolios } from '../db/schema';
 import { toMoney4, toRate8, toQuantity8 } from '../lib/money';
-import { AppError } from '../lib/errors';
 import { PortfolioMetricsService } from './portfolio-metrics-service';
 import { etfData } from './etf-data';
 

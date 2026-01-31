@@ -21,7 +21,7 @@ Each user story will be implemented as a complete, independently testable increm
 - [X] T005 Configure shared linting and formatting tools (ESLint, Prettier) for the monorepo
 - [X] T006 Set up Turborepo configuration in turbo.json
 - [X] T007 [P] Install common dependencies in web app (React, TanStack Router, TanStack Query, Tailwind CSS, shadcn/ui, ky, Zustand)
-- [X] T008 [P] Install common dependencies in BFF (Hono, Better Auth, Drizzle ORM, @cloudflare/workers-types)
+- [X] T008 [P] Install common dependencies in BFF (Hono, Better Auth, Drizzle ORM)
 - [X] T009 Create initial README.md for the monorepo
 - [X] T010 Set up basic CI/CD configuration files
 

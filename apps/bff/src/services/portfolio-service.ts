@@ -1,17 +1,38 @@
-import { portfolios, assets, categories } from '../db/schema';
-import { eq, and, type InferSelectModel } from 'drizzle-orm';
+import { portfolios, assets, categories, portfolioHistories } from '../db/schema';
+import { eq, and, asc, type InferSelectModel } from 'drizzle-orm';
 import { ExchangeRateService } from '../services/exchange-rate-service';
 import { fromMoney4, fromQuantity8 } from '../lib/money';
 import type { AppDb } from '../db';
+import { NotFoundError } from '../lib/errors';
 import type { 
   DashboardData,
   AllocationData,
-  Asset
+  Asset,
+  Portfolio
 } from '@repo/shared-types';
+
+function portfolioRowToApi(row: typeof portfolios.$inferSelect): Portfolio {
+  return {
+    id: row.id,
+    userId: row.userId,
+    name: row.name,
+    description: row.description ?? undefined,
+    totalValueCny: fromMoney4(row.totalValueCny4),
+    dailyProfitCny: fromMoney4(row.dailyProfitCny4),
+    currentTotalProfitCny: fromMoney4(row.currentTotalProfitCny4),
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
 
 export interface PortfolioService {
   getDashboardData(userId: string, portfolioId: string, displayCurrency?: string): Promise<DashboardData>;
   getAllocationData(userId: string, portfolioId: string, displayCurrency?: string): Promise<AllocationData>;
+  getPortfolios(userId: string): Promise<Portfolio[]>;
+  createPortfolio(userId: string, data: { name: string; description?: string }): Promise<Portfolio>;
+  getPortfolio(userId: string, portfolioId: string): Promise<Portfolio>;
+  updatePortfolio(userId: string, portfolioId: string, data: { name?: string; description?: string }): Promise<Portfolio>;
+  deletePortfolio(userId: string, portfolioId: string): Promise<boolean>;
   calculatePortfolioMetrics(portfolioId: string): Promise<{
     totalValueCny: number;
     dailyProfitCny: number;
@@ -22,6 +43,121 @@ export interface PortfolioService {
 
 export class PortfolioServiceImpl implements PortfolioService {
   constructor(private db: AppDb) {}
+  
+  async getPortfolios(userId: string): Promise<Portfolio[]> {
+    let rows = await this.db
+      .select()
+      .from(portfolios)
+      .where(eq(portfolios.userId, userId))
+      .orderBy(asc(portfolios.name));
+
+    // Lazy creation: If user has no portfolios, create a default one
+    if (rows.length === 0) {
+      const defaultPortfolioId = crypto.randomUUID();
+      
+      const [newPortfolio] = await this.db
+        .insert(portfolios)
+        .values({
+          id: defaultPortfolioId,
+          userId,
+          name: 'Default Portfolio',
+          description: 'Automatically created default portfolio',
+          totalValueCny4: 0,
+          dailyProfitCny4: 0,
+          currentTotalProfitCny4: 0,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .returning();
+
+      await this.db.insert(portfolioHistories).values({
+        id: crypto.randomUUID(),
+        portfolioId: defaultPortfolioId,
+        timestamp: new Date(),
+        totalValueCny4: 0,
+        dailyProfitCny4: 0,
+        currentTotalProfitCny4: 0,
+      });
+
+      rows = [newPortfolio];
+    }
+
+    return rows.map(portfolioRowToApi);
+  }
+
+  async createPortfolio(userId: string, data: { name: string; description?: string }): Promise<Portfolio> {
+    const [row] = await this.db
+      .insert(portfolios)
+      .values({
+        id: crypto.randomUUID(),
+        userId,
+        name: data.name,
+        description: data.description,
+        totalValueCny4: 0,
+        dailyProfitCny4: 0,
+        currentTotalProfitCny4: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+
+    await this.db.insert(portfolioHistories).values({
+      id: crypto.randomUUID(),
+      portfolioId: row.id,
+      timestamp: new Date(),
+      totalValueCny4: 0,
+      dailyProfitCny4: 0,
+      currentTotalProfitCny4: 0,
+    });
+
+    return portfolioRowToApi(row);
+  }
+
+  async getPortfolio(userId: string, portfolioId: string): Promise<Portfolio> {
+    const rows = await this.db
+      .select()
+      .from(portfolios)
+      .where(and(eq(portfolios.id, portfolioId), eq(portfolios.userId, userId)))
+      .limit(1);
+
+    if (rows.length === 0) {
+      throw new NotFoundError('Portfolio not found');
+    }
+    return portfolioRowToApi(rows[0]);
+  }
+
+  async updatePortfolio(userId: string, portfolioId: string, data: { name?: string; description?: string }): Promise<Portfolio> {
+    const updated = await this.db
+      .update(portfolios)
+      .set({ ...data, updatedAt: new Date() })
+      .where(and(eq(portfolios.id, portfolioId), eq(portfolios.userId, userId)))
+      .returning();
+
+    if (updated.length === 0) {
+      throw new NotFoundError('Portfolio not found');
+    }
+
+    return portfolioRowToApi(updated[0]);
+  }
+
+  async deletePortfolio(userId: string, portfolioId: string): Promise<boolean> {
+    const owned = await this.db
+      .select({ id: portfolios.id })
+      .from(portfolios)
+      .where(and(eq(portfolios.id, portfolioId), eq(portfolios.userId, userId)))
+      .limit(1);
+      
+    if (owned.length === 0) {
+      throw new NotFoundError('Portfolio not found');
+    }
+
+    await this.db.delete(assets).where(eq(assets.portfolioId, portfolioId));
+    await this.db.delete(categories).where(eq(categories.portfolioId, portfolioId));
+    await this.db.delete(portfolioHistories).where(eq(portfolioHistories.portfolioId, portfolioId));
+    await this.db.delete(portfolios).where(eq(portfolios.id, portfolioId));
+
+    return true;
+  }
   
   async getDashboardData(userId: string, portfolioId: string, displayCurrency: string = 'CNY'): Promise<DashboardData> {
     const exchangeRateService = new ExchangeRateService(this.db);
@@ -34,7 +170,7 @@ export class PortfolioServiceImpl implements PortfolioService {
       .limit(1);
 
     if (portfolioResult.length === 0) {
-      throw new Error('Portfolio not found or access denied');
+      throw new NotFoundError('Portfolio not found or access denied');
     }
 
     // Get all assets in the portfolio
@@ -114,7 +250,7 @@ export class PortfolioServiceImpl implements PortfolioService {
       .limit(1);
 
     if (portfolioResult.length === 0) {
-      throw new Error('Portfolio not found or access denied');
+      throw new NotFoundError('Portfolio not found or access denied');
     }
 
     // Get all assets in the portfolio
@@ -393,7 +529,7 @@ export class PortfolioServiceImpl implements PortfolioService {
     // Calculate percentages and convert to display currency
     const result = [];
     const today = new Date().toISOString().slice(0, 10);
-    for (const [categoryId, data] of allocationByCategory) {
+    for (const data of allocationByCategory.values()) {
       const percentage = totalValueCny > 0 ? (data.valueCny / totalValueCny) * 100 : 0;
       
       let displayValue = data.valueCny;

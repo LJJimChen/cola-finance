@@ -1,14 +1,13 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { and, asc, eq } from 'drizzle-orm';
-import type { Asset, Category, Portfolio } from '@repo/shared-types';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { requireAuth } from '../middleware/auth';
-import { assets, categories, portfolios, portfolioHistories } from '../db/schema';
-import { nowIsoUtc } from '../lib/time';
-import { fromMoney4, toMoney4, toQuantity8, fromQuantity8 } from '../lib/money';
-import { PortfolioMetricsService } from '../services/portfolio-metrics-service';
+import { PortfolioServiceImpl } from '../services/portfolio-service';
+import { CategoryServiceImpl } from '../services/category-service';
+import { AssetServiceImpl } from '../services/asset-service';
 import { PortfolioViewService } from '../services/portfolio-view-service';
+import { AppError } from '../lib/errors';
 
 const createPortfolioSchema = z.object({
   name: z.string().min(1),
@@ -43,53 +42,6 @@ const createAssetSchema = z.object({
   categoryId: z.string().optional(),
 });
 
-function portfolioRowToApi(row: typeof portfolios.$inferSelect): Portfolio {
-  return {
-    id: row.id,
-    userId: row.userId,
-    name: row.name,
-    description: row.description ?? undefined,
-    totalValueCny: fromMoney4(row.totalValueCny4),
-    dailyProfitCny: fromMoney4(row.dailyProfitCny4),
-    currentTotalProfitCny: fromMoney4(row.currentTotalProfitCny4),
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-  };
-}
-
-function categoryRowToApi(row: typeof categories.$inferSelect): Category {
-  return {
-    id: row.id,
-    // userId: row.userId,
-    portfolioId: row.portfolioId,
-    name: row.name,
-    targetAllocation: row.targetAllocationBps / 100,
-    currentAllocation: row.currentAllocationBps / 100,
-    createdAt: row.createdAt.toISOString(),
-    updatedAt: row.updatedAt.toISOString(),
-  } as unknown as Category;
-}
-
-function assetRowToApi(row: typeof assets.$inferSelect): Asset {
-  return {
-    id: row.id,
-    // userId: row.userId,
-    portfolioId: row.portfolioId,
-    categoryId: row.categoryId ?? undefined,
-    symbol: row.symbol,
-    name: row.name,
-    quantity: fromQuantity8(row.quantity8),
-    costBasis: fromMoney4(row.costBasis4),
-    dailyProfit: fromMoney4(row.dailyProfit4),
-    currentPrice: fromMoney4(row.currentPrice4),
-    currency: row.currency,
-    brokerSource: row.brokerSource,
-    brokerAccount: row.brokerAccount,
-    createdAt: row.createdAt.toISOString(),
-    updatedAt: row.updatedAt.toISOString(),
-  } as unknown as Asset;
-}
-
 export const portfolioRoutes = new Hono<{
   Variables: {
     db: import('../db').AppDb;
@@ -101,255 +53,147 @@ portfolioRoutes.use('*', requireAuth());
 
 portfolioRoutes.get('/', async (c) => {
   const { userId } = c.get('auth');
-  let rows = await c.get('db').select().from(portfolios).where(eq(portfolios.userId, userId)).orderBy(asc(portfolios.name));
-
-  // Lazy creation: If user has no portfolios, create a default one
-  if (rows.length === 0) {
-    const defaultPortfolioId = crypto.randomUUID();
-    
-    const [newPortfolio] = await c
-      .get('db')
-      .insert(portfolios)
-      .values({
-        id: defaultPortfolioId,
-        userId,
-        name: 'Default Portfolio',
-        description: 'Automatically created default portfolio',
-        totalValueCny4: 0,
-        dailyProfitCny4: 0,
-        currentTotalProfitCny4: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning();
-
-    await c.get('db').insert(portfolioHistories).values({
-      id: crypto.randomUUID(),
-      portfolioId: defaultPortfolioId,
-      timestamp: new Date(),
-      totalValueCny4: 0,
-      dailyProfitCny4: 0,
-      currentTotalProfitCny4: 0,
-    });
-
-    rows = [newPortfolio];
-  }
-
-  return c.json(rows.map(portfolioRowToApi));
+  const service = new PortfolioServiceImpl(c.get('db'));
+  const portfolios = await service.getPortfolios(userId);
+  return c.json(portfolios);
 });
 
 portfolioRoutes.post('/', zValidator('json', createPortfolioSchema), async (c) => {
   const { userId } = c.get('auth');
   const input = c.req.valid('json');
-
-  const [row] = await c
-    .get('db')
-    .insert(portfolios)
-    .values({
-      id: crypto.randomUUID(),
-      userId,
-      name: input.name,
-      description: input.description,
-      totalValueCny4: 0,
-      dailyProfitCny4: 0,
-      currentTotalProfitCny4: 0,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })
-    .returning();
-
-  await c.get('db').insert(portfolioHistories).values({
-    id: crypto.randomUUID(),
-    portfolioId: row.id,
-    timestamp: new Date(),
-    totalValueCny4: 0,
-    dailyProfitCny4: 0,
-    currentTotalProfitCny4: 0,
-  });
-
-  return c.json(portfolioRowToApi(row));
+  const service = new PortfolioServiceImpl(c.get('db'));
+  const portfolio = await service.createPortfolio(userId, input);
+  return c.json(portfolio);
 });
 
 portfolioRoutes.get('/:portfolioId', async (c) => {
   const { userId } = c.get('auth');
   const portfolioId = c.req.param('portfolioId');
-  const rows = await c
-    .get('db')
-    .select()
-    .from(portfolios)
-    .where(and(eq(portfolios.id, portfolioId), eq(portfolios.userId, userId)))
-    .limit(1);
-
-  if (rows.length === 0) {
-    return c.json({ error: { code: 'NOT_FOUND', message: 'Portfolio not found' } }, 404);
+  const service = new PortfolioServiceImpl(c.get('db'));
+  
+  try {
+    const portfolio = await service.getPortfolio(userId, portfolioId);
+    return c.json(portfolio);
+  } catch (error) {
+    if (error instanceof AppError) {
+      return c.json(error.toResponse(), error.status as ContentfulStatusCode);
+    }
+    throw error;
   }
-  return c.json(portfolioRowToApi(rows[0]));
 });
 
 portfolioRoutes.put('/:portfolioId', zValidator('json', updatePortfolioSchema), async (c) => {
   const { userId } = c.get('auth');
   const portfolioId = c.req.param('portfolioId');
   const input = c.req.valid('json');
+  const service = new PortfolioServiceImpl(c.get('db'));
 
-  const updated = await c
-    .get('db')
-    .update(portfolios)
-    .set({ ...input, updatedAt: new Date() })
-    .where(and(eq(portfolios.id, portfolioId), eq(portfolios.userId, userId)))
-    .returning();
-
-  if (updated.length === 0) {
-    return c.json({ error: { code: 'NOT_FOUND', message: 'Portfolio not found' } }, 404);
+  try {
+    const portfolio = await service.updatePortfolio(userId, portfolioId, input);
+    return c.json(portfolio);
+  } catch (error) {
+    if (error instanceof AppError) {
+      return c.json(error.toResponse(), error.status as ContentfulStatusCode);
+    }
+    throw error;
   }
-
-  return c.json(portfolioRowToApi(updated[0]));
 });
 
 portfolioRoutes.delete('/:portfolioId', async (c) => {
   const { userId } = c.get('auth');
   const portfolioId = c.req.param('portfolioId');
+  const service = new PortfolioServiceImpl(c.get('db'));
 
-  const owned = await c
-    .get('db')
-    .select({ id: portfolios.id })
-    .from(portfolios)
-    .where(and(eq(portfolios.id, portfolioId), eq(portfolios.userId, userId)))
-    .limit(1);
-  if (owned.length === 0) {
-    return c.json({ error: { code: 'NOT_FOUND', message: 'Portfolio not found' } }, 404);
+  try {
+    await service.deletePortfolio(userId, portfolioId);
+    return c.json({ success: true });
+  } catch (error) {
+    if (error instanceof AppError) {
+      return c.json(error.toResponse(), error.status as ContentfulStatusCode);
+    }
+    throw error;
   }
-
-  await c.get('db').delete(assets).where(eq(assets.portfolioId, portfolioId));
-  await c.get('db').delete(categories).where(eq(categories.portfolioId, portfolioId));
-  await c.get('db').delete(portfolioHistories).where(eq(portfolioHistories.portfolioId, portfolioId));
-  await c.get('db').delete(portfolios).where(eq(portfolios.id, portfolioId));
-
-  return c.json({ success: true });
 });
 
 portfolioRoutes.get('/:portfolioId/assets', async (c) => {
   const { userId } = c.get('auth');
   const portfolioId = c.req.param('portfolioId');
-  
-  // Verify portfolio ownership first
-  const owned = await c
-    .get('db')
-    .select({ id: portfolios.id })
-    .from(portfolios)
-    .where(and(eq(portfolios.id, portfolioId), eq(portfolios.userId, userId)))
-    .limit(1);
+  const service = new AssetServiceImpl(c.get('db'));
 
-  if (owned.length === 0) {
-    return c.json({ error: { code: 'NOT_FOUND', message: 'Portfolio not found' } }, 404);
+  try {
+    const assets = await service.getAssetsByPortfolio(userId, portfolioId);
+    return c.json(assets);
+  } catch (error) {
+    if (error instanceof AppError) {
+      return c.json(error.toResponse(), error.status as ContentfulStatusCode);
+    }
+    throw error;
   }
-
-  const rows = await c
-    .get('db')
-    .select()
-    .from(assets)
-    .where(eq(assets.portfolioId, portfolioId))
-    .orderBy(asc(assets.name));
-  return c.json(rows.map(assetRowToApi));
 });
 
 portfolioRoutes.post('/:portfolioId/assets', zValidator('json', createAssetSchema), async (c) => {
   const { userId } = c.get('auth');
   const portfolioId = c.req.param('portfolioId');
   const input = c.req.valid('json');
-  const now = nowIsoUtc();
+  const service = new AssetServiceImpl(c.get('db'));
 
-  const owned = await c
-    .get('db')
-    .select({ id: portfolios.id })
-    .from(portfolios)
-    .where(and(eq(portfolios.id, portfolioId), eq(portfolios.userId, userId)))
-    .limit(1);
-  if (owned.length === 0) {
-    return c.json({ error: { code: 'NOT_FOUND', message: 'Portfolio not found' } }, 404);
+  try {
+    const asset = await service.createAsset(userId, portfolioId, input);
+    return c.json(asset);
+  } catch (error) {
+    if (error instanceof AppError) {
+      return c.json(error.toResponse(), error.status as ContentfulStatusCode);
+    }
+    throw error;
   }
-
-  const [row] = await c
-    .get('db')
-    .insert(assets)
-    .values({
-      id: crypto.randomUUID(),
-      portfolioId,
-      categoryId: input.categoryId,
-      symbol: input.symbol,
-      name: input.name,
-      quantity8: toQuantity8(input.quantity),
-      costBasis4: toMoney4(input.costBasis),
-      dailyProfit4: toMoney4(input.dailyProfit),
-      currentPrice4: toMoney4(input.currentPrice),
-      currency: input.currency,
-      brokerSource: input.brokerSource,
-      brokerAccount: input.brokerAccount,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })
-    .returning();
-
-  const metrics = new PortfolioMetricsService(c.get('db'));
-  await metrics.recomputeAndPersist(userId, portfolioId);
-
-  return c.json(assetRowToApi(row));
 });
 
 portfolioRoutes.get('/:portfolioId/categories', async (c) => {
   const { userId } = c.get('auth');
   const portfolioId = c.req.param('portfolioId');
+  const service = new CategoryServiceImpl(c.get('db'));
   
-  // Verify portfolio ownership first
-  const owned = await c
-    .get('db')
-    .select({ id: portfolios.id })
-    .from(portfolios)
-    .where(and(eq(portfolios.id, portfolioId), eq(portfolios.userId, userId)))
-    .limit(1);
-
-  if (owned.length === 0) {
+  // Note: getCategoriesByPortfolio returns empty array if not found or no categories, 
+  // but let's check ownership implicitly via logic if possible, or just return empty list.
+  // Actually the service doesn't throw if portfolio doesn't exist, it just returns empty list.
+  // But original code checked ownership.
+  // Let's rely on service behavior. If strict check needed, service should do it.
+  // The service implementation:
+  // .innerJoin(portfolios, ...) .where(and(eq(portfolios.userId, userId), eq(categories.portfolioId, portfolioId)))
+  // If portfolio doesn't exist or not owned, it returns empty list.
+  // Original code returned 404 if portfolio not found.
+  // To match original behavior, we might need a separate check or update service.
+  // For now, I'll assume empty list is acceptable or I should check portfolio existence first using PortfolioService.
+  
+  const portfolioService = new PortfolioServiceImpl(c.get('db'));
+  try {
+    await portfolioService.getPortfolio(userId, portfolioId);
+  } catch (e) {
+    if (e instanceof AppError) {
+      return c.json(e.toResponse(), e.status as ContentfulStatusCode);
+    }
     return c.json({ error: { code: 'NOT_FOUND', message: 'Portfolio not found' } }, 404);
   }
 
-  const rows = await c
-    .get('db')
-    .select()
-    .from(categories)
-    .where(eq(categories.portfolioId, portfolioId))
-    .orderBy(asc(categories.name));
-  return c.json(rows.map(categoryRowToApi));
+  const categories = await service.getCategoriesByPortfolio(userId, portfolioId);
+  return c.json(categories);
 });
 
 portfolioRoutes.post('/:portfolioId/categories', zValidator('json', createCategorySchema), async (c) => {
   const { userId } = c.get('auth');
   const portfolioId = c.req.param('portfolioId');
   const input = c.req.valid('json');
+  const service = new CategoryServiceImpl(c.get('db'));
 
-  const owned = await c
-    .get('db')
-    .select({ id: portfolios.id })
-    .from(portfolios)
-    .where(and(eq(portfolios.id, portfolioId), eq(portfolios.userId, userId)))
-    .limit(1);
-  if (owned.length === 0) {
-    return c.json({ error: { code: 'NOT_FOUND', message: 'Portfolio not found' } }, 404);
+  try {
+    const category = await service.createCategory(userId, portfolioId, input);
+    return c.json(category);
+  } catch (error) {
+    if (error instanceof AppError) {
+      return c.json(error.toResponse(), error.status as ContentfulStatusCode);
+    }
+    throw error;
   }
-
-  const [row] = await c
-    .get('db')
-    .insert(categories)
-    .values({
-      id: crypto.randomUUID(),
-      portfolioId,
-      name: input.name,
-      targetAllocationBps: Math.round((input.targetAllocation ?? 0) * 100),
-      currentAllocationBps: 0,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })
-    .returning();
-
-  return c.json(categoryRowToApi(row));
 });
 
 portfolioRoutes.get('/:portfolioId/dashboard', async (c) => {
@@ -391,58 +235,32 @@ categoryRoutes.put('/:categoryId', zValidator('json', updateCategorySchema), asy
   const { userId } = c.get('auth');
   const categoryId = c.req.param('categoryId');
   const input = c.req.valid('json');
+  const service = new CategoryServiceImpl(c.get('db'));
 
-  const owned = await c
-    .get('db')
-    .select({ id: categories.id })
-    .from(categories)
-    .innerJoin(portfolios, eq(categories.portfolioId, portfolios.id))
-    .where(and(eq(categories.id, categoryId), eq(portfolios.userId, userId)))
-    .limit(1);
-
-  if (owned.length === 0) {
-    return c.json({ error: { code: 'NOT_FOUND', message: 'Category not found' } }, 404);
+  try {
+    const category = await service.updateCategory(userId, categoryId, input);
+    return c.json(category);
+  } catch (error) {
+    if (error instanceof AppError) {
+      return c.json(error.toResponse(), error.status as ContentfulStatusCode);
+    }
+    throw error;
   }
-
-  const updated = await c
-    .get('db')
-    .update(categories)
-    .set({
-      ...(input.name ? { name: input.name } : {}),
-      ...(typeof input.targetAllocation === 'number' ? { targetAllocationBps: Math.round(input.targetAllocation * 100) } : {}),
-      updatedAt: new Date(),
-    })
-    .where(eq(categories.id, categoryId))
-    .returning();
-
-  if (updated.length === 0) {
-    return c.json({ error: { code: 'NOT_FOUND', message: 'Category not found' } }, 404);
-  }
-
-  return c.json(categoryRowToApi(updated[0]));
 });
 
 categoryRoutes.delete('/:categoryId', async (c) => {
   const { userId } = c.get('auth');
   const categoryId = c.req.param('categoryId');
+  const service = new CategoryServiceImpl(c.get('db'));
 
-  const owned = await c
-    .get('db')
-    .select({ id: categories.id, portfolioId: categories.portfolioId })
-    .from(categories)
-    .innerJoin(portfolios, eq(categories.portfolioId, portfolios.id))
-    .where(and(eq(categories.id, categoryId), eq(portfolios.userId, userId)))
-    .limit(1);
-  if (owned.length === 0) {
-    return c.json({ error: { code: 'NOT_FOUND', message: 'Category not found' } }, 404);
+  try {
+    await service.deleteCategory(userId, categoryId);
+    return c.json({ success: true });
+  } catch (error) {
+    if (error instanceof AppError) {
+      return c.json(error.toResponse(), error.status as ContentfulStatusCode);
+    }
+    throw error;
   }
-
-  await c.get('db').update(assets).set({ categoryId: null, updatedAt: new Date() }).where(eq(assets.categoryId, categoryId));
-  await c.get('db').delete(categories).where(eq(categories.id, categoryId));
-
-  const metrics = new PortfolioMetricsService(c.get('db'));
-  await metrics.recomputeAndPersist(userId, owned[0].portfolioId);
-
-  return c.json({ success: true });
 });
 

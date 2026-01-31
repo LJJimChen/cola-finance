@@ -1,10 +1,9 @@
 import type { AppDb } from '../db';
 import { categories, assets, portfolios } from '../db/schema';
-import { eq, and, desc, asc, inArray } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
+import { fromMoney4, fromQuantity8 } from '../lib/money';
 import type { 
   RebalanceRecommendations, 
-  CreateCategoryRequest, 
-  UpdateCategoryRequest,
   Category 
 } from '@repo/shared-types';
 
@@ -43,12 +42,12 @@ export class RebalancingServiceImpl implements RebalancingService {
     const categoriesResult = await this.db
       .select()
       .from(categories)
-      .where(eq(categories.userId, userId));
+      .where(eq(categories.portfolioId, portfolioId));
 
     // Calculate total portfolio value
     let totalValue = 0;
     for (const asset of assetsResult) {
-      totalValue += asset.currentPrice * asset.quantity;
+      totalValue += fromMoney4(asset.currentPrice4) * fromQuantity8(asset.quantity8);
     }
 
     // Calculate current allocation for each category
@@ -72,7 +71,7 @@ export class RebalancingServiceImpl implements RebalancingService {
       if (asset.categoryId) {
         const existing = categoryAllocations.get(asset.categoryId);
         if (existing) {
-          const newValue = existing.currentValue + (asset.currentPrice * asset.quantity);
+          const newValue = existing.currentValue + (fromMoney4(asset.currentPrice4) * fromQuantity8(asset.quantity8));
           categoryAllocations.set(asset.categoryId, {
             ...existing,
             currentValue: newValue
@@ -92,8 +91,9 @@ export class RebalancingServiceImpl implements RebalancingService {
 
     // Generate recommendations
     const recommendations = [];
-    for (const [categoryId, data] of categoryAllocations) {
-      const deviation = data.category.targetAllocation - data.currentAllocation;
+    for (const data of categoryAllocations.values()) {
+      const targetAllocation = data.category.targetAllocationBps / 100;
+      const deviation = targetAllocation - data.currentAllocation;
       
       let recommendation = '';
       let suggestedActions: string[] = [];
@@ -125,7 +125,7 @@ export class RebalancingServiceImpl implements RebalancingService {
         categoryId: data.category.id,
         categoryName: data.category.name,
         currentAllocation: data.currentAllocation,
-        targetAllocation: data.category.targetAllocation,
+        targetAllocation: data.category.targetAllocationBps / 100,
         deviation,
         recommendation,
         suggestedActions
@@ -155,7 +155,7 @@ export class RebalancingServiceImpl implements RebalancingService {
       .update(categories)
       .set({ 
         targetAllocationBps: Math.round(targetAllocation * 100),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date()
       })
       .where(eq(categories.id, categoryId))
       .returning();

@@ -1,6 +1,5 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import type { D1Database } from '@cloudflare/workers-types';
 import { createDb, type AppDb } from './db';
 import { apiRoutes } from './routes';
 import { toAppError } from './lib/errors';

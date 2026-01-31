@@ -1,7 +1,9 @@
-import { categories, portfolios } from '../db/schema';
+import { categories, portfolios, assets } from '../db/schema';
 import { eq, and, asc } from 'drizzle-orm';
 import type { Category, CreateCategoryRequest, UpdateCategoryRequest } from '@repo/shared-types';
 import type { AppDb } from '../db';
+import { PortfolioMetricsService } from './portfolio-metrics-service';
+import { NotFoundError, ConflictError } from '../lib/errors';
 
 export interface CategoryService {
   getCategoriesByPortfolio(userId: string, portfolioId: string): Promise<Category[]>;
@@ -47,7 +49,7 @@ export class CategoryServiceImpl implements CategoryService {
     });
 
     if (!portfolio) {
-        throw new Error('Portfolio not found or access denied');
+        throw new NotFoundError('Portfolio not found or access denied');
     }
 
     // Check for duplicate name
@@ -58,7 +60,7 @@ export class CategoryServiceImpl implements CategoryService {
       .limit(1);
 
     if (existing.length > 0) {
-      throw new Error(`Category with name "${data.name}" already exists in this portfolio`);
+      throw new ConflictError(`Category with name "${data.name}" already exists in this portfolio`);
     }
 
     const [newCategory] = await this.db
@@ -69,8 +71,8 @@ export class CategoryServiceImpl implements CategoryService {
         name: data.name,
         targetAllocationBps: Math.round((data.targetAllocation ?? 0) * 100),
         currentAllocationBps: 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       })
       .returning();
 
@@ -87,7 +89,7 @@ export class CategoryServiceImpl implements CategoryService {
       .limit(1);
 
     if (result.length === 0) {
-      throw new Error('Category not found or access denied');
+      throw new NotFoundError('Category not found or access denied');
     }
 
     const currentCategory = result[0].category;
@@ -104,7 +106,7 @@ export class CategoryServiceImpl implements CategoryService {
         .limit(1);
 
       if (existing.length > 0) {
-        throw new Error(`Category with name "${data.name}" already exists in this portfolio`);
+        throw new ConflictError(`Category with name "${data.name}" already exists in this portfolio`);
       }
     }
 
@@ -124,17 +126,30 @@ export class CategoryServiceImpl implements CategoryService {
   async deleteCategory(userId: string, categoryId: string): Promise<boolean> {
     // Verify user owns the category via portfolio
     const result = await this.db
-      .select({ category: categories })
+      .select({ category: categories, portfolioId: portfolios.id })
       .from(categories)
       .innerJoin(portfolios, eq(categories.portfolioId, portfolios.id))
       .where(and(eq(categories.id, categoryId), eq(portfolios.userId, userId)))
       .limit(1);
 
     if (result.length === 0) {
-      throw new Error('Category not found or access denied');
+      throw new NotFoundError('Category not found or access denied');
     }
+    
+    const { portfolioId } = result[0];
 
+    // Update assets to have no category
+    await this.db
+      .update(assets)
+      .set({ categoryId: null, updatedAt: new Date() })
+      .where(eq(assets.categoryId, categoryId));
+
+    // Delete the category
     await this.db.delete(categories).where(eq(categories.id, categoryId));
+
+    // Recompute metrics
+    const metrics = new PortfolioMetricsService(this.db);
+    await metrics.recomputeAndPersist(userId, portfolioId);
 
     return true;
   }

@@ -4,31 +4,37 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
+    "lint": "eslint .",
     "build": "wrangler build",
     "deploy": "wrangler deploy --minify",
-    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    "generate-types": "wrangler types",
+    "type-check": "pnpm generate-types && tsc",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "test:run": "vitest run",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage",  
+    "test:coverage": "vitest run --coverage",
     "test": "vitest"
   },
   "dependencies": {
-    "hono": "^4.11.4",
-    "@libsql/client": "^0.17.0",
-    "drizzle-orm": "^0.45.1",
-    "better-auth": "^1.4.14",
-    "@repo/shared-types": "workspace:*",
     "@hono/zod-validator": "^0.7.3",
+    "@libsql/client": "^0.17.0",
+    "@repo/shared-types": "workspace:*",
+    "@types/node": "^25.1.0",
+    "better-auth": "^1.4.14",
+    "drizzle-orm": "^0.45.1",
+    "hono": "^4.11.4",
     "zod": "^4.0.0"
   },
   "devDependencies": {
-    "wrangler": "^4.4.0",
+    "@eslint/js": "^9.39.2",
+    "@vitest/ui": "^1.0.0",
     "drizzle-kit": "^0.31.8",
-    "@cloudflare/workers-types": "^4.20241022.0",
+    "eslint": "^9.39.2",
+    "globals": "^16.5.0",
+    "typescript-eslint": "^8.53.0",
     "vitest": "^1.0.0",
-    "@vitest/ui": "^1.0.0"
+    "wrangler": "^4.4.0"
   }
 }

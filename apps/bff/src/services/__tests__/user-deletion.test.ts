@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { createTestDb } from '../../db/testing';
 import { account, assets, categories, portfolioHistories, portfolios, session, user } from '../../db/schema';
 import { eq } from 'drizzle-orm';
-import { toMoney4, toQuantity8 } from '../../lib/money';
+import { toQuantity8 } from '../../lib/money';
 
 describe('User Deletion Cascade', () => {
   it('should delete all related data when user is deleted', async () => {

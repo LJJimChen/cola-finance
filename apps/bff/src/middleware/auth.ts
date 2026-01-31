@@ -1,7 +1,5 @@
 import type { MiddlewareHandler } from 'hono';
 import { createAuth } from '../lib/auth';
-import { AppError } from '../lib/errors';
-import type { D1Database } from '@cloudflare/workers-types';
 import type { AppDb } from '../db';
 import { session as sessionTable } from '../db/schema';
 import { eq } from 'drizzle-orm';

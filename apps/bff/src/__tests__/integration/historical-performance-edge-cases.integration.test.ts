@@ -4,10 +4,9 @@ import { describe, expect, it } from 'vitest';
 import { apiRoutes } from '../../routes';
 import type { AppDb } from '../../db';
 import { createTestDb } from '../../db/testing';
-import { portfolioHistories, portfolios, user } from '../../db/schema';
+import { portfolioHistories, portfolios } from '../../db/schema';
 import { toMoney4 } from '../../lib/money';
 import { createAuth } from '../../lib/auth';
-import { eq } from 'drizzle-orm';
 
 describe('Historical Performance Edge Cases', () => {
   it('handles timezone boundaries correctly', async () => {
@@ -16,7 +15,7 @@ describe('Historical Performance Edge Cases', () => {
     
     // Create user and session
     const auth = createAuth(db);
-    const signUpRes = await auth.api.signUpEmail({
+    await auth.api.signUpEmail({
       body: {
         email: 'tz@example.com',
         password: 'password123',
@@ -76,7 +75,7 @@ describe('Historical Performance Edge Cases', () => {
     );
 
     expect(res.status).toBe(200);
-    const data = await res.json<any>();
+    const data = await res.json() as { snapshots: { date: string }[] };
     
     // Should have 1 snapshot for 2024-01-02
     expect(data.snapshots).toHaveLength(1);
@@ -88,7 +87,7 @@ describe('Historical Performance Edge Cases', () => {
     const now = new Date().toISOString();
     
     const auth = createAuth(db);
-    const signUpRes = await auth.api.signUpEmail({
+    await auth.api.signUpEmail({
       body: {
         email: 'return@example.com',
         password: 'password123',
@@ -146,7 +145,7 @@ describe('Historical Performance Edge Cases', () => {
     );
 
     expect(res.status).toBe(200);
-    const data = await res.json<any>();
+    const data = await res.json() as { snapshots: { cumulativeReturn: number }[] };
     
     expect(data.snapshots).toHaveLength(1);
     // cumulativeReturn is (cumulative - 1) * 100
@@ -161,7 +160,7 @@ describe('Historical Performance Edge Cases', () => {
     
     // Create user and session
     const auth = createAuth(db);
-    const signUpRes = await auth.api.signUpEmail({
+    await auth.api.signUpEmail({
       body: {
         email: 'tz_override@example.com',
         password: 'password123',
@@ -217,7 +216,7 @@ describe('Historical Performance Edge Cases', () => {
       `/api/historical-performance/${portfolioId}?startDate=2024-01-02&endDate=2024-01-02&displayCurrency=CNY`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
-    const data1 = await res1.json<any>();
+    const data1 = await res1.json() as { snapshots: unknown[] };
     expect(data1.snapshots).toHaveLength(0);
 
     // Case 2: With X-Timezone=Asia/Shanghai -> Uses UTC+8 -> Date is 2024-01-02
@@ -229,10 +228,10 @@ describe('Historical Performance Edge Cases', () => {
           Authorization: `Bearer ${token}`,
           'X-Timezone': 'Asia/Shanghai' 
         } 
-      }
+      } 
     );
     expect(res2.status).toBe(200);
-    const data2 = await res2.json<any>();
+    const data2 = await res2.json() as { snapshots: { date: string }[] };
     expect(data2.snapshots).toHaveLength(1);
     expect(data2.snapshots[0].date).toBe('2024-01-02');
   });

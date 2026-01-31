@@ -1,4 +1,4 @@
-import { integer, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 export const user = sqliteTable("user", {
 	id: text("id").primaryKey(),
@@ -11,6 +11,7 @@ export const user = sqliteTable("user", {
   languagePreference: text('language_preference').default('zh'),
   themeSettings: text('theme_settings').default('auto'),
   displayCurrency: text('display_currency').default('CNY'),
+  timeZone: text('time_zone').default('UTC'),
 });
 
 export const session = sqliteTable("session", {

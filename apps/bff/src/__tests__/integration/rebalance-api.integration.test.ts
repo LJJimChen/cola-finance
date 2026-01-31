@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { apiRoutes } from '../../routes';
 import type { AppDb } from '../../db';
 import { createTestDb } from '../../db/testing';
-import { assets, categories, exchangeRates, portfolios, session, user } from '../../db/schema';
-import { toMoney4, toRate8, toQuantity8 } from '../../lib/money';
+import { assets, categories, portfolios } from '../../db/schema';
+import { toMoney4, toQuantity8 } from '../../lib/money';
 import { toAppError } from '../../lib/errors';
 import type { RebalanceRecommendations } from '@repo/shared-types';
 import { createAuth } from '../../lib/auth';
@@ -15,7 +15,6 @@ describe('Rebalance API', () => {
   it('returns rebalance recommendations for authorized user', async () => {
     const { db } = await createTestDb();
     const now = new Date().toISOString();
-    const today = new Date(now.slice(0, 10));
     
     // Setup user and session via better-auth
     const auth = createAuth(db);

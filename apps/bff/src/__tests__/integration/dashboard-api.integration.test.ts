@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { apiRoutes } from '../../routes';
 import type { AppDb } from '../../db';
 import { createTestDb } from '../../db/testing';
-import { assets, categories, exchangeRates, portfolios, session, user } from '../../db/schema';
-import { toMoney4, toRate8, toQuantity8 } from '../../lib/money';
+import { assets, categories, portfolios, session } from '../../db/schema';
+import { toMoney4, toQuantity8 } from '../../lib/money';
 import { toAppError } from '../../lib/errors';
 import { createAuth } from '../../lib/auth';
 
@@ -14,7 +14,6 @@ describe('Dashboard API', () => {
   it('returns dashboard data for authorized user', async () => {
     const { db } = await createTestDb();
     const now = new Date().toISOString();
-    const today = new Date(now.slice(0, 10));
     
     // Create user and session using better-auth
     const auth = createAuth(db);
@@ -121,7 +120,7 @@ describe('Dashboard API', () => {
     });
 
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = await res.json() as { currency: string; totalValue: number; topPerformingAssets: unknown[] };
     expect(body.currency).toBe('USD');
     expect(typeof body.totalValue).toBe('number');
     expect(Array.isArray(body.topPerformingAssets)).toBe(true);
@@ -142,7 +141,7 @@ describe('Dashboard API', () => {
 
     const res = await app.request('/api/portfolios/x/dashboard');
     expect(res.status).toBe(401);
-    const body = await res.json() as any;
+    const body = await res.json() as { error: { code: string } };
     expect(body.error.code).toBe('UNAUTHORIZED');
   });
 });

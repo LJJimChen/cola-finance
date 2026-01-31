@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { apiRoutes } from '../../routes';
 import type { AppDb } from '../../db';
 import { createTestDb } from '../../db/testing';
-import { portfolioHistories, exchangeRates, portfolios, session } from '../../db/schema';
+import { portfolioHistories, exchangeRates, portfolios } from '../../db/schema';
 import { toMoney4, toRate8 } from '../../lib/money';
 import { toAppError } from '../../lib/errors';
 import { createAuth } from '../../lib/auth';
@@ -108,7 +108,7 @@ describe('Historical Performance API', () => {
     app.route('/api', apiRoutes);
     app.onError((err, c) => {
       const e = toAppError(err);
-      return c.json(e.toResponse(), e.status as any);
+      return c.json(e.toResponse(), e.status as ContentfulStatusCode);
     });
 
     const res = await app.request(
@@ -191,7 +191,7 @@ describe('Historical Performance API', () => {
     );
 
     expect(res.status).toBe(422);
-    const body = await res.json();
+    const body = await res.json() as { error: { code: string } };
     expect(body.error.code).toBe('MISSING_EXCHANGE_RATE');
   });
 });
