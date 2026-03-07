@@ -14,7 +14,7 @@ export const useErrorHandler = (): ErrorHandler => {
     const errorMessage = error instanceof Error ? error.message : String(error);
     
     // Log error to monitoring service in production
-    if (process.env.NODE_ENV === 'production') {
+    if (import.meta.env.MODE === 'production') {
       // In a real app, you would send this to a service like Sentry
       console.error('Logging error to monitoring service:', {
         error: errorMessage,
@@ -33,7 +33,7 @@ export const useErrorHandler = (): ErrorHandler => {
     const errorMessage = error instanceof Error ? error.message : String(error);
     
     // Log error to monitoring service in production
-    if (process.env.NODE_ENV === 'production') {
+    if (import.meta.env.MODE === 'production') {
       // In a real app, you would send this to a service like Sentry
       console.error('Logging error to monitoring service:', {
         error: errorMessage,

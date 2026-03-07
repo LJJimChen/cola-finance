@@ -22,7 +22,8 @@ const API_BASE_URL =
   win
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ? ((import.meta as any).env?.VITE_API_BASE_URL ?? '/api')
-    : (process.env.API_BASE_URL ?? 'http://localhost:8787/api');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    : (((globalThis as any).process?.env?.API_BASE_URL) ?? 'http://localhost:8787/api');
 
 export interface ApiClientOptions {
   baseUrl?: string;

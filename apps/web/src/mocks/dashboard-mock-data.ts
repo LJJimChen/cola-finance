@@ -6,7 +6,7 @@ export const mockDashboardData: DashboardData = {
   annualReturn: 12.5,
   totalProfit: 24500.25,
   currency: 'USD',
-  lastUpdated: new Date().toISOString(),
+  lastUpdated: new Date(),
   allocationByCategory: [
     {
       categoryName: 'US Equities',
@@ -47,8 +47,8 @@ export const mockDashboardData: DashboardData = {
       currency: 'USD',
       brokerSource: 'BrokerA',
       brokerAccount: 'Main Account',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     },
     {
       id: 'asset-2',
@@ -62,8 +62,8 @@ export const mockDashboardData: DashboardData = {
       currency: 'USD',
       brokerSource: 'BrokerA',
       brokerAccount: 'Main Account',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     },
     {
       id: 'asset-3',
@@ -77,8 +77,8 @@ export const mockDashboardData: DashboardData = {
       currency: 'USD',
       brokerSource: 'BrokerA',
       brokerAccount: 'Main Account',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     },
     {
       id: 'asset-4',
@@ -92,8 +92,8 @@ export const mockDashboardData: DashboardData = {
       currency: 'USD',
       brokerSource: 'BrokerA',
       brokerAccount: 'Main Account',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     },
     {
       id: 'asset-5',
@@ -107,8 +107,8 @@ export const mockDashboardData: DashboardData = {
       currency: 'USD',
       brokerSource: 'BrokerA',
       brokerAccount: 'Main Account',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     },
   ],
 };
