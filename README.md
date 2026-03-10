@@ -20,30 +20,23 @@ An asset management system that aggregates user holdings across multiple platfor
 
 ## Getting Started
 
+- **Local Development**: See [quick-start.md](quick-start.md).
+- **Cloudflare Deployment**: See [quick-start-cloudflare.md](quick-start-cloudflare.md).
+
 ### Prerequisites
 
 - Node.js 18.x or later
 - pnpm
 
-### Installation
+### Quick Installation
 
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd cola-finance-sp
-   ```
+```bash
+git clone <repository-url>
+cd cola-finance
+pnpm install
+pnpm dev
+```
 
-2. Install dependencies:
-   ```bash
-   pnpm install
-   ```
-
-3. Set up environment variables (see individual app READMEs)
-
-4. Run the development servers:
-   ```bash
-   pnpm dev
-   ```
 
 ## Project Structure
 

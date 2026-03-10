@@ -13,7 +13,7 @@
 
 ```bash
 git clone <repository-url>
-cd cola-finance-sp
+cd cola-finance
 ```
 
 ### 2. Install Dependencies
@@ -102,7 +102,7 @@ pnpm test       # Run tests
 ## Project Structure
 
 ```
-cola-finance-sp/
+cola-finance/
 ├── apps/
 │   ├── web/           # React frontend application
 │   └── bff/           # Cloudflare Workers BFF
