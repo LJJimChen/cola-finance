@@ -31,7 +31,7 @@ app.use('/api/*', async (c, next) => {
 
 app.route('/api', apiRoutes);
 
-app.get('/', (c) => c.json({ status: 'ok', trustedOrigins: c.env.BETTER_AUTH_TRUSTED_ORIGINS  }));
+app.get('/', (c) => c.json({ status: 'ok', trustedOrigins: c.env.BETTER_AUTH_TRUSTED_ORIGINS ?? ""  }));
 
 app.onError((err, c) => {
   console.error('Unhandled Error:', err);
