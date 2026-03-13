@@ -6,18 +6,29 @@ import type { AppDb } from "../db";
 import { seedNewUser } from "../services/seed-service";
 import { nowIsoUtc } from "../lib/time";
 
-export function createAuth(dbOrD1: D1Database | AppDb, baseURL?: string, trustedOrigins?: string[]) {
+export function createAuth(
+  dbOrD1: D1Database | AppDb,
+  baseURL?: string,
+  trustedOrigins?: string[],
+  secret?: string,
+) {
   let db: AppDb;
-  // Check if it's Drizzle instance (has 'select', 'insert', etc.)
-  if ('select' in dbOrD1) {
+  if ("select" in dbOrD1) {
     db = dbOrD1 as AppDb;
   } else {
     db = drizzle(dbOrD1 as D1Database, { schema });
   }
 
+  const resolvedSecret =
+    secret ??
+    (typeof process !== "undefined" && typeof process.env !== "undefined"
+      ? process.env.BETTER_AUTH_SECRET
+      : undefined);
+
   return betterAuth({
     baseURL: baseURL || "http://localhost:3000",
     trustedOrigins: trustedOrigins || [],
+    secret: resolvedSecret,
     database: drizzleAdapter(db, {
       provider: "sqlite",
       schema: {
@@ -25,20 +36,24 @@ export function createAuth(dbOrD1: D1Database | AppDb, baseURL?: string, trusted
         session: schema.session,
         account: schema.account,
         verification: schema.verification,
-      }
+      },
     }),
     emailAndPassword: {
       enabled: true,
     },
     logger: {
-        level: "debug",
+      level: "debug",
     },
     user: {
       additionalFields: {
-        languagePreference: { type: "string", required: false, defaultValue: "en" },
+        languagePreference: {
+          type: "string",
+          required: false,
+          defaultValue: "en",
+        },
         themeSettings: { type: "string", defaultValue: "auto" },
         displayCurrency: { type: "string", defaultValue: "CNY" },
-      }
+      },
     },
     databaseHooks: {
       user: {
@@ -52,9 +67,9 @@ export function createAuth(dbOrD1: D1Database | AppDb, baseURL?: string, trusted
             } catch (error) {
               console.error("Failed to seed new user:", error);
             }
-          }
-        }
-      }
-    }
+          },
+        },
+      },
+    },
   });
 }

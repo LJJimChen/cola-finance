@@ -107,25 +107,22 @@ npx wrangler pages deploy apps/web/dist --project-name cola-finance-web
 Follow the prompts to create the project if it doesn't exist.
 
 ## 4. Final Configuration
-
-After deploying the frontend, you might need to update the backend's allowed origins if you have CORS configured.
-
-1.  Get your frontend URL (e.g., `https://cola-finance-web.pages.dev`).
-2.  Update `BETTER_AUTH_URL` and `BETTER_AUTH_TRUSTED_ORIGINS` in the backend if necessary (usually handled via secrets or env vars).
-
-```bash
-cd apps/bff
-npx wrangler secret put BETTER_AUTH_URL
-# Enter: https://cola-finance-web.pages.dev
-
-npx wrangler secret put BETTER_AUTH_TRUSTED_ORIGINS
-# Enter: https://cola-finance-web.pages.dev
-```
-
-Redeploy the backend if you updated secrets:
-
-```bash
-pnpm deploy
-```
-
-Now your Cola Finance application should be live!
+#
+#After deploying the frontend, you might need to update the backend's allowed origins if you have CORS configured.
+#
+#1.  Get your frontend URL (e.g., `https://cola-finance-web.pages.dev`).
+#2.  Update `BETTER_AUTH_TRUSTED_ORIGINS` in the backend if necessary (usually handled via secrets or env vars).
+#
+#```bash
+#cd apps/bff
+#npx wrangler secret put BETTER_AUTH_TRUSTED_ORIGINS
+## Enter: https://cola-finance-web.pages.dev
+#```
+#
+#Redeploy the backend if you updated secrets:
+#
+#```bash
+#pnpm deploy
+#```
+#
+#Now your Cola Finance application should be live!

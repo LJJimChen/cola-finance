@@ -13,6 +13,11 @@ authRoutes.all('/*', async (c) => {
     ? c.env.BETTER_AUTH_TRUSTED_ORIGINS.split(',').map(o => o.trim()) 
     : [];
 
-  const auth = createAuth(c.env.DB, baseURL, trustedOrigins);
+  const auth = createAuth(
+    c.env.DB,
+    baseURL,
+    trustedOrigins,
+    c.env.BETTER_AUTH_SECRET,
+  );
   return auth.handler(c.req.raw);
 });

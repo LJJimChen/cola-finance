@@ -20,7 +20,12 @@ export function requireAuth(): MiddlewareHandler<{
     const trustedOrigins = c.env?.BETTER_AUTH_TRUSTED_ORIGINS 
         ? c.env.BETTER_AUTH_TRUSTED_ORIGINS.split(',').map(o => o.trim()) 
         : [];
-    const auth = createAuth(db || c.env?.DB, undefined, trustedOrigins);
+    const auth = createAuth(
+      db || c.env?.DB,
+      undefined,
+      trustedOrigins,
+      c.env?.BETTER_AUTH_SECRET,
+    );
     
     const session = await auth.api.getSession({
        headers: c.req.raw.headers,
