@@ -13,7 +13,7 @@ describe('Portfolios API', () => {
     const auth = createAuth(db);
     
     // Create user
-    const signUpRes = await auth.api.signUpEmail({
+    await auth.api.signUpEmail({
       body: {
         email: 'lazy@example.com',
         password: 'password123',

@@ -13,7 +13,8 @@ export function createAuth(
   secret?: string,
 ) {
   let db: AppDb;
-  if ("select" in dbOrD1) {
+  const shouldSeedOnUserCreate = "select" in dbOrD1;
+  if (shouldSeedOnUserCreate) {
     db = dbOrD1 as AppDb;
   } else {
     db = drizzle(dbOrD1 as D1Database, { schema });
@@ -26,7 +27,7 @@ export function createAuth(
       : undefined);
 
   return betterAuth({
-    baseURL: baseURL || "http://localhost:3000",
+    baseURL: baseURL,
     trustedOrigins: trustedOrigins || [],
     secret: resolvedSecret,
     database: drizzleAdapter(db, {
@@ -59,6 +60,9 @@ export function createAuth(
       user: {
         create: {
           after: async (user) => {
+            if (!shouldSeedOnUserCreate) {
+              return;
+            }
             try {
               await seedNewUser(db, {
                 userId: user.id,

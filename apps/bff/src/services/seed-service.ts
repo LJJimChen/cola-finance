@@ -30,18 +30,17 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
     { source: 'CNY', target: 'CNY', rate: 1.0 },
   ] as const;
 
-  for (const fx of fxSeed) {
-    // We generate a random ID, so this will always insert new rows. 
-    // In a real app, this table shouldn't be user-scoped or seeded per user.
-    // But following existing pattern for now.
-    await db.insert(exchangeRates).values({
-      id: randomUUID(),
-      sourceCurrency: fx.source,
-      targetCurrency: fx.target,
-      rate8: toRate8(fx.rate),
-      date: new Date(today),
-      createdAt: new Date(args.now),
-    });
+  const exchangeRateRows = fxSeed.map((fx) => ({
+    id: randomUUID(),
+    sourceCurrency: fx.source,
+    targetCurrency: fx.target,
+    rate8: toRate8(fx.rate),
+    date: new Date(today),
+    createdAt: new Date(args.now),
+  }));
+
+  if (exchangeRateRows.length > 0) {
+    await db.insert(exchangeRates).values(exchangeRateRows);
   }
 
   // 2. Define Main Portfolio
@@ -72,10 +71,11 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
   ];
 
   const categoryIdsByName = new Map<string, string>();
+  const categoryRows: (typeof categories.$inferInsert)[] = [];
   for (const c of categoriesList) {
     const catId = randomUUID();
     categoryIdsByName.set(c.name, catId);
-    await db.insert(categories).values({
+    categoryRows.push({
       id: catId,
       portfolioId: portfolioId,
       name: c.name,
@@ -84,6 +84,10 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
       createdAt: nowDate,
       updatedAt: nowDate,
     });
+  }
+
+  if (categoryRows.length > 0) {
+    await db.insert(categories).values(categoryRows);
   }
 
   // 4. Shared Capital Management
@@ -123,6 +127,7 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
     },
   ];
 
+  const manualAssetRows: (typeof assets.$inferInsert)[] = [];
   for (const asset of manualAssets) {
     const rate = fxRates.get(asset.currency) || 1.0;
     const costInCny = asset.cost * rate;
@@ -135,7 +140,7 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
       const categoryId = categoryIdsByName.get(asset.cat)!;
       const dailyProfit = (asset.price - asset.cost) * 0.1; 
 
-      await db.insert(assets).values({
+      manualAssetRows.push({
         id: randomUUID(),
         portfolioId: portfolioId,
         categoryId,
@@ -152,6 +157,10 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
         updatedAt: nowDate,
       });
     }
+  }
+
+  if (manualAssetRows.length > 0) {
+    await db.insert(assets).values(manualAssetRows);
   }
 
   // 6. Seed ETF Assets
@@ -190,6 +199,7 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
 
   const allDates = new Set<string>();
   const priceMap = new Map<string, Map<string, number>>();
+  const etfAssetRows: (typeof assets.$inferInsert)[] = [];
 
   for (const [symbol, data] of Object.entries(etfData)) {
     if (!assetAllocations.has(symbol)) continue;
@@ -207,7 +217,7 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
     
     const categoryId = categoryIdsByName.get(categoryName)!;
 
-    await db.insert(assets).values({
+    etfAssetRows.push({
       id: randomUUID(),
       portfolioId: portfolioId,
       categoryId,
@@ -229,6 +239,10 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
       if (!priceMap.has(point.date)) priceMap.set(point.date, new Map());
       priceMap.get(point.date)!.set(symbol, point.price);
     }
+  }
+
+  if (etfAssetRows.length > 0) {
+    await db.insert(assets).values(etfAssetRows);
   }
 
   // 6. Seed Cash Asset
@@ -255,6 +269,8 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
   const sortedDates = Array.from(allDates).sort();
   const lastKnownPrices = new Map<string, number>();
   let prevTotalValue = 0;
+
+  const historyRows: (typeof portfolioHistories.$inferInsert)[] = [];
 
   for (const date of sortedDates) {
     const todaysPrices = priceMap.get(date);
@@ -285,7 +301,7 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
     if (prevTotalValue === 0) dailyProfit = 0;
     const currentTotalProfit = totalValue - INITIAL_CAPITAL;
 
-    await db.insert(portfolioHistories).values({
+    historyRows.push({
       id: randomUUID(),
       portfolioId: portfolioId,
       timestamp: new Date(date),
@@ -295,6 +311,10 @@ export async function seedNewUser(db: AppDb, args: SeedArgs): Promise<void> {
     });
 
     prevTotalValue = totalValue;
+  }
+
+  if (historyRows.length > 0) {
+    await db.insert(portfolioHistories).values(historyRows);
   }
 
   // 8. Compute Metrics
