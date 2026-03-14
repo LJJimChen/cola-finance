@@ -14,6 +14,8 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@fontsource/inter": "^5.2.8",
+    "@fontsource/material-symbols-outlined": "^5.2.38",
     "@repo/shared-types": "workspace:*",
     "@tailwindcss/postcss": "^4.1.18",
     "@tanstack/react-query": "^5.90.18",
