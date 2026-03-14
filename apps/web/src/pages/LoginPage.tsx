@@ -34,12 +34,6 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className="bg-background-light dark:bg-background-dark min-h-screen font-display text-slate-900 dark:text-white overflow-x-hidden selection:bg-primary selection:text-white flex flex-col items-center justify-center">
-      {/* Background Effects */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute -top-[20%] -left-[10%] w-[60vw] h-[60vw] bg-primary/5 rounded-full blur-[120px]"></div>
-        <div className="absolute top-[60%] -right-[10%] w-[50vw] h-[50vw] bg-primary/5 rounded-full blur-[100px]"></div>
-      </div>
-
       <div className="relative z-10 flex flex-col items-center justify-center min-h-[100dvh] px-6 w-full max-w-sm mx-auto">
         <div className="w-full text-center mb-10">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-5 ring-1 ring-primary/20">
