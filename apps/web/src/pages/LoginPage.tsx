@@ -41,7 +41,7 @@ const LoginPage: React.FC = () => {
       </div>
 
       <div className="relative z-10 flex flex-col items-center justify-center min-h-[100dvh] px-6 w-full max-w-sm mx-auto">
-        <div className="w-full text-center mb-10 animate-[fadeIn_0.6s_ease-out]">
+        <div className="w-full text-center mb-10">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-5 ring-1 ring-primary/20">
             <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>lock</span>
           </div>
@@ -49,7 +49,7 @@ const LoginPage: React.FC = () => {
           <p className="text-slate-500 dark:text-slate-400 text-sm">{t('auth.loginSubtitle')}</p>
         </div>
 
-        <form onSubmit={handleLogin} className="w-full flex flex-col gap-4 animate-[fadeIn_0.8s_ease-out]">
+        <form onSubmit={handleLogin} className="w-full flex flex-col gap-4">
           {error && (
             <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-lg">
               {error}
@@ -102,7 +102,7 @@ const LoginPage: React.FC = () => {
           </button>
         </form>
 
-        <div className="w-full mt-8 animate-[fadeIn_1.0s_ease-out]">
+        <div className="w-full mt-8">
           <div className="absolute bottom-6 w-full flex flex-col items-center gap-4">
             <p className="text-[13px] text-slate-500">
               {t('auth.dontHaveAccount')} 
@@ -117,12 +117,6 @@ const LoginPage: React.FC = () => {
           </div>
         </div>
       </div>
-      <style>{`
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
     </div>
   );
 };
