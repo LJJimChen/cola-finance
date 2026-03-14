@@ -1,25 +1,6 @@
 import 'dotenv/config';
 import { defineConfig } from 'drizzle-kit';
-import fs from 'fs';
-import path from 'path';
-
-function getLocalD1DB() {
-  try {
-    const basePath = path.resolve('.wrangler/state/v3/d1/miniflare-D1DatabaseObject');
-    
-    if (!fs.existsSync(basePath)) {
-      return undefined;
-    }
-
-    const dbFile = fs
-      .readdirSync(basePath)
-      .find((file) => file.endsWith('.sqlite'));
-      
-    return dbFile ? path.join(basePath, dbFile) : undefined;
-  } catch {
-    return undefined;
-  }
-}
+import { getLocalD1DB } from './scripts/utils/db-path';
 
 const isProd = process.env.NODE_ENV === 'production';
 const localDB = getLocalD1DB();

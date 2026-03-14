@@ -78,3 +78,5 @@ output/
 
 # Monorepo
 .turbo
+
+.temp/
