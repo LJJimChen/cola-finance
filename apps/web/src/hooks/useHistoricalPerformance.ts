@@ -23,6 +23,7 @@ export const useHistoricalPerformance = ({
     queryKey: ['historical-performance', portfolioId, startDateKey, endDateKey, displayCurrency],
     queryFn: () => apiClient.getHistoricalPerformance(portfolioId, startDate, endDate, displayCurrency),
     enabled: !!portfolioId,
+    placeholderData: (previousData) => previousData,
     staleTime: 24 * 60 * 60 * 1000, // 24 hours
     gcTime: 48 * 60 * 60 * 1000, // 48 hours
   });

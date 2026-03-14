@@ -193,7 +193,7 @@ const DashboardPage: React.FC = () => {
                 <button
                   key={range}
                   onClick={() => setTimeRange(range)}
-                  className={`px-2.5 py-1 text-[10px] font-medium transition-all rounded shadow-sm
+                  className={`h-6 px-2.5 text-[10px] leading-none font-medium transition-all rounded shadow-sm
                     ${timeRange === range
                       ? 'bg-white dark:bg-white/10 text-slate-900 dark:text-white font-bold'
                       : 'text-gray-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
@@ -204,7 +204,7 @@ const DashboardPage: React.FC = () => {
               ))}
             </div>
           </div>
-            <div className="bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-white/5 rounded-2xl p-4 shadow-sm relative overflow-hidden">
+            <div className="bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-white/5 rounded-2xl p-4 shadow-sm relative overflow-hidden min-h-[286px]">
                <PerformanceChart
                   data={chartData?.data || []}
                   growth={chartData?.growth || 0}
