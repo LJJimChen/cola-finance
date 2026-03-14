@@ -17,7 +17,7 @@ const WelcomePage: React.FC = () => {
       <main className="flex-1 w-full max-w-md flex flex-col justify-center items-center px-6 relative h-full min-h-0">
         <div className="w-full relative rounded-[2rem] overflow-hidden bg-white isolate shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] ring-1 ring-slate-200">
           <div className="absolute inset-0 -z-10">
-            <div className="absolute inset-0 bg-cover bg-center opacity-[0.06]" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCZG2l1u57pwxe1ZnnzKSjvYLhI9R7QDXr2P5rJEp_CEgnunrYEq9dek5yuGyoEOnS7XG8xYgxDs9CUaZY1NCaYMPG9FuhP9H4ryCgATtI3V6HEp65v5RTnHhoWni6VMB7yzyusqXWzMmdRXiom3A-WRPji_GhyYdVjYIBmFVi5-kHTQLVSqDkqrSEaBDfwvM0nIyOuts8x7jHAxvmR2L_udpBi43pYcPgf2z5OZyFGLy1ch2SWpyYnYPvQm48Z5eAInBuTJb0FXXtT')", filter: 'grayscale(100%)' }}></div>
+            <div className="absolute inset-0 bg-cover bg-center opacity-[0.06]"></div>
             <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-white/60 to-white"></div>
           </div>
           
