@@ -16,15 +16,14 @@ export const useHistoricalPerformance = ({
   displayCurrency = 'CNY' 
 }: UseHistoricalPerformanceProps) => {
   const apiClient = getApiClient();
+  const startDateKey = startDate.toISOString().split('T')[0];
+  const endDateKey = endDate.toISOString().split('T')[0];
 
   return useQuery<HistoricalPerformance, Error>({
-    queryKey: ['historical-performance', portfolioId, startDate.toISOString(), endDate.toISOString(), displayCurrency],
+    queryKey: ['historical-performance', portfolioId, startDateKey, endDateKey, displayCurrency],
     queryFn: () => apiClient.getHistoricalPerformance(portfolioId, startDate, endDate, displayCurrency),
     enabled: !!portfolioId,
     staleTime: 24 * 60 * 60 * 1000, // 24 hours
     gcTime: 48 * 60 * 60 * 1000, // 48 hours
-    retry: 1,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: true,
   });
 };
