@@ -43,7 +43,7 @@ export function createAuth(
       enabled: true,
     },
     logger: {
-      level: "debug",
+      level: "error",
     },
     user: {
       additionalFields: {
