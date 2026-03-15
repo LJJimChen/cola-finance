@@ -110,7 +110,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
               hide={true} 
               domain={['auto', 'auto']} 
             />
-            <Tooltip content={CustomTooltip} position={{ x: 0, y: 0 }} />
+            <Tooltip content={CustomTooltip} position={{ y: 0 }} />
             <Area
               type="monotone"
               dataKey="value"
