@@ -19,7 +19,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <div className="relative flex h-full min-h-screen w-full flex-col overflow-x-hidden max-w-md mx-auto shadow-2xl bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white">
       {/* Main Content */}
-      <main className="flex-1 flex flex-col px-4 pb-24 pt-2">
+      <main className="flex-1 flex flex-col px-4 pb-24 pt-[calc(env(safe-area-inset-top)+1rem)]">
         {children}
       </main>
 
