@@ -42,7 +42,7 @@ const AllocationChart: React.FC<AllocationChartProps> = ({ data, title }) => {
       {title && <h3 className="text-lg font-semibold mb-4">{title}</h3>}
 
       <div className="flex items-start gap-5">
-        <div className="relative w-32 h-32 shrink-0">
+        <div className="relative w-32 h-32 shrink-0 chart-touch-lock">
           <div className="w-full h-full focus:outline-none">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>

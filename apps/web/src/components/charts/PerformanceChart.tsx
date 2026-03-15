@@ -63,7 +63,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
 
   return (
     <div className="w-full">
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-2 gap-4">
         <div>
           <span className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1">
             Period Growth
@@ -89,7 +89,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
         </div>
       </div>
 
-      <div className="h-[200px] w-full -ml-2">
+      <div className="h-[200px] w-full chart-touch-lock">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data}>
             <defs>
