@@ -86,8 +86,7 @@ const DashboardPage: React.FC = () => {
     // Format data for Recharts
     const data = snapshots.map(s => ({
       date: s.date instanceof Date ? s.date.toISOString() : s.date,
-      value: s.totalValue,
-      formattedDate: new Date(s.date).toLocaleDateString(undefined, { month: 'short', year: '2-digit' })
+      value: s.totalValue
     }));
 
     return {

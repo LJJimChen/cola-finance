@@ -15,7 +15,6 @@ interface PerformanceChartProps {
   data: Array<{
     date: string;
     value: number;
-    formattedDate: string;
   }>;
   growth: number;
   maxDrawdown: number;
@@ -25,9 +24,10 @@ interface PerformanceChartProps {
 const CustomTooltip = ({ active, payload, label }: TooltipContentProps<ValueType, NameType>) => {
   const value = payload?.[0]?.value;
   if (active && value !== undefined) {
+    const displayLabel = payload?.[0]?.payload?.date || label;
     return (
       <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 p-2 rounded shadow-lg text-xs">
-        <p className="text-gray-500 dark:text-gray-400 mb-1">{label}</p>
+        <p className="text-gray-500 dark:text-gray-400 mb-1">{displayLabel}</p>
         <p className="font-bold text-slate-900 dark:text-white">
           {formatCurrency(Number(value), 'CNY')}
         </p>
@@ -99,7 +99,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
               </linearGradient>
             </defs>
             <XAxis
-              dataKey="formattedDate"
+              dataKey="date"
               axisLine={false}
               tickLine={false}
               tick={{ fontSize: 10, fill: '#9ca3af' }}
@@ -110,7 +110,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({
               hide={true} 
               domain={['auto', 'auto']} 
             />
-            <Tooltip content={CustomTooltip} />
+            <Tooltip content={CustomTooltip} position={{ x: 0, y: 0 }} />
             <Area
               type="monotone"
               dataKey="value"
